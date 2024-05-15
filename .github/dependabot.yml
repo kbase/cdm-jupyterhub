@@ -1,0 +1,17 @@
+version: 2
+updates:
+
+  # Docker
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+      time: '11:00'
+    open-pull-requests-limit: 25
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: ".github/workflows"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 25

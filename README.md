@@ -1,10 +1,4 @@
-# Template Repo
-Template for new KBase repositories
-For further info on using the KBase default repo template, 
-please see the [KBase Build & Release Guide](https://github.com/kbase/.github/tree/main/guide).
+# CDM Jupyterhub dockerfiles (Prototype)
 
-## To Do:
-
-- [ ] Update this README.md with info about your repository
-- [ ] Modify `Dockerfile` with needed steps (assuming repo produces a Docker image)
-- [ ] Ensure all [branch rules](https://github.com/kbase/.github/blob/develop/guide/enable-branch-rules.md) & [status checks](https://github.com/kbase/.github/blob/develop/guide/enable-branch-rules.md#require-status-checks) are enabled
+This prototype establishes a Docker container configuration for JupyterHub, designed to furnish a multi-user 
+environment tailored for executing Spark jobs via Jupyter notebooks.

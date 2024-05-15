@@ -1,6 +1,4 @@
-FROM python:3.9.13-alpine3.16
+FROM bitnami/spark:3.5.1
 
-# Install Base Packages
-RUN apk --no-cache add bash curl 
 
-ENTRYPOINT ["sleep 1d"]
+ENTRYPOINT ["sleep 10s"]
