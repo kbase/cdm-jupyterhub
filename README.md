@@ -59,29 +59,26 @@ sc.stop()
 
 ### Spark Session/Context Configuration
 
-Ensure to configure `spark.driver.host` for the Spark driver to bind to the Jupyter notebook container's hostname
+When running Spark in the Jupyter notebook container, the `spark.driver.host` configuration is automatically set to 
+the hostname (`SPARK_DRIVER_HOST`) of the container.
 
+#### Example SparkSession Configuration
 ```python
 spark = SparkSession.builder \
-    .master(os.environ['SPARK_MASTER_URL']) \
     .appName("TestSparkJob") \
-    .config("spark.driver.host", os.environ['SPARK_DRIVER_HOST']) \
     .getOrCreate()
 ```
-Or
+
+#### Example SparkContext Configuration
 ```python
 conf = SparkConf(). \
-    setMaster( os.environ['SPARK_MASTER_URL']). \
-    setAppName("TestSparkJob"). \
-    set("spark.driver.host", os.environ['SPARK_DRIVER_HOST'])
+    setAppName("TestSparkJob")
 sc = SparkContext(conf=conf)
 ```
 
-Submitting job using terminal
+#### Submitting a Job Using Terminal
 ```bash
 /opt/bitnami/spark/bin/spark-submit \
-    --master $SPARK_MASTER_URL \
-    --conf spark.driver.host=$SPARK_DRIVER_HOST \
     /opt/bitnami/spark/examples/src/main/python/pi.py 10 \
     2>/dev/null
 ```
