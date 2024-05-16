@@ -56,8 +56,6 @@ sc.stop()
 - `SPARK_MASTER_URL`: `spark://spark-master:7077`
 - `NOTEBOOK_PORT`: 4041
 - `SPARK_DRIVER_HOST`: `notebook` (the hostname of the Jupyter notebook container).
-- `SPARK_DRIVER_PORT`: 7075
-- `SPARK_BLOCKMANAGER_PORT`: 7076
 
 ### Spark Session/Context Configuration
 
