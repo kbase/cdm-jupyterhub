@@ -44,6 +44,8 @@ services:
   spark-test-node:
     image: bitnami/spark:3.5.1
     container_name: spark-test-node
+    depends_on:
+      - spark-master
     environment:
       - SPARK_MASTER_URL=spark://spark-master:7077
 
