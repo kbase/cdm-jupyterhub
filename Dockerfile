@@ -18,6 +18,6 @@ COPY scripts/entrypoint.sh /opt/
 RUN chmod a+x /opt/entrypoint.sh
 
 # Switch back to the original user
-USER ${ORI_USER}
+#USER ${ORI_USER}
 
 ENTRYPOINT ["/opt/entrypoint.sh"]
