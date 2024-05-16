@@ -4,11 +4,9 @@ RUN export ORI_USER=$(id -u)
 # Switch to root to install packages
 USER root
 
-ENV PYTHON_VER=python3.11
-
-# Install necessary packages
 RUN apt-get update && apt-get install -y \
-    $PYTHON_VER python3-pip $PYTHON_VER-dev \
+    # GCC required to resolve error during JupyterLab installation: psutil could not be installed from sources because gcc is not installed.
+    gcc \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Jupyterlab and other python dependencies
