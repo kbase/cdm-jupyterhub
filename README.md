@@ -50,5 +50,45 @@ print(pi)
 sc.stop()
 ```
 
+## Racher Deployment
+
+### Environment Variables
+- `SPARK_MASTER_URL`: `spark://spark-master:7077`
+- `NOTEBOOK_PORT`: 4041
+- `SPARK_DRIVER_HOST`: `notebook` (the hostname of the Jupyter notebook container).
+- `SPARK_DRIVER_PORT`: 7075
+- `SPARK_BLOCKMANAGER_PORT`: 7076
+
+### Spark Session/Context Configuration
+
+Ensure to configure `spark.driver.host` for the Spark driver to bind to the Jupyter notebook container's hostname
+
+```python
+spark = SparkSession.builder \
+    .master(os.environ['SPARK_MASTER_URL']) \
+    .appName("TestSparkJob") \
+    .config("spark.driver.host", os.environ['SPARK_DRIVER_HOST']) \
+    .getOrCreate()
+```
+```python
+conf = SparkConf(). \
+    setMaster( os.environ['SPARK_MASTER_URL']). \
+    setAppName("TestSparkJob"). \
+    set("spark.driver.host", os.environ['SPARK_DRIVER_HOST'])
+sc = SparkContext(conf=conf)
+```
+
+```bash
+/opt/bitnami/spark/bin/spark-submit \
+    --master $SPARK_MASTER_URL \
+    --conf spark.driver.host=$SPARK_DRIVER_HOST \
+    /opt/bitnami/spark/examples/src/main/python/pi.py 10 \
+    2>/dev/null
+```
+
+
+
+
+
 
 
