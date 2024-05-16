@@ -18,7 +18,7 @@ docker-compose up --build
 docker exec -it spark-test-node \
     sh -c '
 	    /opt/bitnami/spark/bin/spark-submit \
-	    --master spark://spark-master:7077 \
+	    --master $SPARK_MASTER_URL \
 	    examples/src/main/python/pi.py 10 \
 	    2>/dev/null
     '
