@@ -51,6 +51,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: spark-notebook
     ports:
       - "4040:4040"
       - "4041:4041"
