@@ -59,8 +59,9 @@ sc.stop()
 
 ### Spark Session/Context Configuration
 
-When running Spark in the Jupyter notebook container, the `spark.driver.host` configuration is automatically set to 
-the hostname (`SPARK_DRIVER_HOST`) of the container.
+When running Spark in the Jupyter notebook container, the default `spark.driver.host` configuration is set to 
+the hostname (`SPARK_DRIVER_HOST`) of the container. 
+In addition, the environment variable `SPARK_MASTER_URL` should also be configured.
 
 #### Example SparkSession Configuration
 ```python
