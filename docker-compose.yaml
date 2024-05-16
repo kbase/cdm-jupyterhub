@@ -63,3 +63,4 @@ services:
     environment:
       - NOTEBOOK_PORT=4041
       - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_DRIVER_HOST=spark-notebook
