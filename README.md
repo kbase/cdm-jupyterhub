@@ -68,6 +68,7 @@ spark = SparkSession.builder \
     .config("spark.driver.host", os.environ['SPARK_DRIVER_HOST']) \
     .getOrCreate()
 ```
+Or
 ```python
 conf = SparkConf(). \
     setMaster( os.environ['SPARK_MASTER_URL']). \
@@ -76,6 +77,7 @@ conf = SparkConf(). \
 sc = SparkContext(conf=conf)
 ```
 
+Submitting job using terminal
 ```bash
 /opt/bitnami/spark/bin/spark-submit \
     --master $SPARK_MASTER_URL \
