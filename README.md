@@ -65,7 +65,7 @@ In addition, the environment variable `SPARK_MASTER_URL` should also be configur
 
 #### Using Predefined SparkSession from `spark.utils.get_spark_session` method
 ```python
-from spark.utils import get_spark_session
+from common.utils import get_spark_session
 
 spark = get_spark_session('TestApp')
 ```
