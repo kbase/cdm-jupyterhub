@@ -63,23 +63,37 @@ When running Spark in the Jupyter notebook container, the default `spark.driver.
 the hostname (`SPARK_DRIVER_HOST`) of the container. 
 In addition, the environment variable `SPARK_MASTER_URL` should also be configured.
 
+#### Using Predefined SparkSession from `spark.utils.get_spark_session` method
+```python
+from spark.utils import get_spark_session
+
+spark = get_spark_session('TestApp')
+```
+
+#### Manually Configuring SparkSession/SparkContext
+
+If you want to configure the SparkSession manually, you can do so as follows:
+
 #### Example SparkSession Configuration
 ```python
 spark = SparkSession.builder \
+    .master(os.environ['SPARK_MASTER_URL']) \
     .appName("TestSparkJob") \
     .getOrCreate()
 ```
 
 #### Example SparkContext Configuration
 ```python
-conf = SparkConf(). \
-    setAppName("TestSparkJob")
+conf = SparkConf() \
+    .setMaster(os.environ['SPARK_MASTER_URL']) \
+    .setAppName("TestSparkJob")
 sc = SparkContext(conf=conf)
 ```
 
 #### Submitting a Job Using Terminal
 ```bash
 /opt/bitnami/spark/bin/spark-submit \
+    --master $SPARK_MASTER_URL \
     /opt/bitnami/spark/examples/src/main/python/pi.py 10 \
     2>/dev/null
 ```

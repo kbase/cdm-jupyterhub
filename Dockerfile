@@ -12,6 +12,9 @@ RUN apt-get update && apt-get install -y \
 # Install Jupyterlab and other python dependencies
 RUN pip3 install jupyterlab==4.2.0 pyspark==3.5.1
 
+COPY ./src/ /src
+ENV PYTHONPATH "${PYTHONPATH}:/src"
+
 COPY scripts/entrypoint.sh /opt/
 RUN chmod a+x /opt/entrypoint.sh
 
