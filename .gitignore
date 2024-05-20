@@ -1,5 +1,5 @@
 .DS_Store
 .idea
 .coverage
-
 cdm_shared_workspace/
+*_pycache__
