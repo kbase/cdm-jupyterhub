@@ -9,8 +9,12 @@ RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Jupyterlab and other python dependencies
-RUN pip3 install jupyterlab==4.2.0 pyspark==3.5.1
+# install pipenv
+RUN pip3 install pipenv
+
+# install python dependencies
+COPY Pipfile* ./
+RUN pipenv sync --system
 
 COPY ./src/ /src
 ENV PYTHONPATH "${PYTHONPATH}:/src"
