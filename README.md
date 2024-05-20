@@ -63,7 +63,7 @@ When running Spark in the Jupyter notebook container, the default `spark.driver.
 the hostname (`SPARK_DRIVER_HOST`) of the container. 
 In addition, the environment variable `SPARK_MASTER_URL` should also be configured.
 
-#### Using Predefined SparkSession from `spark.utils.get_spark_session` method
+#### Using Predefined SparkSession from `common.utils.get_spark_session` method
 ```python
 from common.utils import get_spark_session
 
