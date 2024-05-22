@@ -2,3 +2,4 @@
 .idea
 .coverage
 *_pycache__
+cdm_shared_workspace/

@@ -5,7 +5,9 @@ version: '3'
 services:
 
   spark-master:
-    image: bitnami/spark:3.5.1
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: spark-master
     ports:
       - "8080:8080"
@@ -51,10 +53,48 @@ services:
     environment:
       - SPARK_MASTER_URL=spark://spark-master:7077
 
+  minio:
+    image: minio/minio
+    container_name: spark-minio
+    expose:
+      - "9000"
+    ports:
+      - "9000:9000"
+      # MinIO Console is available at http://localhost:9001
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio123
+    healthcheck:
+      test: timeout 5s bash -c ':> /dev/tcp/127.0.0.1/9000' || exit 1
+      interval: 1s
+      timeout: 10s
+      retries: 5
+    # Note there is no bucket by default
+    command: server /data --console-address ":9001"
+
+  minio-create-bucket:
+    image: minio/mc
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      bash -c "
+      mc alias set minio http://minio:9000 minio minio123 &&
+      if ! mc ls minio/delta-lake 2>/dev/null; then
+        mc mb minio/delta-lake && echo 'Bucket delta-lake created'
+      else
+        echo 'bucket delta-lake already exists'
+      fi
+      "
+
   notebook:
     build:
       context: .
       dockerfile: Dockerfile
+    entrypoint: /opt/scripts/notebook_entrypoint.sh
     container_name: spark-notebook
     ports:
       - "4041:4041"
@@ -64,3 +104,8 @@ services:
       - NOTEBOOK_PORT=4041
       - SPARK_MASTER_URL=spark://spark-master:7077
       - SPARK_DRIVER_HOST=spark-notebook
+      - MINIO_URL=http://minio:9000
+      - MINIO_ACCESS_KEY=minio
+      - MINIO_SECRET_KEY=minio123
+    volumes:
+      - ./cdm_shared_workspace:/cdm_shared_workspace
