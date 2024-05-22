@@ -20,7 +20,7 @@ ENV SCALA_VER=2.12
 RUN curl -O https://repo1.maven.org/maven2/io/delta/delta-spark_${SCALA_VER}/${DELTA_SPARK_VER}/delta-spark_${SCALA_VER}-${DELTA_SPARK_VER}.jar \
     && mv delta-spark_${SCALA_VER}-${DELTA_SPARK_VER}.jar /opt/bitnami/spark/jars
 
-Run curl -O https://repo1.maven.org/maven2/io/delta/delta-storage/${DELTA_SPARK_VER}/delta-storage-${DELTA_SPARK_VER}.jar \
+RUN curl -O https://repo1.maven.org/maven2/io/delta/delta-storage/${DELTA_SPARK_VER}/delta-storage-${DELTA_SPARK_VER}.jar \
     && mv delta-storage-${DELTA_SPARK_VER}.jar /opt/bitnami/spark/jars
 
 # install pipenv

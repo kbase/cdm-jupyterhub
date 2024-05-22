@@ -42,7 +42,6 @@ def get_spark_session(app_name: str,
                 ("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension"),
                 ("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"),
                 ("spark.hadoop.fs.s3a.path.style.access", "true"),
-                ("spark.hadoop.fs.s3a.connection.ssl.enabled", "false"),
                 ("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem"),
             ]
         )
