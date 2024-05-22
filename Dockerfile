@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     gcc curl \
     && rm -rf /var/lib/apt/lists/*
 
+# TODO: using Gradle to build the jar
 # Install jars to support delta lake spark operations
 ENV HADOOP_AWS_VER=3.3.4
 RUN curl -O https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/${HADOOP_AWS_VER}/hadoop-aws-${HADOOP_AWS_VER}.jar \
