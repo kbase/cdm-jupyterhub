@@ -68,7 +68,7 @@ services:
       MINIO_ACCESS_KEY: minio
       MINIO_SECRET_KEY: minio123
     healthcheck:
-      # Check if the server is healthy by sending a HTTP request on port 9000
+      # reference: https://github.com/rodrigobdz/docker-compose-healthchecks?tab=readme-ov-file#minio-release2023-11-01t18-37-25z-and-older
       test: timeout 5s bash -c ':> /dev/tcp/127.0.0.1/9000' || exit 1
       interval: 1s
       timeout: 10s
@@ -101,6 +101,7 @@ services:
       - "4041:4041"
     depends_on:
       - spark-master
+      - minio-create-bucket
     environment:
       - NOTEBOOK_PORT=4041
       - SPARK_MASTER_URL=spark://spark-master:7077
@@ -109,4 +110,4 @@ services:
       - MINIO_ACCESS_KEY=minio
       - MINIO_SECRET_KEY=minio123
     volumes:
-      - ./cdm_shared_workspace:/cdm_shared_workspace
+      - ./cdr/cdm/jupyter:/cdm_shared_workspace
