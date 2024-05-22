@@ -34,7 +34,7 @@ COPY ./src/ /src
 ENV PYTHONPATH "${PYTHONPATH}:/src"
 
 COPY ./scripts/ /opt/scripts/
-RUN chmod a+x /opt/scripts/*
+RUN chmod a+x /opt/scripts/*.sh
 
 # Switch back to the original user
 USER ${ORI_USER}
