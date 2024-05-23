@@ -41,4 +41,3 @@ RUN chmod a+x /opt/scripts/*.sh
 USER ${ORI_USER}
 
 ENTRYPOINT ["/opt/scripts/entrypoint.sh"]
-CMD ["/opt/bitnami/scripts/spark/run.sh"]
