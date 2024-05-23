@@ -39,3 +39,6 @@ RUN chmod a+x /opt/scripts/*.sh
 
 # Switch back to the original user
 USER ${ORI_USER}
+
+ENTRYPOINT ["/opt/scripts/entrypoint.sh"]
+CMD ["/opt/bitnami/scripts/spark/run.sh"]

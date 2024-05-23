@@ -95,7 +95,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    entrypoint: /opt/scripts/notebook_entrypoint.sh
     container_name: spark-notebook
     ports:
       - "4041:4041"
@@ -109,5 +108,6 @@ services:
       - MINIO_URL=http://minio:9000
       - MINIO_ACCESS_KEY=minio
       - MINIO_SECRET_KEY=minio123
+      - SPARK_MODE=notebook
     volumes:
       - ./cdr/cdm/jupyter:/cdm_shared_workspace
