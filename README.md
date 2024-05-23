@@ -79,7 +79,10 @@ In addition, the environment variable `SPARK_MASTER_URL` should also be configur
 ```python
 from spark.utils import get_spark_session
 
-spark = get_spark_session('TestApp')
+spark = get_spark_session(app_name)
+
+# To build spark session for Delta Lake operations, set the delta_lake parameter to True
+spark = get_spark_session(app_name, delta_lake=True)
 ```
 
 #### Manually Configuring SparkSession/SparkContext

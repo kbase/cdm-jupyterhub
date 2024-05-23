@@ -1,26 +1,10 @@
 #!/bin/bash
 
-echo "starting jupyter notebook"
-
-if [ -n "$SPARK_DRIVER_HOST" ]; then
-    echo "Setting spark.driver.host to $SPARK_DRIVER_HOST"
-    source /opt/bitnami/scripts/spark-env.sh
-    if [ -z "$SPARK_CONF_FILE" ]; then
-        echo "Error: unable to find SPARK_CONF_FILE path"
-        exit 1
-    fi
-    echo "spark.driver.host $SPARK_DRIVER_HOST" >> $SPARK_CONF_FILE
+if [ "$SPARK_MODE" = "notebook" ]; then
+    exec /opt/scripts/notebook_entrypoint.sh "$@"
+else
+  # In bitnami/spark Dockerfile, the entrypoint is set to /opt/bitnami/scripts/spark/entrypoint.sh and followed
+  # by CMD ["/opt/bitnami/scripts/spark/run.sh"] meaning that the entrypoint is expected the run.sh script as an argument.
+  # reference: https://github.com/bitnami/containers/blob/main/bitnami/spark/3.5/debian-12/Dockerfile#L69
+    exec /opt/bitnami/scripts/spark/entrypoint.sh "$@" /opt/bitnami/scripts/spark/run.sh
 fi
-
-WORKSPACE_DIR="/cdm_shared_workspace"
-mkdir -p "$WORKSPACE_DIR"
-cd "$WORKSPACE_DIR"
-
-# Start Jupyter Lab
-jupyter lab --ip=0.0.0.0 \
-            --port=$NOTEBOOK_PORT \
-            --no-browser \
-            --allow-root \
-            --notebook-dir="$WORKSPACE_DIR" \
-            --ServerApp.token='' \
-            --ServerApp.password=''
