@@ -6,23 +6,26 @@ USER root
 
 RUN apt-get update && apt-get install -y \
     # GCC required to resolve error during JupyterLab installation: psutil could not be installed from sources because gcc is not installed.
-    gcc curl \
+    gcc curl unzip\
     && rm -rf /var/lib/apt/lists/*
 
-# TODO: using Gradle to build the jar
-# Install jars to support delta lake spark operations
-ENV HADOOP_AWS_VER=3.3.4
-RUN curl -O https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/${HADOOP_AWS_VER}/hadoop-aws-${HADOOP_AWS_VER}.jar \
-    && mv hadoop-aws-${HADOOP_AWS_VER}.jar /opt/bitnami/spark/jars
+# Install Gradle
+ENV GRADLE_VERSION=8.7
+RUN curl -L https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip -o gradle-bin.zip \
+    && unzip gradle-bin.zip -d /opt \
+    && rm gradle-bin.zip \
+    && ln -s /opt/gradle-${GRADLE_VERSION}/bin/gradle /usr/bin/gradle
 
-# NOTE: ensure Delta Spark jars matche python pip delta-spark version specified in the Pipfile
+ENV HADOOP_AWS_VER=3.3.4
+# NOTE: ensure Delta Spark jar version matches python pip delta-spark version specified in the Pipfile
 ENV DELTA_SPARK_VER=3.2.0
 ENV SCALA_VER=2.12
-RUN curl -O https://repo1.maven.org/maven2/io/delta/delta-spark_${SCALA_VER}/${DELTA_SPARK_VER}/delta-spark_${SCALA_VER}-${DELTA_SPARK_VER}.jar \
-    && mv delta-spark_${SCALA_VER}-${DELTA_SPARK_VER}.jar /opt/bitnami/spark/jars
 
-RUN curl -O https://repo1.maven.org/maven2/io/delta/delta-storage/${DELTA_SPARK_VER}/delta-storage-${DELTA_SPARK_VER}.jar \
-    && mv delta-storage-${DELTA_SPARK_VER}.jar /opt/bitnami/spark/jars
+COPY build.gradle /gradle/build.gradle
+
+# Run Gradle task to download JARs to /gradle/gradle_jars location
+RUN gradle -b /gradle/build.gradle downloadJars
+RUN cp -r /gradle/gradle_jars/* /opt/bitnami/spark/jars/
 
 # install pipenv
 RUN pip3 install pipenv
