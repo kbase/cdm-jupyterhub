@@ -13,7 +13,6 @@ def scalaVersion = System.getenv('SCALA_VER')
 dependencies {
     implementation "org.apache.hadoop:hadoop-aws:$hadoopAwsVersion"
     implementation "io.delta:delta-spark_${scalaVersion}:$deltaSparkVersion"
-    implementation "io.delta:delta-storage:$deltaSparkVersion"
 }
 
 task downloadJars(type: Copy) {
