@@ -87,7 +87,6 @@ def get_spark_session(
 
         # Just to include the necessary jars for Delta Lake
         jar_names = [f"delta-spark_{SCALA_VER}-{DELTA_SPARK_VER}.jar",
-                     # f"delta-storage-{DELTA_SPARK_VER}.jar",
                      f"hadoop-aws-{HADOOP_AWS_VER}.jar"]
         jars_str = _get_jars(jar_names)
         delta_conf = _get_delta_lake_conf(jars_str)
