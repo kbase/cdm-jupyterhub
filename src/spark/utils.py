@@ -48,7 +48,6 @@ def _get_delta_lake_conf(jars_str: str) -> dict:
         "spark.hadoop.fs.s3a.path.style.access": "true",
         "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
         "spark.sql.catalogImplementation": "hive",
-        "spark.hadoop.hive.support.concurrency": "false"  # Prevent Hive metastore locks
     }
 
 
