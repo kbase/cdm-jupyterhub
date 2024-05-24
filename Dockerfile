@@ -21,11 +21,12 @@ ENV HADOOP_AWS_VER=3.3.4
 ENV DELTA_SPARK_VER=3.2.0
 ENV SCALA_VER=2.12
 
-COPY build.gradle /gradle/build.gradle
-
 # Run Gradle task to download JARs to /gradle/gradle_jars location
-RUN gradle -b /gradle/build.gradle downloadJars
-RUN cp -r /gradle/gradle_jars/* /opt/bitnami/spark/jars/
+COPY build.gradle settings.gradle gradlew /gradle/
+COPY gradle /gradle/gradle
+ENV GRADLE_JARS_DIR=gradle_jars
+RUN /gradle/gradlew -p /gradle build
+RUN cp -r /gradle/${GRADLE_JARS_DIR}/* /opt/bitnami/spark/jars/
 
 # install pipenv
 RUN pip3 install pipenv

@@ -3,3 +3,8 @@
 .coverage
 *_pycache__
 cdr/cdm/jupyter/
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build
