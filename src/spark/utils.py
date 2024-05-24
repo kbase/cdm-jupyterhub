@@ -93,4 +93,4 @@ def get_spark_session(
         for key, value in delta_conf.items():
             spark_conf.set(key, value)
 
-    return SparkSession.builder.config(conf=spark_conf).enableHiveSupport().getOrCreate()
+    return SparkSession.builder.config(conf=spark_conf).getOrCreate()
