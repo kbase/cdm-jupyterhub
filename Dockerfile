@@ -6,7 +6,7 @@ USER root
 
 RUN apt-get update && apt-get install -y \
     # GCC required to resolve error during JupyterLab installation: psutil could not be installed from sources because gcc is not installed.
-    gcc curl unzip\
+    gcc curl \
     && rm -rf /var/lib/apt/lists/*
 
 ENV HADOOP_AWS_VER=3.3.4
