@@ -9,13 +9,6 @@ RUN apt-get update && apt-get install -y \
     gcc curl unzip\
     && rm -rf /var/lib/apt/lists/*
 
-# Install Gradle
-ENV GRADLE_VERSION=8.7
-RUN curl -L https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip -o gradle-bin.zip \
-    && unzip gradle-bin.zip -d /opt \
-    && rm gradle-bin.zip \
-    && ln -s /opt/gradle-${GRADLE_VERSION}/bin/gradle /usr/bin/gradle
-
 ENV HADOOP_AWS_VER=3.3.4
 # NOTE: ensure Delta Spark jar version matches python pip delta-spark version specified in the Pipfile
 ENV DELTA_SPARK_VER=3.2.0
