@@ -119,7 +119,7 @@ sc = SparkContext(conf=conf)
 ```bash
 ssh -f -N -L localhost:44041:10.58.2.201:4041 <kbase_developer_username>@login1.berkeley.kbase.us
 ```
-where ```kbase_developer_username``` is an Argonne account usually starting with `ac.`.
+where ```kbase_developer_username``` is an Argonne account, typically starting with `ac.`.
 
 ### Accessing the Jupyter Notebook
 Navigate to [http://localhost:44041/](http://localhost:44041/) in your browser.
