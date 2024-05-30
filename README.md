@@ -113,9 +113,16 @@ sc = SparkContext(conf=conf)
     2>/dev/null
 ```
 
+## Connecting to the Jupyter Notebook
 
+### Tunneling to the Jupyter Notebook
+```bash
+ssh -f -N -L localhost:44041:10.58.2.201:4041 tgu@login1.berkeley.kbase.us
+```
 
+### Accessing the Jupyter Notebook
+Navigate to [http://localhost:44041/](http://localhost:44041/) in your browser.
 
-
+Enjoy your Spark journey!
 
 
