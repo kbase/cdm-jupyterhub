@@ -1,4 +1,5 @@
 import os
+from threading import Timer
 
 from pyspark.conf import SparkConf
 from pyspark.sql import SparkSession
@@ -8,6 +9,7 @@ JAR_DIR = '/opt/bitnami/spark/jars'
 HADOOP_AWS_VER = os.getenv('HADOOP_AWS_VER')
 DELTA_SPARK_VER = os.getenv('DELTA_SPARK_VER')
 SCALA_VER = os.getenv('SCALA_VER')
+SPARK_TIMEOUT_SECONDS = os.getenv('SPARK_TIMEOUT_SECONDS', 4 * 60 * 60)
 
 
 def _get_jars(jar_names: list) -> str:
@@ -49,6 +51,11 @@ def _get_delta_lake_conf(jars_str: str) -> dict:
         "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
         "spark.sql.catalogImplementation": "hive",
     }
+
+
+def _stop_spark_session(spark):
+    print("Stopping Spark session after timeout...")
+    spark.stop()
 
 
 def get_base_spark_conf(app_name: str) -> SparkConf:
@@ -93,4 +100,7 @@ def get_spark_session(
         for key, value in delta_conf.items():
             spark_conf.set(key, value)
 
-    return SparkSession.builder.config(conf=spark_conf).getOrCreate()
+    spark = SparkSession.builder.config(conf=spark_conf).getOrCreate()
+    Timer(int(SPARK_TIMEOUT_SECONDS), _stop_spark_session, [spark]).start()
+
+    return spark
