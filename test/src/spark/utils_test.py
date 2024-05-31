@@ -44,7 +44,8 @@ def spark_session_non_local(mock_spark_master):
     spark_master_url = f"spark://localhost:{port}"
     print(f"Using Spark master URL: {spark_master_url}")
 
-    with mock.patch.dict('os.environ', {"SPARK_MASTER_URL": spark_master_url}):
+    with mock.patch.dict('os.environ', {"SPARK_MASTER_URL": spark_master_url,
+                                        "SPARK_TIMEOUT_SECONDS": "2"}):
         spark_session = get_spark_session("TestApp", local=False)
         print("Created non-local Spark session.")
         try:
