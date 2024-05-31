@@ -103,5 +103,6 @@ services:
       - MINIO_ACCESS_KEY=minio
       - MINIO_SECRET_KEY=minio123
       - SPARK_MODE=notebook
+      - MAX_EXECUTORS=2
     volumes:
       - ./cdr/cdm/jupyter:/cdm_shared_workspace
