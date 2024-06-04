@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from threading import Timer
 
 from pyspark.conf import SparkConf
@@ -72,20 +73,23 @@ def get_base_spark_conf(app_name: str) -> SparkConf:
 
 
 def get_spark_session(
-        app_name: str,
+        app_name: str = None,
         local: bool = False,
-        delta_lake: bool = False,
+        delta_lake: bool = True,
         timeout_sec: int = 4 * 60 * 60) -> SparkSession:
     """
     Helper to get and manage the SparkSession and keep all of our spark configuration params in one place.
 
-    :param app_name: The name of the application
-    :param local: Whether to run the spark session locally or not
-    :param delta_lake: Build the spark session with Delta Lake support
-    :param timeout_sec: The timeout in seconds to stop the Spark session forcefully
+    :param app_name: The name of the application. If not provided, a default name will be generated.
+    :param local: Whether to run the spark session locally or not. Default is False.
+    :param delta_lake: Build the spark session with Delta Lake support. Default is True.
+    :param timeout_sec: The timeout in seconds to stop the Spark session forcefully. Default is 4 hours.
 
     :return: A SparkSession object
     """
+    if not app_name:
+        app_name = f"kbase_spark_session_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
     if local:
         return SparkSession.builder.appName(app_name).getOrCreate()
 
