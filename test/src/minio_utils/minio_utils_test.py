@@ -1,1 +1,1 @@
-from src.minio_utils.minio_utils import *
+from minio_utils.minio_utils import *

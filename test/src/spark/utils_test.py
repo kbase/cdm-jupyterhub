@@ -5,7 +5,7 @@ import pytest
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
 
-from src.spark.utils import get_spark_session, _get_jars, _get_base_spark_conf, JAR_DIR
+from spark.utils import get_spark_session, _get_jars, _get_base_spark_conf, JAR_DIR
 
 
 @pytest.fixture(scope="session")
