@@ -10,7 +10,9 @@ JAR_DIR = '/opt/bitnami/spark/jars'
 HADOOP_AWS_VER = os.getenv('HADOOP_AWS_VER')
 DELTA_SPARK_VER = os.getenv('DELTA_SPARK_VER')
 SCALA_VER = os.getenv('SCALA_VER')
-DEFAULT_EXECUTOR_CORES = 1  # the default number of CPU cores that each Spark executor will use
+# the default number of CPU cores that each Spark executor will use
+# If not specified, Spark will typically use all available cores on the worker nodes
+DEFAULT_EXECUTOR_CORES = 1
 
 
 def _get_jars(jar_names: list) -> str:
