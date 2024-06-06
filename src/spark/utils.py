@@ -142,7 +142,8 @@ def _detect_delimiter(sample: str) -> str:
         dialect = sniffer.sniff(sample)
         return dialect.delimiter
     except Exception as e:
-        raise ValueError(f"Delimiter could not be detected: {e}. Please provide the delimiter explicitly.")
+        raise ValueError(
+            f"Delimiter could not be detected: {e}. Please provide the delimiter explicitly.") from e
 
 
 def read_csv(
