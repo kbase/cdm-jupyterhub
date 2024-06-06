@@ -128,13 +128,13 @@ def get_spark_session(
     return spark
 
 
-def _detect_delimiter(sample: str) -> str or None:
+def _detect_delimiter(sample: str) -> str:
     """
     Detect the delimiter of a CSV file from a sample string.
 
     :param sample: A sample string from the CSV file
 
-    :return: The detected delimiter or None if it cannot be detected
+    :return: The detected delimiter or raise error if it cannot be detected
     """
 
     try:
