@@ -41,7 +41,7 @@ jobs:
 
     - name: Run tests
       shell: bash
-      run: PYTHONPATH=. pytest --cov=src --cov-report=xml test
+      run: PYTHONPATH=src pytest --cov=src --cov-report=xml test
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
