@@ -10,6 +10,9 @@ JAR_DIR = '/opt/bitnami/spark/jars'
 HADOOP_AWS_VER = os.getenv('HADOOP_AWS_VER')
 DELTA_SPARK_VER = os.getenv('DELTA_SPARK_VER')
 SCALA_VER = os.getenv('SCALA_VER')
+# the default number of CPU cores that each Spark executor will use
+# If not specified, Spark will typically use all available cores on the worker nodes
+DEFAULT_EXECUTOR_CORES = 1
 
 
 def _get_jars(jar_names: list) -> str:
@@ -29,7 +32,9 @@ def _get_jars(jar_names: list) -> str:
     return ", ".join(jars)
 
 
-def _get_delta_lake_conf(jars_str: str) -> dict:
+def _get_delta_lake_conf(
+        jars_str: str,
+) -> dict:
     """
     Helper function to get Delta Lake specific Spark configuration.
 
@@ -58,17 +63,22 @@ def _stop_spark_session(spark):
     spark.stop()
 
 
-def get_base_spark_conf(app_name: str) -> SparkConf:
+def _get_base_spark_conf(
+        app_name: str,
+        executor_cores: int,
+) -> SparkConf:
     """
     Helper function to get the base Spark configuration.
 
     :param app_name: The name of the application
+    :param executor_cores: The number of CPU cores that each Spark executor will use.
 
     :return: A SparkConf object with the base configuration
     """
     return SparkConf().setAll([
         ("spark.master", os.environ.get("SPARK_MASTER_URL", "spark://spark-master:7077")),
         ("spark.app.name", app_name),
+        ("spark.executor.cores", executor_cores),
     ])
 
 
@@ -76,7 +86,8 @@ def get_spark_session(
         app_name: str = None,
         local: bool = False,
         delta_lake: bool = True,
-        timeout_sec: int = 4 * 60 * 60) -> SparkSession:
+        timeout_sec: int = 4 * 60 * 60,
+        executor_cores: int = DEFAULT_EXECUTOR_CORES) -> SparkSession:
     """
     Helper to get and manage the SparkSession and keep all of our spark configuration params in one place.
 
@@ -84,6 +95,7 @@ def get_spark_session(
     :param local: Whether to run the spark session locally or not. Default is False.
     :param delta_lake: Build the spark session with Delta Lake support. Default is True.
     :param timeout_sec: The timeout in seconds to stop the Spark session forcefully. Default is 4 hours.
+    :param executor_cores: The number of CPU cores that each Spark executor will use. Default is 1.
 
     :return: A SparkSession object
     """
@@ -93,7 +105,7 @@ def get_spark_session(
     if local:
         return SparkSession.builder.appName(app_name).getOrCreate()
 
-    spark_conf = get_base_spark_conf(app_name)
+    spark_conf = _get_base_spark_conf(app_name, executor_cores)
 
     if delta_lake:
 

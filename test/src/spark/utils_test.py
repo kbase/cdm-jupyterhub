@@ -5,7 +5,7 @@ import pytest
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
 
-from src.spark.utils import get_spark_session, _get_jars, get_base_spark_conf, JAR_DIR
+from src.spark.utils import get_spark_session, _get_jars, _get_base_spark_conf, JAR_DIR
 
 
 @pytest.fixture(scope="session")
@@ -95,20 +95,24 @@ def test_get_base_spark_conf():
     app_name = "test_app"
     expected_master_url = "spark://spark-master:7077"
     expected_app_name = app_name
+    executor_cores = 3
 
     with mock.patch.dict('os.environ', {}):
-        result = get_base_spark_conf(app_name)
+        result = _get_base_spark_conf(app_name, executor_cores)
         assert isinstance(result, SparkConf)
         assert result.get("spark.master") == expected_master_url
         assert result.get("spark.app.name") == expected_app_name
+        assert result.get("spark.executor.cores") == str(executor_cores)
 
 
 def test_get_base_spark_conf_with_env():
     app_name = "test_app"
     custom_master_url = "spark://custom-master:7077"
+    executor_cores = 3
 
     with mock.patch.dict('os.environ', {"SPARK_MASTER_URL": custom_master_url}):
-        result = get_base_spark_conf(app_name)
+        result = _get_base_spark_conf(app_name, executor_cores)
         assert isinstance(result, SparkConf)
         assert result.get("spark.master") == custom_master_url
         assert result.get("spark.app.name") == app_name
+        assert result.get("spark.executor.cores") == str(executor_cores)
