@@ -156,7 +156,7 @@ def read_csv(
     Read a file in CSV format from minIO into a Spark DataFrame.
 
     :param spark: The Spark session.
-    :param path: The minIO path to the CSV file.
+    :param path: The minIO path to the CSV file. e.g. s3a://bucket-name/file.csv or bucket-name/file.csv
     :param header: Whether the CSV file has a header. Default is True.
     :param sep: The delimiter to use. If not provided, the function will try to detect it.
     :param kwargs: Additional arguments to pass to spark.read.csv.
@@ -169,7 +169,7 @@ def read_csv(
         bucket, key = path.replace("s3a://", "").split("/", 1)
         obj = client.get_object(bucket, key)
         sample = obj.read(1024).decode()
-        sep = _detect_delimiter(sample)
+        sep = _detect_delimiter(sample)  # In the event that _detect_delimiter returns None, spark.read.csv will use the default delimiter ','
         print(f"Detected delimiter: {sep}")
 
     df = spark.read.csv(path, header=header, sep=sep, **kwargs)
