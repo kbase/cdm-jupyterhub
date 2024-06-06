@@ -169,7 +169,7 @@ def read_csv(
         client = get_minio_client()
         bucket, key = path.replace("s3a://", "").split("/", 1)
         obj = client.get_object(bucket, key)
-        sample = obj.read(1024).decode()
+        sample = obj.read(8192).decode()
         sep = _detect_delimiter(sample)
         print(f"Detected delimiter: {sep}")
 
