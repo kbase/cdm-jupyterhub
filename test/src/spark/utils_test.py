@@ -102,7 +102,7 @@ def test_get_base_spark_conf():
         assert isinstance(result, SparkConf)
         assert result.get("spark.master") == expected_master_url
         assert result.get("spark.app.name") == expected_app_name
-        assert result.get("spark.executor.cores") == executor_cores
+        assert result.get("spark.executor.cores") == str(executor_cores)
 
 
 def test_get_base_spark_conf_with_env():
@@ -115,4 +115,4 @@ def test_get_base_spark_conf_with_env():
         assert isinstance(result, SparkConf)
         assert result.get("spark.master") == custom_master_url
         assert result.get("spark.app.name") == app_name
-        assert result.get("spark.executor.cores") == executor_cores
+        assert result.get("spark.executor.cores") == str(executor_cores)
