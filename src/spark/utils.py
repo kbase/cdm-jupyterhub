@@ -141,8 +141,8 @@ def _detect_delimiter(sample: str) -> str or None:
         sniffer = csv.Sniffer()
         dialect = sniffer.sniff(sample)
         return dialect.delimiter
-    except Exception:
-        return None
+    except Exception as e:
+        raise ValueError(f"Delimiter could not be detected: {e}. Please provide the delimiter explicitly.")
 
 
 def read_csv(
@@ -169,7 +169,7 @@ def read_csv(
         bucket, key = path.replace("s3a://", "").split("/", 1)
         obj = client.get_object(bucket, key)
         sample = obj.read(1024).decode()
-        sep = _detect_delimiter(sample)  # In the event that _detect_delimiter returns None, spark.read.csv will use the default delimiter ','
+        sep = _detect_delimiter(sample)
         print(f"Detected delimiter: {sep}")
 
     df = spark.read.csv(path, header=header, sep=sep, **kwargs)
