@@ -1,9 +1,13 @@
+import csv
 import os
 from datetime import datetime
 from threading import Timer
 
 from pyspark.conf import SparkConf
+from pyspark.pandas import DataFrame
 from pyspark.sql import SparkSession
+
+from minio_utils.minio_utils import get_minio_client
 
 # Default directory for JAR files in the Bitnami Spark image
 JAR_DIR = '/opt/bitnami/spark/jars'
@@ -122,3 +126,52 @@ def get_spark_session(
     Timer(int(timeout_sec), _stop_spark_session, [spark]).start()
 
     return spark
+
+
+def _detect_delimiter(sample: str) -> str or None:
+    """
+    Detect the delimiter of a CSV file from a sample string.
+
+    :param sample: A sample string from the CSV file
+
+    :return: The detected delimiter or None if it cannot be detected
+    """
+
+    try:
+        sniffer = csv.Sniffer()
+        dialect = sniffer.sniff(sample)
+        return dialect.delimiter
+    except Exception:
+        return None
+
+
+def read_csv(
+        spark: SparkSession,
+        path: str,
+        header: bool = True,
+        sep: str = None,
+        **kwargs
+) -> DataFrame:
+    """
+    Read a file in CSV format from minIO into a Spark DataFrame.
+
+    :param spark: The Spark session.
+    :param path: The minIO path to the CSV file.
+    :param header: Whether the CSV file has a header. Default is True.
+    :param sep: The delimiter to use. If not provided, the function will try to detect it.
+    :param kwargs: Additional arguments to pass to spark.read.csv.
+
+    :return: A DataFrame.
+    """
+
+    if not sep:
+        client = get_minio_client()
+        bucket, key = path.replace("s3a://", "").split("/", 1)
+        obj = client.get_object(bucket, key)
+        sample = obj.read(1024).decode()
+        sep = _detect_delimiter(sample)
+        print(f"Detected delimiter: {sep}")
+
+    df = spark.read.csv(path, header=header, sep=sep, **kwargs)
+
+    return df
