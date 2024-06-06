@@ -34,12 +34,11 @@ def _get_jars(jar_names: list) -> str:
 
 def _get_delta_lake_conf(
         jars_str: str,
-        executor_cores: int) -> dict:
+) -> dict:
     """
     Helper function to get Delta Lake specific Spark configuration.
 
     :param jars_str: A comma-separated string of JAR file paths
-    :param executor_cores: The number of CPU cores that each Spark executor will use
 
     :return: A dictionary of Delta Lake specific Spark configuration
 
@@ -56,7 +55,6 @@ def _get_delta_lake_conf(
         "spark.hadoop.fs.s3a.path.style.access": "true",
         "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
         "spark.sql.catalogImplementation": "hive",
-        "spark.executor.cores": executor_cores,
     }
 
 
@@ -65,17 +63,22 @@ def _stop_spark_session(spark):
     spark.stop()
 
 
-def get_base_spark_conf(app_name: str) -> SparkConf:
+def get_base_spark_conf(
+        app_name: str,
+        executor_cores: int
+) -> SparkConf:
     """
     Helper function to get the base Spark configuration.
 
     :param app_name: The name of the application
+    :param executor_cores: The number of CPU cores that each Spark executor will use
 
     :return: A SparkConf object with the base configuration
     """
     return SparkConf().setAll([
         ("spark.master", os.environ.get("SPARK_MASTER_URL", "spark://spark-master:7077")),
         ("spark.app.name", app_name),
+        ("spark.executor.cores", executor_cores),
     ])
 
 
@@ -102,7 +105,7 @@ def get_spark_session(
     if local:
         return SparkSession.builder.appName(app_name).getOrCreate()
 
-    spark_conf = get_base_spark_conf(app_name)
+    spark_conf = get_base_spark_conf(app_name, executor_cores)
 
     if delta_lake:
 
@@ -110,7 +113,7 @@ def get_spark_session(
         jar_names = [f"delta-spark_{SCALA_VER}-{DELTA_SPARK_VER}.jar",
                      f"hadoop-aws-{HADOOP_AWS_VER}.jar"]
         jars_str = _get_jars(jar_names)
-        delta_conf = _get_delta_lake_conf(jars_str, executor_cores)
+        delta_conf = _get_delta_lake_conf(jars_str)
         for key, value in delta_conf.items():
             spark_conf.set(key, value)
 
