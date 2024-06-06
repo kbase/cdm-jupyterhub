@@ -7,3 +7,4 @@ With the PYTHONPATH configured to /src by the Dockerfile, we can directly import
 
 from spark.utils import get_spark_session
 from db_ops.spark_db_utils import create_namespace_if_not_exists, table_exists, remove_table
+from minio_utils.minio_utils import get_minio_client
