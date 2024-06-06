@@ -63,15 +63,15 @@ def _stop_spark_session(spark):
     spark.stop()
 
 
-def get_base_spark_conf(
+def _get_base_spark_conf(
         app_name: str,
-        executor_cores: int
+        executor_cores: int,
 ) -> SparkConf:
     """
     Helper function to get the base Spark configuration.
 
     :param app_name: The name of the application
-    :param executor_cores: The number of CPU cores that each Spark executor will use
+    :param executor_cores: The number of CPU cores that each Spark executor will use.
 
     :return: A SparkConf object with the base configuration
     """
@@ -105,7 +105,7 @@ def get_spark_session(
     if local:
         return SparkSession.builder.appName(app_name).getOrCreate()
 
-    spark_conf = get_base_spark_conf(app_name, executor_cores)
+    spark_conf = _get_base_spark_conf(app_name, executor_cores)
 
     if delta_lake:
 
