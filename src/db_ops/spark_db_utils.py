@@ -18,11 +18,9 @@ def create_namespace_if_not_exists(
     :param namespace: The name of the namespace. Default is "default".
     :return: None
     """
-    try:
-        spark.sql(f"CREATE DATABASE IF NOT EXISTS {namespace}")
-        print(f"Namespace {namespace} is ready to use.")
-    except Exception as e:
-        print(f"Error creating namespace {namespace}: {e}")
+
+    spark.sql(f"CREATE DATABASE IF NOT EXISTS {namespace}")
+    print(f"Namespace {namespace} is ready to use.")
 
 
 def table_exists(
@@ -68,9 +66,6 @@ def remove_table(
 
     spark_catalog = f"{namespace}.{table_name}"
 
-    try:
-        spark.sql(f"DROP TABLE IF EXISTS {spark_catalog}")
-        print(f"Table {spark_catalog} removed.")
-    except Exception as e:
-        print(f"Error removing table {spark_catalog}: {e}")
+    spark.sql(f"DROP TABLE IF EXISTS {spark_catalog}")
+    print(f"Table {spark_catalog} removed.")
 
