@@ -146,6 +146,7 @@ services:
       - MINIO_SECRET_KEY=minio123
       - SPARK_MODE=notebook
       - MAX_EXECUTORS=4
+      # TODO: create postgres user w/ only write access to the hive tables
       - POSTGRES_USER=hive
       - POSTGRES_PASSWORD=hivepassword
       - POSTGRES_DB=hive
