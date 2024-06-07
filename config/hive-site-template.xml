@@ -20,10 +20,10 @@
   </property>
 
   <!-- Configuration to automatically create the necessary tables in the database schema if they don't exist -->
-  <!-- Hive metastore fails to start if this property is not set-->
+  <!-- The Hive metastore may fail to start if this property is unset and tables have not been created previously-->
   <property>
     <name>datanucleus.schema.autoCreateTables</name>
-    <value>true</value>
+    <value>{{DATANUCLEUS_AUTO_CREATE_TABLES}}</value>
   </property>
 
   <!-- Disable schema verification in the Hive metastore -->

@@ -100,11 +100,11 @@ services:
       fi
       "
 
-  notebook:
+  dev_notebook:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: spark-notebook
+    container_name: spark-dev-notebook
     ports:
       - "4041:4041"
     depends_on:
@@ -113,9 +113,36 @@ services:
     environment:
       - NOTEBOOK_PORT=4041
       - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_DRIVER_HOST=spark-notebook
+      - SPARK_DRIVER_HOST=spark-dev-notebook
       - MINIO_URL=http://minio:9002
       - MINIO_ACCESS_KEY=minio
+      - MINIO_SECRET_KEY=minio123
+      - SPARK_MODE=notebook
+      - MAX_EXECUTORS=4
+      - POSTGRES_USER=hive
+      - POSTGRES_PASSWORD=hivepassword
+      - POSTGRES_DB=hive
+      - POSTGRES_URL=postgres:5432
+      - USAGE_MODE=dev  # Enabling dev mode grants full access to MinIO and additional privileges for services like Hive, such as the ability to create tables as defined in the scripts/setup.sh.
+    volumes:
+      - ./cdr/cdm/jupyter:/cdm_shared_workspace
+
+  user_notebook:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: spark-user-notebook
+    ports:
+      - "4042:4042"
+    depends_on:
+      - spark-master
+      - minio-create-bucket
+    environment:
+      - NOTEBOOK_PORT=4042
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_DRIVER_HOST=spark-user-notebook
+      - MINIO_URL=http://minio:9002
+      - MINIO_ACCESS_KEY=minio  # TODO: create minIO user and policy for read-only access
       - MINIO_SECRET_KEY=minio123
       - SPARK_MODE=notebook
       - MAX_EXECUTORS=4
@@ -143,4 +170,4 @@ services:
       - POSTGRES_PASSWORD=hivepassword
       - POSTGRES_DB=hive
     volumes:
-      - ./cdr/cdm/jupyter/cdm-postgres:/var/lib/postgresql/data
+      - ./cdr/cdm/jupyter/cdm-postgres:/var/lib/postgresql/data  # For local development only. In Rancher development, PostgreSQL data shouldn't be stored in a shared mount.
