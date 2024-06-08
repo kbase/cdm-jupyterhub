@@ -33,7 +33,7 @@ COPY ./src/ /src
 ENV PYTHONPATH "${PYTHONPATH}:/src"
 
 # Copy the startup script to the default profile location to automatically load pre-built functions in Jupyter Notebook
-COPY ./src/notebook/startup.py /.ipython/profile_default/startup/
+COPY ./src/notebook_utils/startup.py /.ipython/profile_default/startup/
 
 COPY ./scripts/ /opt/scripts/
 RUN chmod a+x /opt/scripts/*.sh

@@ -1,5 +1,6 @@
 import csv
 import os
+import site
 from datetime import datetime
 from threading import Timer
 
@@ -48,6 +49,9 @@ def _get_delta_lake_conf(
 
     reference: https://blog.min.io/delta-lake-minio-multi-cloud/
     """
+
+    site_packages_path = site.getsitepackages()[0]
+
     return {
         "spark.jars": jars_str,
         "spark.sql.extensions": "io.delta.sql.DeltaSparkSessionExtension",
@@ -59,6 +63,10 @@ def _get_delta_lake_conf(
         "spark.hadoop.fs.s3a.path.style.access": "true",
         "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
         "spark.sql.catalogImplementation": "hive",
+        # SparkMonitor extension configuration
+        # https://github.com/swan-cern/sparkmonitor?tab=readme-ov-file#setting-up-the-extension
+        "spark.extraListeners": "sparkmonitor.listener.JupyterSparkMonitorListener",
+        "spark.driver.extraClassPath": f"{site_packages_path}/sparkmonitor/listener_{SCALA_VER}.jar",
     }
 
 
