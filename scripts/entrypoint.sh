@@ -1,5 +1,7 @@
 #!/bin/bash
 
+/opt/scripts/setup.sh
+
 if [ "$SPARK_MODE" = "notebook" ]; then
     exec /opt/scripts/notebook_entrypoint.sh "$@"
 else

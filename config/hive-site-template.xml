@@ -1,0 +1,47 @@
+<configuration>
+  <property>
+    <name>javax.jdo.option.ConnectionURL</name>
+    <value>jdbc:postgresql://{{POSTGRES_URL}}/{{POSTGRES_DB}}</value>
+  </property>
+
+  <!-- JDBC driver class name for PostgreSQL -->
+  <!--  Ensure that PostgreSQL JDBC driver jars are included via Gradle -->
+  <property>
+    <name>javax.jdo.option.ConnectionDriverName</name>
+    <value>org.postgresql.Driver</value>
+  </property>
+  <property>
+    <name>javax.jdo.option.ConnectionUserName</name>
+    <value>{{POSTGRES_USER}}</value>
+  </property>
+  <property>
+    <name>javax.jdo.option.ConnectionPassword</name>
+    <value>{{POSTGRES_PASSWORD}}</value>
+  </property>
+
+  <!-- Configuration to automatically create the necessary tables in the database schema if they don't exist -->
+  <!-- The Hive metastore may fail to start if this property is unset and tables have not been created previously-->
+  <property>
+    <name>datanucleus.schema.autoCreateTables</name>
+    <value>{{DATANUCLEUS_AUTO_CREATE_TABLES}}</value>
+  </property>
+
+  <!-- Disable schema verification in the Hive metastore -->
+  <!-- Hive metastore fails to start if this property is not set-->
+  <property>
+    <name>hive.metastore.schema.verification</name>
+    <value>false</value>
+  </property>
+
+  <!-- Directory location for the Hive warehouse where table data is stored -->
+  <property>
+    <name>hive.metastore.warehouse.dir</name>
+    <value>/cdm_shared_workspace/hive_metastore</value>
+  </property>
+
+  <!-- Enable support for concurrency in Hive, allowing multiple users to access and modify the data simultaneously -->
+  <property>
+    <name>hive.support.concurrency</name>
+    <value>true</value>
+  </property>
+</configuration>
