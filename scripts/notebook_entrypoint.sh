@@ -2,16 +2,11 @@
 
 echo "starting jupyter notebook"
 
-lowercase_usage_mode=${USAGE_MODE,,}
-
-case "$lowercase_usage_mode" in
-    dev)
-        export NOTEBOOK_DIR="$CDM_SHARED_DIR"
-        ;;
-    *)
-        export NOTEBOOK_DIR="$CDM_SHARED_DIR/user_shared_workspace"
-        ;;
-esac
+# Ensure NOTEBOOK_DIR is set
+if [ -z "$NOTEBOOK_DIR" ]; then
+    echo "ERROR: NOTEBOOK_DIR is not set. Please run setup.sh first."
+    exit 1
+fi
 
 mkdir -p "$NOTEBOOK_DIR" && cd "$NOTEBOOK_DIR"
 
