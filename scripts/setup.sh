@@ -45,9 +45,11 @@ set_environment() {
     case "$lowercase_usage_mode" in
         dev)
             export DATANUCLEUS_AUTO_CREATE_TABLES=true
+            export NOTEBOOK_DIR="$CDM_SHARED_DIR"
             ;;
         *)
             export DATANUCLEUS_AUTO_CREATE_TABLES=false
+            export NOTEBOOK_DIR="$CDM_SHARED_DIR/user_shared_workspace"
             ;;
     esac
     update_config
