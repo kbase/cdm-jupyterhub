@@ -2,7 +2,13 @@
 
 echo "starting jupyter notebook"
 
-cd "$CDM_SHARED_DIR"
+# Ensure NOTEBOOK_DIR is set
+if [ -z "$NOTEBOOK_DIR" ]; then
+    echo "ERROR: NOTEBOOK_DIR is not set. Please run setup.sh first."
+    exit 1
+fi
+
+mkdir -p "$NOTEBOOK_DIR" && cd "$NOTEBOOK_DIR"
 
 # Enable SparkMonitor extension
 # https://github.com/swan-cern/sparkmonitor?tab=readme-ov-file#setting-up-the-extension
@@ -26,6 +32,6 @@ jupyter lab --ip=0.0.0.0 \
             --port="$NOTEBOOK_PORT" \
             --no-browser \
             --allow-root \
-            --notebook-dir="$CDM_SHARED_DIR" \
+            --notebook-dir="$NOTEBOOK_DIR" \
             --ServerApp.token='' \
             --ServerApp.password=''

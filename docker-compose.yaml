@@ -97,8 +97,14 @@ services:
         mc mb minio/cdm-lake && echo 'Bucket cdm-lake created'
       else
         echo 'bucket cdm-lake already exists'
-      fi
+      fi &&
+      mc admin user add minio minio-readonly minio123 &&
+      mc admin policy create minio cdm-lake-read-only-policy /config/cdm-lake-read-only-policy.json &&
+      mc admin policy attach minio cdm-lake-read-only-policy --user=minio-readonly &&
+      echo 'CDM Read-only user and policy set'
       "
+    volumes:
+      - ./config/cdm-lake-read-only-policy.json:/config/cdm-lake-read-only-policy.json
 
   dev_notebook:
     build:
@@ -142,7 +148,7 @@ services:
       - SPARK_MASTER_URL=spark://spark-master:7077
       - SPARK_DRIVER_HOST=spark-user-notebook
       - MINIO_URL=http://minio:9002
-      - MINIO_ACCESS_KEY=minio  # TODO: create minIO user and policy for read-only access
+      - MINIO_ACCESS_KEY=minio-readonly
       - MINIO_SECRET_KEY=minio123
       - SPARK_MODE=notebook
       - MAX_EXECUTORS=4
@@ -152,7 +158,7 @@ services:
       - POSTGRES_DB=hive
       - POSTGRES_URL=postgres:5432
     volumes:
-      - ./cdr/cdm/jupyter:/cdm_shared_workspace
+      - ./cdr/cdm/jupyter/user_shared_workspace:/cdm_shared_workspace/user_shared_workspace
 
   postgres:
     image: postgres:16.3
