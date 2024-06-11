@@ -1,4 +1,3 @@
-
 """
 This file handles the importation of essential modules and functions pre-configured for the notebook.
 
@@ -15,3 +14,4 @@ from db_ops.spark_db_utils import (
     remove_table,
 )
 from minio_utils.minio_utils import get_minio_client
+from notebook_utils.notebook_utils import display_df
