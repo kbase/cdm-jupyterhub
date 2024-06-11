@@ -1,8 +1,10 @@
-from threading import Lock
+from threading import RLock
 
 import itables.options as opt
 from itables import init_notebook_mode, show
 from pandas import DataFrame
+
+lock = RLock()
 
 
 def display_df(
@@ -39,7 +41,6 @@ def display_df(
     buttons = buttons or default_buttons
     length_menu = length_menu or default_length_menu
 
-    lock = Lock()
     with lock:
         opt.layout = layout
         show(df, buttons=buttons, lengthMenu=length_menu)
