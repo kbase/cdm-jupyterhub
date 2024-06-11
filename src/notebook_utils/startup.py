@@ -14,4 +14,7 @@ from db_ops.spark_db_utils import (
     remove_table,
 )
 from minio_utils.minio_utils import get_minio_client
-from notebook_utils.notebook_utils import display_df
+from notebook_utils.notebook_utils import (
+    display_df,
+    spark_to_pandas,
+)
