@@ -17,6 +17,9 @@ def display_df(
     Display a pandas DataFrame using itables.
     iTables project page: https://github.com/mwouts/itables
 
+    Notice this function is not compatible with Spark DataFrames. A Spark DataFrame should be converted to a
+    pandas DataFrame before calling this function which is not efficient for large datasets.
+
     :param df: a pandas DataFrame # TODO add spark DataFrame support
     :param layout: layout options, refer to https://datatables.net/reference/option/layout
     :param buttons: buttons options, options refer to https://datatables.net/reference/button/
