@@ -15,7 +15,7 @@ def display_df(
     Display a pandas DataFrame using itables.
     iTables project page: https://github.com/mwouts/itables
 
-    :param df: a pandas DataFrame # TODO automatically convert spark DataFrame to pandas
+    :param df: a pandas DataFrame # TODO add spark DataFrame support
     :param layout: layout options, refer to https://datatables.net/reference/option/layout
     :param buttons: buttons options, options refer to https://datatables.net/reference/button/
     :param length_menu: length menu options, refer to https://datatables.net/reference/option/lengthMenu
