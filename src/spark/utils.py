@@ -99,7 +99,9 @@ def get_spark_session(
         local: bool = False,
         delta_lake: bool = True,
         timeout_sec: int = 4 * 60 * 60,
-        executor_cores: int = DEFAULT_EXECUTOR_CORES) -> SparkSession:
+        executor_cores: int = DEFAULT_EXECUTOR_CORES,
+        additional_conf: dict = None
+) -> SparkSession:
     """
     Helper to get and manage the SparkSession and keep all of our spark configuration params in one place.
 
@@ -108,6 +110,7 @@ def get_spark_session(
     :param delta_lake: Build the spark session with Delta Lake support. Default is True.
     :param timeout_sec: The timeout in seconds to stop the Spark session forcefully. Default is 4 hours.
     :param executor_cores: The number of CPU cores that each Spark executor will use. Default is 1.
+    :param additional_conf: Additional user supplied configuration to pass to the Spark session. e.g. {"spark.executor.memory": "2g"}
 
     :return: A SparkSession object
     """
@@ -128,6 +131,9 @@ def get_spark_session(
         delta_conf = _get_delta_lake_conf(jars_str)
         for key, value in delta_conf.items():
             spark_conf.set(key, value)
+
+    if additional_conf:
+        spark_conf.setAll(additional_conf.items())
 
     spark = SparkSession.builder.config(conf=spark_conf).getOrCreate()
     timeout_sec = os.getenv('SPARK_TIMEOUT_SECONDS', timeout_sec)
