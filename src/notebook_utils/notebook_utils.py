@@ -1,3 +1,5 @@
+from threading import Lock
+
 import itables.options as opt
 from itables import init_notebook_mode, show
 from pandas import DataFrame
@@ -13,10 +15,10 @@ def display_df(
     Display a pandas DataFrame using itables.
     iTables project page: https://github.com/mwouts/itables
 
-    :param df: a pandas DataFrame
+    :param df: a pandas DataFrame # TODO automatically convert spark DataFrame to pandas
     :param layout: layout options, refer to https://datatables.net/reference/option/layout
     :param buttons: buttons options, options refer to https://datatables.net/reference/button/
-    :param length_menu: length menu options
+    :param length_menu: length menu options, refer to https://datatables.net/reference/option/lengthMenu
     :return:
     """
     # initialize itables for the notebook
@@ -37,5 +39,7 @@ def display_df(
     buttons = buttons or default_buttons
     length_menu = length_menu or default_length_menu
 
-    opt.layout = layout
-    show(df, buttons=buttons, lengthMenu=length_menu)
+    lock = Lock()
+    with lock:
+        opt.layout = layout
+        show(df, buttons=buttons, lengthMenu=length_menu)
