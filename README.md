@@ -126,4 +126,8 @@ Navigate to [http://localhost:44041/](http://localhost:44041/) in your browser.
 
 Enjoy your Spark journey!
 
+For more information, please consult the [User Guide](docs/user_guide.md).
+
+[
+
 
