@@ -5,8 +5,7 @@ from datetime import datetime
 from threading import Timer
 
 from pyspark.conf import SparkConf
-from pyspark.pandas import DataFrame
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, DataFrame
 
 from minio_utils.minio_utils import get_minio_client
 
