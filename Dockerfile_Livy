@@ -1,0 +1,37 @@
+FROM bitnami/spark:2.4.3
+
+RUN export ORI_USER=$(id -u)
+# Switch to root to install packages
+USER root
+
+RUN echo "deb http://archive.debian.org/debian stretch main contrib non-free" > /etc/apt/sources.list
+
+RUN apt-get update && apt-get install -y \
+    wget unzip curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Apache Livy
+ENV SCALA_VER=2.11
+ENV LIVY_VER=0.8.0
+ENV LIVY_HOME=/opt/bitnami/livy
+
+RUN wget -q "https://archive.apache.org/dist/incubator/livy/${LIVY_VER}-incubating/apache-livy-${LIVY_VER}-incubating_${SCALA_VER}-bin.zip" -O /tmp/livy.zip \
+    && unzip /tmp/livy.zip -d /opt/ \
+    && mv /opt/apache-livy-${LIVY_VER}-incubating_${SCALA_VER}-bin ${LIVY_HOME} \
+    && rm /tmp/livy.zip \
+    && mkdir -p ${LIVY_HOME}/logs \
+    && chown -R 1001:1001 ${LIVY_HOME}
+
+# Generate a comma-separated list of the REPL jars
+RUN ls ${LIVY_HOME}/repl_${SCALA_VER}-jars/*.jar | tr '\n' ',' | sed 's/,$//' > ${LIVY_HOME}/repl_jars.txt
+
+ENV LIVY_CONF_DIR=${LIVY_HOME}/conf
+ENV LIVY_LOG_DIR=${LIVY_HOME}/logs
+
+COPY ./scripts/livy_entrypoint.sh /opt/scripts/
+RUN chmod a+x /opt/scripts/*.sh
+
+# Switch back to the original user
+USER ${ORI_USER}
+
+ENTRYPOINT ["/opt/scripts/livy_entrypoint.sh"]

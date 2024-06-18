@@ -178,3 +178,18 @@ services:
       - POSTGRES_DB=hive
     volumes:
       - ./cdr/cdm/jupyter/cdm-postgres:/var/lib/postgresql/data  # For local development only. In Rancher development, PostgreSQL data shouldn't be stored in a shared mount.
+
+  livy-server:
+    build:
+      context: .
+      dockerfile: Dockerfile_Livy
+    container_name: livy-server
+    ports:
+      - "8998:8998"
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - LIVY_SERVER_HOST=livy-server
+      - LIVY_PORT=8998
+      - LIVY_RSC_RPC_SERVER_ADDRESS=livy-server
