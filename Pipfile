@@ -15,6 +15,7 @@ sparkmonitor = "==3.0.2"
 itables = "==2.1.1"
 PyMySQL = "==1.1.1"
 urllib3 = "==2.2.2"
+jupyterlab-git = "==0.50.1"
 
 [dev-packages]
 pytest = "==8.2.2"
