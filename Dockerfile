@@ -1,7 +1,7 @@
 FROM bitnami/spark:3.5.1
 
-RUN export ORI_USER=$(id -u)
 # Switch to root to install packages
+# https://github.com/bitnami/containers/tree/main/bitnami/spark#installing-additional-jars
 USER root
 
 RUN apt-get update && apt-get install -y \
@@ -45,7 +45,7 @@ COPY ./config/ /opt/config/
 ENV CDM_SHARED_DIR=/cdm_shared_workspace
 RUN mkdir -p ${CDM_SHARED_DIR} && chmod -R 777 ${CDM_SHARED_DIR}
 
-# Switch back to the original user
-USER ${ORI_USER}
+# TODO: Switch back to non-root user
+#USER 1001
 
 ENTRYPOINT ["/opt/scripts/entrypoint.sh"]
