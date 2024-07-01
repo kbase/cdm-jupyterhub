@@ -62,6 +62,8 @@ def _get_delta_lake_conf(
         "spark.hadoop.fs.s3a.path.style.access": "true",
         "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
         "spark.sql.catalogImplementation": "hive",
+        "spark.hadoop.hive.metastore.uris": os.environ.get("HIVE_METASTORE_THRIFT_URIS"),
+        #"spark.sql.warehouse.dir": os.environ.get("HIVE_WAREHOUSE_DIR"),
         # SparkMonitor extension configuration
         # https://github.com/swan-cern/sparkmonitor?tab=readme-ov-file#setting-up-the-extension
         "spark.extraListeners": "sparkmonitor.listener.JupyterSparkMonitorListener",
@@ -126,9 +128,13 @@ def get_spark_session(
         jars_str = _get_jars(jar_names)
         delta_conf = _get_delta_lake_conf(jars_str)
         for key, value in delta_conf.items():
+            print(key, value)
             spark_conf.set(key, value)
 
+    # Doesn't seem to make a difference to the error
+    #spark = SparkSession.builder.config(conf=spark_conf).enableHiveSupport().getOrCreate()
     spark = SparkSession.builder.config(conf=spark_conf).getOrCreate()
+    
     timeout_sec = os.getenv('SPARK_TIMEOUT_SECONDS', timeout_sec)
     Timer(int(timeout_sec), _stop_spark_session, [spark]).start()
 

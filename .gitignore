@@ -8,3 +8,7 @@ cdr/cdm/jupyter/
 
 # Ignore Gradle build output directory
 build
+/.settings/
+/.project
+/.pydevproject.bak
+/.pydevproject

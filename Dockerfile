@@ -13,7 +13,6 @@ ENV HADOOP_AWS_VER=3.3.4
 # NOTE: ensure Delta Spark jar version matches python pip delta-spark version specified in the Pipfile
 ENV DELTA_SPARK_VER=3.2.0
 ENV SCALA_VER=2.12
-ENV POSTGRES_JDBC_VER=42.2.23
 
 # Run Gradle task to download JARs to /gradle/gradle_jars location
 COPY build.gradle settings.gradle gradlew /gradle/
@@ -40,6 +39,11 @@ RUN chmod a+x /opt/scripts/*.sh
 
 # Copy the configuration files
 COPY ./config/ /opt/config/
+
+# Make a temp directory for hive warehouse storage
+RUN mkdir -p /cdm_shared_workspace/spark_arg_warehouse && \
+    chmod a+rwx /cdm_shared_workspace/spark_arg_warehouse && \
+    chown 1001:1001 /cdm_shared_workspace/spark_arg_warehouse
 
 # This is the shared directory between the spark master, worker and driver containers
 ENV CDM_SHARED_DIR=/cdm_shared_workspace

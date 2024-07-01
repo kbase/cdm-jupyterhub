@@ -9,16 +9,16 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: spark-master
+    depends_on:
+      - hive-metastore-server
     ports:
       - "8090:8090"
     environment:
       - SPARK_MODE=master
       - SPARK_MASTER_WEBUI_PORT=8090
       - MAX_EXECUTORS=4
-      - POSTGRES_USER=hive
-      - POSTGRES_PASSWORD=hivepassword
-      - POSTGRES_DB=hive
-      - POSTGRES_URL=postgres:5432
+      - HIVE_METASTORE_THRIFT_URIS=thrift://hive-metastore-server:9083
+      - HIVE_WAREHOUSE_DIR=/cdm_shared_workspace/spark-warehouse
     volumes:
       - ./cdr/cdm/jupyter:/cdm_shared_workspace
 
@@ -29,6 +29,7 @@ services:
     container_name: spark-worker-1
     depends_on:
       - spark-master
+      - hive-metastore-server
     ports:
       - "8081:8081"
     environment:
@@ -37,10 +38,8 @@ services:
       - SPARK_WORKER_CORES=2
       - SPARK_WORKER_MEMORY=1G
       - SPARK_WORKER_WEBUI_PORT=8081
-      - POSTGRES_USER=hive
-      - POSTGRES_PASSWORD=hivepassword
-      - POSTGRES_DB=hive
-      - POSTGRES_URL=postgres:5432
+      - HIVE_METASTORE_THRIFT_URIS=thrift://hive-metastore-server:9083
+      - HIVE_WAREHOUSE_DIR=/cdm_shared_workspace/spark-warehouse
     volumes:
       - ./cdr/cdm/jupyter:/cdm_shared_workspace
 
@@ -51,6 +50,7 @@ services:
     container_name: spark-worker-2
     depends_on:
       - spark-master
+      - hive-metastore-server
     ports:
       - "8082:8082"
     environment:
@@ -59,10 +59,8 @@ services:
       - SPARK_WORKER_CORES=2
       - SPARK_WORKER_MEMORY=1G
       - SPARK_WORKER_WEBUI_PORT=8082
-      - POSTGRES_USER=hive
-      - POSTGRES_PASSWORD=hivepassword
-      - POSTGRES_DB=hive
-      - POSTGRES_URL=postgres:5432
+      - HIVE_METASTORE_THRIFT_URIS=thrift://hive-metastore-server:9083
+      - HIVE_WAREHOUSE_DIR=/cdm_shared_workspace/spark-warehouse
     volumes:
       - ./cdr/cdm/jupyter:/cdm_shared_workspace
 
@@ -116,6 +114,7 @@ services:
     depends_on:
       - spark-master
       - minio-create-bucket
+      - hive-metastore-server
     environment:
       - NOTEBOOK_PORT=4041
       - SPARK_MASTER_URL=spark://spark-master:7077
@@ -125,10 +124,8 @@ services:
       - MINIO_SECRET_KEY=minio123
       - SPARK_MODE=notebook
       - MAX_EXECUTORS=4
-      - POSTGRES_USER=hive
-      - POSTGRES_PASSWORD=hivepassword
-      - POSTGRES_DB=hive
-      - POSTGRES_URL=postgres:5432
+      - HIVE_METASTORE_THRIFT_URIS=thrift://hive-metastore-server:9083
+      - HIVE_WAREHOUSE_DIR=/cdm_shared_workspace/spark-warehouse
       - USAGE_MODE=dev  # Enabling dev mode grants full access to MinIO and additional privileges for services like Hive, such as the ability to create tables as defined in the scripts/setup.sh.
     volumes:
       - ./cdr/cdm/jupyter:/cdm_shared_workspace
@@ -143,6 +140,7 @@ services:
     depends_on:
       - spark-master
       - minio-create-bucket
+      - hive-metastore-server
     environment:
       - NOTEBOOK_PORT=4042
       - SPARK_MASTER_URL=spark://spark-master:7077
@@ -152,11 +150,8 @@ services:
       - MINIO_SECRET_KEY=minio123
       - SPARK_MODE=notebook
       - MAX_EXECUTORS=4
-      # TODO: create postgres user w/ only write access to the hive tables
-      - POSTGRES_USER=hive
-      - POSTGRES_PASSWORD=hivepassword
-      - POSTGRES_DB=hive
-      - POSTGRES_URL=postgres:5432
+      - HIVE_METASTORE_THRIFT_URIS=thrift://hive-metastore-server:9083
+      - HIVE_WAREHOUSE_DIR=/cdm_shared_workspace/user_shared_workspace/spark-warehouse
     volumes:
       - ./cdr/cdm/jupyter/user_shared_workspace:/cdm_shared_workspace/user_shared_workspace
 
@@ -165,6 +160,7 @@ services:
     restart: always
     container_name: postgres
     # To avoid incorrect user permissions, manually create the volume directory before running Docker.
+    # Note for at least some flavors of Linux, the UID variable is read only
     # export UID=$(id -u)
     # export GID=$(id -g)
     # mkdir -p cdr/cdm/jupyter/cdm-postgres
@@ -178,3 +174,23 @@ services:
       - POSTGRES_DB=hive
     volumes:
       - ./cdr/cdm/jupyter/cdm-postgres:/var/lib/postgresql/data  # For local development only. In Rancher development, PostgreSQL data shouldn't be stored in a shared mount.
+      
+  hive-metastore-server:
+    # Seems like hive 4.0.0 isn't supported yet
+    # https://spark.apache.org/docs/latest/sql-data-sources-hive-tables.html#interacting-with-different-versions-of-hive-metastore
+    image: ghcr.io/kbase/cdm-prototype-hive:pr-5
+    container_name: hive-metastore-server
+    ports:
+      - 9083:9083
+    depends_on:
+      - postgres
+    environment:
+      # Set to true after DB has been created on first run
+      # This is really annoying...
+      - IS_RESUME=true
+      - POSTGRES_HOST=postgres:5432
+      - POSTGRES_DB=hive
+      - POSTGRES_USER=hive
+      - POSTGRES_PASSWORD=hivepassword
+    volumes:
+      - ./cdr/cdm/hive/data/warehouse:/opt/hive/data/warehouse

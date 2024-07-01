@@ -25,6 +25,8 @@ enable_spark_monitor() {
     fi
 }
 
+# mkdir -p $HIVE_WAREHOUSE_DIR
+
 enable_spark_monitor
 
 # Start Jupyter Lab

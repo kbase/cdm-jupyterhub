@@ -2,6 +2,8 @@
 
 . /opt/scripts/setup.sh
 
+mkdir -p $CDM_SHARED_DIR/spark-warehouse
+
 if [ "$SPARK_MODE" = "notebook" ]; then
     exec /opt/scripts/notebook_entrypoint.sh "$@"
 else
