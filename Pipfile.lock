@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "036b5c109d0575b507d4b37e6a241903a9a95dc081d0af878c1218897fd07358"
+            "sha256": "9c78d4915044f965688382d8c7811c26be565a6995de109302a728a1cc46f775"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -471,11 +471,12 @@
         },
         "itables": {
             "hashes": [
-                "sha256:5ac5cf11c2a7aaab6dd265724061124f44a55434a299ba30f7b33f1fbed25fe3",
-                "sha256:f8f4912821aaa4dc13ff148bef5e665f487792a592814aec09a0252e29250c8c"
+                "sha256:60f4246f85bf6f849fd7778a11ae10f04566c877d72433c22724e5c2316b2af6",
+                "sha256:b95fa578a657a09545e51d220ef6d9fc75c8533f516f75576665df94cd981238"
             ],
             "index": "pypi",
-            "version": "==2.1.3"
+            "markers": "python_version >= '3.7'",
+            "version": "==2.1.4"
         },
         "jedi": {
             "hashes": [
@@ -806,7 +807,7 @@
                 "sha256:fbd6acc766814ea6443628f4e6751d0da6593dae29c08c0b2606164db026970c",
                 "sha256:feff59f27338135776f6d4e2ec7aeeac5d5f7a08a83e80869121ef8164b74af9"
             ],
-            "markers": "python_version >= '3.9'",
+            "markers": "python_version == '3.11'",
             "version": "==2.0.0"
         },
         "overrides": {
@@ -858,6 +859,7 @@
                 "sha256:eee3a87076c0756de40b05c5e9a6069c035ba43e8dd71c379e68cab2c20f16ad"
             ],
             "index": "pypi",
+            "markers": "python_version >= '3.9'",
             "version": "==2.2.2"
         },
         "pandocfilters": {
