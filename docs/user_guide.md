@@ -13,7 +13,7 @@
 Execute the following command to create an SSH tunnel to the remote server (`login1.berkeley.kbase.us`):
 
 ```bash
-ssh -f -N -L localhost:44042:10.58.2.201:4042 <kbase_developer_username>@login1.berkeley.kbase.us
+ssh -f -N -L localhost:44042:10.58.2.201:4042 <ac.anl_username>@login1.berkeley.kbase.us
 ```
    
 * `-f`: Run SSH command in the background.
