@@ -45,7 +45,23 @@ COPY ./config/ /opt/config/
 ENV CDM_SHARED_DIR=/cdm_shared_workspace
 RUN mkdir -p ${CDM_SHARED_DIR} && chmod -R 777 ${CDM_SHARED_DIR}
 
-# TODO: Switch back to non-root user
-#USER 1001
+# Set up Jupyter directories
+ENV JUPYTER_CONFIG_DIR=/.jupyter
+ENV JUPYTER_RUNTIME_DIR=/.jupyter/runtime
+ENV JUPYTER_DATA_DIR=/.jupyter/data
+RUN mkdir -p ${JUPYTER_CONFIG_DIR} ${JUPYTER_RUNTIME_DIR} ${JUPYTER_DATA_DIR}
+
+# Switch back to non-root user
+
+# Create a non-root user
+# User 1001 is not defined in /etc/passwd in the bitnami/spark image, causing various issues.
+# References:
+# https://github.com/bitnami/containers/issues/52698
+# https://github.com/bitnami/containers/pull/52661
+RUN groupadd -r spark && useradd -r -g spark spark_user
+
+# Change ownership of the .ipython, .jupyter, etc. directories to the non-root user
+RUN chown -R spark_user:spark /.ipython /.jupyter /src /opt/config /opt/scripts /cdm_shared_workspace /opt/bitnami
+USER spark_user
 
 ENTRYPOINT ["/opt/scripts/entrypoint.sh"]
