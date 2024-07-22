@@ -16,6 +16,7 @@ itables = "==2.1.4"
 PyMySQL = "==1.1.1"
 urllib3 = "==2.2.2"
 jupyterlab-git = "==0.50.1"
+jupyter-collaboration = "==2.1.1"
 
 [dev-packages]
 pytest = "==8.2.2"
