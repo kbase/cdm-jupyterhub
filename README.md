@@ -59,7 +59,7 @@ Python 3.11 must be installed on the system.
 ```
 pipenv sync --dev  # only the first time or when Pipfile.lock changes
 pipenv shell
-PYTHONPATH=. pytest test
+PYTHONPATH=src pytest test
 ```
 
 ## Racher Deployment

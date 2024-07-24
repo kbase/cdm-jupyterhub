@@ -10,3 +10,5 @@ cdr/cdm/jupyter/
 build
 /.project
 /.pydevproject*
+/.pytest_cache/
+/.settings/

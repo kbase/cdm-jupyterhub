@@ -4,6 +4,29 @@ version: '3'
 
 services:
 
+  yarn-resourcemanager:
+    image: ghcr.io/kbase/cdm-prototype-yarn:pr-6
+    container_name: yarn-resourcemanager
+    ports:
+      - 8088:8088  # web ui
+    environment:
+      - YARN_MODE=resourcemanager
+      - MINIO_URL=http://minio:9002
+      - MINIO_ACCESS_KEY=yarnuser
+      - MINIO_SECRET_KEY=yarnpass
+
+  yarn-nodemanager:
+    image: ghcr.io/kbase/cdm-prototype-yarn:pr-6
+    container_name: yarn-nodemanager
+    ports:
+      - 8042:8042  # web ui
+    environment:
+      - YARN_MODE=nodemanager
+      - YARN_RESOURCEMANAGER_HOSTNAME=yarn-resourcemanager
+      - MINIO_URL=http://minio:9002
+      - MINIO_ACCESS_KEY=yarnuser
+      - MINIO_SECRET_KEY=yarnpass
+
   spark-master:
     build:
       context: .
@@ -90,21 +113,11 @@ services:
     depends_on:
       minio:
         condition: service_healthy
-    entrypoint: >
-      bash -c "
-      mc alias set minio http://minio:9002 minio minio123 &&
-      if ! mc ls minio/cdm-lake 2>/dev/null; then
-        mc mb minio/cdm-lake && echo 'Bucket cdm-lake created'
-      else
-        echo 'bucket cdm-lake already exists'
-      fi &&
-      mc admin user add minio minio-readonly minio123 &&
-      mc admin policy create minio cdm-lake-read-only-policy /config/cdm-lake-read-only-policy.json &&
-      mc admin policy attach minio cdm-lake-read-only-policy --user=minio-readonly &&
-      echo 'CDM Read-only user and policy set'
-      "
+    entrypoint: /scripts/minio_create_bucket_entrypoint.sh
     volumes:
       - ./config/cdm-lake-read-only-policy.json:/config/cdm-lake-read-only-policy.json
+      - ./config/yarn-write-policy.json:/config/yarn-write-policy.json
+      - ./scripts/minio_create_bucket_entrypoint.sh:/scripts/minio_create_bucket_entrypoint.sh
 
   dev_notebook:
     build:
@@ -118,11 +131,13 @@ services:
       - minio-create-bucket
     environment:
       - NOTEBOOK_PORT=4041
+      - YARN_RESOURCE_MANAGER_URL=http://yarn-resourcemanager:8032
       - SPARK_MASTER_URL=spark://spark-master:7077
       - SPARK_DRIVER_HOST=spark-dev-notebook
       - MINIO_URL=http://minio:9002
       - MINIO_ACCESS_KEY=minio
       - MINIO_SECRET_KEY=minio123
+      - S3_YARN_BUCKET=yarn
       - SPARK_MODE=notebook
       - MAX_EXECUTORS=4
       - POSTGRES_USER=hive
@@ -145,11 +160,13 @@ services:
       - minio-create-bucket
     environment:
       - NOTEBOOK_PORT=4042
+      - YARN_RESOURCE_MANAGER_URL=http://yarn-resourcemanager:8032
       - SPARK_MASTER_URL=spark://spark-master:7077
       - SPARK_DRIVER_HOST=spark-user-notebook
       - MINIO_URL=http://minio:9002
       - MINIO_ACCESS_KEY=minio-readonly
       - MINIO_SECRET_KEY=minio123
+      - S3_YARN_BUCKET=yarn
       - SPARK_MODE=notebook
       - MAX_EXECUTORS=4
       # TODO: create postgres user w/ only write access to the hive tables
