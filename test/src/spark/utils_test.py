@@ -46,7 +46,7 @@ def spark_session_non_local(mock_spark_master):
 
     with mock.patch.dict('os.environ', {"SPARK_MASTER_URL": spark_master_url,
                                         "SPARK_TIMEOUT_SECONDS": "2"}):
-        spark_session = get_spark_session("TestApp", local=False, delta_lake=False)
+        spark_session = get_spark_session("TestApp", local=False, delta_lake=False, yarn=False)
         print("Created non-local Spark session.")
         try:
             yield spark_session, port
@@ -98,7 +98,7 @@ def test_get_base_spark_conf():
     executor_cores = 3
 
     with mock.patch.dict('os.environ', {}):
-        result = _get_base_spark_conf(app_name, executor_cores)
+        result = _get_base_spark_conf(app_name, executor_cores, False)
         assert isinstance(result, SparkConf)
         assert result.get("spark.master") == expected_master_url
         assert result.get("spark.app.name") == expected_app_name
@@ -111,7 +111,7 @@ def test_get_base_spark_conf_with_env():
     executor_cores = 3
 
     with mock.patch.dict('os.environ', {"SPARK_MASTER_URL": custom_master_url}):
-        result = _get_base_spark_conf(app_name, executor_cores)
+        result = _get_base_spark_conf(app_name, executor_cores, False)
         assert isinstance(result, SparkConf)
         assert result.get("spark.master") == custom_master_url
         assert result.get("spark.app.name") == app_name

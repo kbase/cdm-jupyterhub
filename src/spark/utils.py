@@ -3,6 +3,7 @@ import os
 import site
 from datetime import datetime
 from threading import Timer
+from urllib.parse import urlparse
 
 from pyspark.conf import SparkConf
 from pyspark.sql import SparkSession, DataFrame
@@ -36,13 +37,18 @@ def _get_jars(jar_names: list) -> str:
     return ", ".join(jars)
 
 
-def _get_delta_lake_conf(
-        jars_str: str,
-) -> dict:
+def _get_s3_conf() -> dict:
+    return {
+        "spark.hadoop.fs.s3a.endpoint": os.environ.get("MINIO_URL"),
+        "spark.hadoop.fs.s3a.access.key": os.environ.get("MINIO_ACCESS_KEY"),
+        "spark.hadoop.fs.s3a.secret.key": os.environ.get("MINIO_SECRET_KEY"),
+        "spark.hadoop.fs.s3a.path.style.access": "true",
+        "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
+    }
+
+def _get_delta_lake_conf() -> dict:
     """
     Helper function to get Delta Lake specific Spark configuration.
-
-    :param jars_str: A comma-separated string of JAR file paths
 
     :return: A dictionary of Delta Lake specific Spark configuration
 
@@ -52,15 +58,9 @@ def _get_delta_lake_conf(
     site_packages_path = site.getsitepackages()[0]
 
     return {
-        "spark.jars": jars_str,
         "spark.sql.extensions": "io.delta.sql.DeltaSparkSessionExtension",
         "spark.sql.catalog.spark_catalog": "org.apache.spark.sql.delta.catalog.DeltaCatalog",
         "spark.databricks.delta.retentionDurationCheck.enabled": "false",
-        "spark.hadoop.fs.s3a.endpoint": os.environ.get("MINIO_URL"),
-        "spark.hadoop.fs.s3a.access.key": os.environ.get("MINIO_ACCESS_KEY"),
-        "spark.hadoop.fs.s3a.secret.key": os.environ.get("MINIO_SECRET_KEY"),
-        "spark.hadoop.fs.s3a.path.style.access": "true",
-        "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
         "spark.sql.catalogImplementation": "hive",
         # SparkMonitor extension configuration
         # https://github.com/swan-cern/sparkmonitor?tab=readme-ov-file#setting-up-the-extension
@@ -77,6 +77,7 @@ def _stop_spark_session(spark):
 def _get_base_spark_conf(
         app_name: str,
         executor_cores: int,
+        yarn: bool
 ) -> SparkConf:
     """
     Helper function to get the base Spark configuration.
@@ -86,16 +87,21 @@ def _get_base_spark_conf(
 
     :return: A SparkConf object with the base configuration
     """
-    return SparkConf().setAll([
-        ("spark.master", os.environ.get("SPARK_MASTER_URL", "spark://spark-master:7077")),
-        ("spark.app.name", app_name),
-        ("spark.executor.cores", executor_cores),
-    ])
+    sc = SparkConf().set("spark.app.name", app_name).set("spark.executor.cores", executor_cores)
+    if yarn:
+        yarnparse = urlparse(os.environ.get("YARN_RESOURCE_MANAGER_URL"))
+        sc.setMaster("yarn"
+            ).set("spark.hadoop.yarn.resourcemanager.hostname", yarnparse.hostname
+            ).set("spark.hadoop.yarn.resourcemanager.address", yarnparse.netloc)
+    else:
+        sc.set("spark.master", os.environ.get("SPARK_MASTER_URL", "spark://spark-master:7077"))
+    return sc
 
 
 def get_spark_session(
         app_name: str = None,
         local: bool = False,
+        yarn: bool = True,
         delta_lake: bool = True,
         timeout_sec: int = 4 * 60 * 60,
         executor_cores: int = DEFAULT_EXECUTOR_CORES) -> SparkSession:
@@ -116,18 +122,24 @@ def get_spark_session(
     if local:
         return SparkSession.builder.appName(app_name).getOrCreate()
 
-    spark_conf = _get_base_spark_conf(app_name, executor_cores)
+    spark_conf = _get_base_spark_conf(app_name, executor_cores, yarn)
+    sc = {}
+    if delta_lake or yarn:
+        sc.update(_get_s3_conf())
+    if yarn:
+        sc["spark.yarn.stagingDir"] = "s3a://" + os.environ["S3_YARN_BUCKET"]
 
     if delta_lake:
 
         # Just to include the necessary jars for Delta Lake
         jar_names = [f"delta-spark_{SCALA_VER}-{DELTA_SPARK_VER}.jar",
                      f"hadoop-aws-{HADOOP_AWS_VER}.jar"]
-        jars_str = _get_jars(jar_names)
-        delta_conf = _get_delta_lake_conf(jars_str)
-        for key, value in delta_conf.items():
-            spark_conf.set(key, value)
+        if not yarn:
+            sc["spark.jars"] = _get_jars(jar_names)
+        sc.update(_get_delta_lake_conf())
 
+    for key, value in sc.items():
+        spark_conf.set(key, value)
     spark = SparkSession.builder.config(conf=spark_conf).getOrCreate()
     timeout_sec = os.getenv('SPARK_TIMEOUT_SECONDS', timeout_sec)
     Timer(int(timeout_sec), _stop_spark_session, [spark]).start()
