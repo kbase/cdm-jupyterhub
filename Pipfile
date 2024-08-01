@@ -20,7 +20,7 @@ jupyter-collaboration = "==2.1.1"
 cdm-jupyterlab-brand-extension = {file = "https://github.com/kbaseincubator/cdm_jupyterlab_brand_extension/raw/main/dist/cdm_jupyterlab_brand_extension-0.1.0-py3-none-any.whl"}
 
 [dev-packages]
-pytest = "==8.2.2"
+pytest = "==8.3.2"
 coverage = "==7.5.4"
 pytest-cov = "==5.0.0"
 ipython = "==8.26.0"
