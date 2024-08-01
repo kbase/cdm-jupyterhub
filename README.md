@@ -128,6 +128,10 @@ Enjoy your Spark journey!
 
 For more information, please consult the [User Guide](docs/user_guide.md).
 
-[
+## User How-To Guide
+
+[Accessing Spark Jupyter Notebook](docs/user_guide.md)
+
+[MinIO Guide](docs/minio_guide.md)
 
 
