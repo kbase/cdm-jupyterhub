@@ -21,7 +21,7 @@ cdm-jupyterlab-brand-extension = {file = "https://github.com/kbaseincubator/cdm_
 
 [dev-packages]
 pytest = "==8.2.2"
-coverage = "==7.5.4"
+coverage = "==7.6.0"
 pytest-cov = "==5.0.0"
 ipython = "==8.26.0"
 
