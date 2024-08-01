@@ -3,6 +3,13 @@
 This prototype establishes a Docker container configuration for JupyterHub, designed to furnish a multi-user 
 environment tailored for executing Spark jobs via Jupyter notebooks.
 
+## User How-To Guide
+
+[Accessing Spark Jupyter Notebook](docs/user_guide.md)
+
+[MinIO Guide](docs/minio_guide.md)
+
+
 ## Using `docker-compose.yaml`
 
 To deploy the JupyterHub container and Spark nodes locally, execute the following command:
@@ -128,10 +135,6 @@ Enjoy your Spark journey!
 
 For more information, please consult the [User Guide](docs/user_guide.md).
 
-## User How-To Guide
 
-[Accessing Spark Jupyter Notebook](docs/user_guide.md)
-
-[MinIO Guide](docs/minio_guide.md)
 
 
