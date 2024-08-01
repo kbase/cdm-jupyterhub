@@ -16,7 +16,7 @@ itables = "==2.1.4"
 PyMySQL = "==1.1.1"
 urllib3 = "==2.2.2"
 jupyterlab-git = "==0.50.1"
-jupyter-collaboration = "==2.1.1"
+jupyter-collaboration = "==2.1.2"
 cdm-jupyterlab-brand-extension = {file = "https://github.com/kbaseincubator/cdm_jupyterlab_brand_extension/raw/main/dist/cdm_jupyterlab_brand_extension-0.1.0-py3-none-any.whl"}
 
 [dev-packages]
