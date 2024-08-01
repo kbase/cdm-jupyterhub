@@ -19,7 +19,7 @@ ssh -f -N -L localhost:44042:10.58.2.201:4042 <ac.anl_username>@login1.berkeley.
 * `-f`: Run SSH command in the background.
 * `-N`: Do not execute a remote command.
 * `-L localhost:44042:10.58.2.201:4042`: Forward port `44042` on your local machine to port `4042` on the remote machine `10.58.2.201`.
-* `<kbase_developer_username>`: Your username for SSH access. Contact the KBase System Admin team if you do not have access.
+* `<ac.anl_username>`: Your username for SSH access. Contact the KBase System Admin team if you do not have access.
 * `@login1.berkeley.kbase.us`: The remote SSH server.   
    
 ### 2. Access Jupyter Notebook:
