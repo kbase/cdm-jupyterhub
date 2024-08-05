@@ -22,7 +22,7 @@ matplotlib = "==3.9.0"  # on the Notebook, the first installation attempt may fa
 
 [dev-packages]
 pytest = "==8.3.2"
-coverage = "==7.6.0"
+coverage = "==7.6.1"
 pytest-cov = "==5.0.0"
 ipython = "==8.26.0"
 
