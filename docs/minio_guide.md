@@ -22,7 +22,8 @@ Open a web browser and navigate to the following URL:
 http://localhost:9003
 ```
 
-Please contact the KBase System Admin team for the access key and secret key.
+Please note that UI access requires a MinIO username and password. The access key and secret key will not work for 
+UI access. Please contact the KBase System Admin team for the username and password.
 
 ## Using MinIO Client (`mc`)
 
