@@ -10,6 +10,7 @@ interacting with MinIO.
 
     ```bash
     ssh -f -N -L 9002:ci07:9002 <ac.anl_username>@login1.berkeley.kbase.us 
+    ssh -f -N -L 9003:ci07:9003 <ac.anl_username>@login1.berkeley.kbase.us 
     ```
 
    `<ac.anl_username>`: Your username for SSH access. Contact the KBase System Admin team if you do not have access.
@@ -18,7 +19,7 @@ interacting with MinIO.
 Open a web browser and navigate to the following URL:
 
 ```
-http://localhost:9002
+http://localhost:9003
 ```
 
 Please contact the KBase System Admin team for the access key and secret key.
