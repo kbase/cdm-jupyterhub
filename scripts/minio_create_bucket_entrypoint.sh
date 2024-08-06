@@ -18,11 +18,12 @@ fi
 
 # create policies
 mc admin policy create minio yarn-write-policy /config/yarn-write-policy.json
-mc admin policy create minio cdm-lake-read-only-policy /config/cdm-lake-read-only-policy.json
+mc admin policy create minio cdm-read-only-policy /config/cdm-read-only-policy.json
+mc admin policy create minio cdm-read-write-policy /config/cdm-read-write-policy.json
 
 # make read only user for user notebook w/ yarn write privs
 mc admin user add minio minio-readonly minio123
-mc admin policy attach minio cdm-lake-read-only-policy --user=minio-readonly
+mc admin policy attach minio cdm-read-only-policy --user=minio-readonly
 mc admin policy attach minio yarn-write-policy --user=minio-readonly
 echo 'CDM Read-only user and policy set'
 
@@ -30,3 +31,9 @@ echo 'CDM Read-only user and policy set'
 mc admin user add minio yarnuser yarnpass
 mc admin policy attach minio yarn-write-policy --user=yarnuser
 echo 'YARN user and policy set'
+
+# make read/write user
+mc admin user add minio minio-readwrite minio123
+mc admin policy attach minio cdm-read-write-policy --user=minio-readwrite
+mc admin policy attach minio yarn-write-policy --user=minio-readwrite
+echo 'CDM read-write user and policy set'
