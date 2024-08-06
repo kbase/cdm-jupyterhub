@@ -115,7 +115,8 @@ services:
         condition: service_healthy
     entrypoint: /scripts/minio_create_bucket_entrypoint.sh
     volumes:
-      - ./config/cdm-lake-read-only-policy.json:/config/cdm-lake-read-only-policy.json
+      - ./config/cdm-read-only-policy.json:/config/cdm-read-only-policy.json
+      - ./config/cdm-read-write-policy.json:/config/cdm-read-write-policy.json
       - ./config/yarn-write-policy.json:/config/yarn-write-policy.json
       - ./scripts/minio_create_bucket_entrypoint.sh:/scripts/minio_create_bucket_entrypoint.sh
 
@@ -135,7 +136,7 @@ services:
       - SPARK_MASTER_URL=spark://spark-master:7077
       - SPARK_DRIVER_HOST=spark-dev-notebook
       - MINIO_URL=http://minio:9002
-      - MINIO_ACCESS_KEY=minio
+      - MINIO_ACCESS_KEY=minio-readwrite
       - MINIO_SECRET_KEY=minio123
       - S3_YARN_BUCKET=yarn
       - SPARK_MODE=notebook
