@@ -29,17 +29,11 @@ ENV GRADLE_JARS_DIR=gradle_jars
 RUN /gradle/gradlew -p /gradle build
 RUN cp -r /gradle/${GRADLE_JARS_DIR}/* /opt/bitnami/spark/jars/
 
-# install pipenv
-RUN pip3 install pipenv
-
-# install python dependencies
-COPY Pipfile* ./
-RUN pipenv sync --system
-
-# Update permissions on the Bitnami directory after Pipenv installs
-# to ensure the Spark user can install packages properly within notebook.
 RUN chown -R spark_user:spark /opt/bitnami
-RUN chown -R spark_user:spark /.cache/pip
+
+# make an empty yarn conf dir to prevent spark from complaining
+RUN mkdir -p /opt/yarn/conf && chown -R spark_user:spark /opt/yarn
+ENV YARN_CONF_DIR=/opt/yarn/conf
 
 # make an empty yarn conf dir to prevent spark from complaining
 RUN mkdir -p /opt/yarn/conf && chown -R spark_user:spark /opt/yarn
@@ -75,5 +69,15 @@ RUN chown -R spark_user:spark $CDM_SHARED_DIR
 
 # Switch back to non-root user
 USER spark_user
+
+# Set home directory for the spark user so that pipenv can install packages properly with spark user permissions
+ENV HOME=/opt/bitnami
+
+# install pipenv
+RUN pip3 install pipenv
+
+# install python dependencies
+COPY Pipfile* ./
+RUN pipenv sync --system
 
 ENTRYPOINT ["/opt/scripts/entrypoint.sh"]
