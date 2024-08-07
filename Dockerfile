@@ -35,12 +35,20 @@ RUN chown -R spark_user:spark /opt/bitnami
 RUN mkdir -p /opt/yarn/conf && chown -R spark_user:spark /opt/yarn
 ENV YARN_CONF_DIR=/opt/yarn/conf
 
+# Use the spark user for pipenv installation
+USER spark_user
+# Set home directory for the spark user so that pipenv can install packages properly with spark user permissions
+ENV HOME=/opt/bitnami
+
 # install pipenv
 RUN pip3 install pipenv
 
 # install python dependencies
 COPY Pipfile* ./
 RUN pipenv sync --system
+
+# Switch back to root to install Jupyter and other setup
+USER root
 
 # Set up Jupyter directories
 ENV JUPYTER_CONFIG_DIR=/.jupyter

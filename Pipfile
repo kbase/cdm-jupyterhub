@@ -18,7 +18,7 @@ urllib3 = "==2.2.2"
 jupyterlab-git = "==0.50.1"
 jupyter-collaboration = "==2.1.2"
 cdm-jupyterlab-brand-extension = {file = "https://github.com/kbaseincubator/cdm_jupyterlab_brand_extension/raw/main/dist/cdm_jupyterlab_brand_extension-0.1.0-py3-none-any.whl"}
-matplotlib = "==3.9.0"  # on the Notebook, the first installation attempt may fail, but the second attempt will succeed.
+plotly = "==5.23.0"
 
 [dev-packages]
 pytest = "==8.3.2"
