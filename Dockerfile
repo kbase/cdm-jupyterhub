@@ -35,10 +35,6 @@ RUN chown -R spark_user:spark /opt/bitnami
 RUN mkdir -p /opt/yarn/conf && chown -R spark_user:spark /opt/yarn
 ENV YARN_CONF_DIR=/opt/yarn/conf
 
-# make an empty yarn conf dir to prevent spark from complaining
-RUN mkdir -p /opt/yarn/conf && chown -R spark_user:spark /opt/yarn
-ENV YARN_CONF_DIR=/opt/yarn/conf
-
 # Set up Jupyter directories
 ENV JUPYTER_CONFIG_DIR=/.jupyter
 ENV JUPYTER_RUNTIME_DIR=/.jupyter/runtime
