@@ -29,18 +29,21 @@ ENV GRADLE_JARS_DIR=gradle_jars
 RUN /gradle/gradlew -p /gradle build
 RUN cp -r /gradle/${GRADLE_JARS_DIR}/* /opt/bitnami/spark/jars/
 
-RUN chown -R spark_user:spark /opt/bitnami
-
-# make an empty yarn conf dir to prevent spark from complaining
-RUN mkdir -p /opt/yarn/conf && chown -R spark_user:spark /opt/yarn
-ENV YARN_CONF_DIR=/opt/yarn/conf
-
 # install pipenv
 RUN pip3 install pipenv
 
 # install python dependencies
 COPY Pipfile* ./
 RUN pipenv sync --system
+
+# Update permissions on the Bitnami directory after Pipenv installs
+# to ensure the Spark user can install packages properly within notebook.
+RUN chown -R spark_user:spark /opt/bitnami
+RUN chown -R spark_user:spark /.cache/pip
+
+# make an empty yarn conf dir to prevent spark from complaining
+RUN mkdir -p /opt/yarn/conf && chown -R spark_user:spark /opt/yarn
+ENV YARN_CONF_DIR=/opt/yarn/conf
 
 # Set up Jupyter directories
 ENV JUPYTER_CONFIG_DIR=/.jupyter
