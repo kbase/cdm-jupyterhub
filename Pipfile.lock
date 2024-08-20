@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "a5b9d51e0d3445da982777fe5a571623b24ce73ec9502f23c686353e276a0bf4"
+            "sha256": "76c7c39d82ddc8e6759f6241dc83c6251485134f95edd3086f7eb0f53bc40f24"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -460,11 +460,11 @@
         },
         "importlib-metadata": {
             "hashes": [
-                "sha256:42817a4a0be5845d22c6e212db66a94ad261e2318d80b3e0d363894a79df2b67",
-                "sha256:9c8fa6e8ea0f9516ad5c8db9246a731c948193c7754d3babb0114a05b27dd364"
+                "sha256:66f342cc6ac9818fc6ff340576acd24d65ba0b3efabb2b4ac08b598965a4a2f1",
+                "sha256:9a547d3bc3608b025f93d403fdd1aae741c24fbb8314df4b155675742ce303c5"
             ],
             "markers": "python_version >= '3.8'",
-            "version": "==8.3.0"
+            "version": "==8.4.0"
         },
         "ipykernel": {
             "hashes": [
@@ -1214,6 +1214,14 @@
             ],
             "markers": "python_version >= '3.8'",
             "version": "==2.18.0"
+        },
+        "pygraphviz": {
+            "hashes": [
+                "sha256:6ad8aa2f26768830a5a1cfc8a14f022d13df170a8f6fdfd68fd1aa1267000964"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.10'",
+            "version": "==1.13"
         },
         "pymysql": {
             "hashes": [

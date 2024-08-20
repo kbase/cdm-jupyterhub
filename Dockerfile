@@ -13,7 +13,7 @@ RUN groupadd -r spark && useradd -r -g spark spark_user
 
 RUN apt-get update && apt-get install -y \
     # GCC required to resolve error during JupyterLab installation: psutil could not be installed from sources because gcc is not installed.
-    gcc curl git \
+    gcc curl git graphviz graphviz-dev\
     && rm -rf /var/lib/apt/lists/*
 
 ENV HADOOP_AWS_VER=3.3.4
