@@ -30,6 +30,9 @@ enable_spark_monitor
 # install Plotly extension
 jupyter labextension install jupyterlab-plotly@5.23.0
 
+# install ipywidgets extension
+jupyter labextension install @jupyter-widgets/jupyterlab-manager@8.1.3
+
 # Start Jupyter Lab
 jupyter lab --ip=0.0.0.0 \
             --port="$NOTEBOOK_PORT" \
