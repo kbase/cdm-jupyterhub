@@ -1,0 +1,68 @@
+name: "Trivy Scans"
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+  push:
+    # run workflow when merging to main or develop
+    branches:
+      - main
+      - master
+      - develop
+
+jobs:
+  build:
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+    name: Build
+    runs-on: "ubuntu-20.04"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build an image from Dockerfile
+        run: |
+          git config --global --add safe.directory $GITHUB_WORKSPACE;
+          docker build -t trivy-test .
+
+      - name: Run Trivy vulnerability scanner, output as table
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "trivy-test"
+          format: "table"
+          output: "trivy-results.tbl"
+          timeout: "20m0s"
+
+      - name: Check for log4j CVEs
+        run: |
+          set -e
+          for cve in CVE-2021-4104 CVE-2021-44228 CVE-2021-45046 CVE-2022-22965 ; do
+            if grep -c $cve trivy-results.tbl > 0;
+              then
+                echo "Found log4j error: $cve"
+                exit 2
+            fi
+          done
+          # If above doesn't find errors, return pass message:
+          echo "Did not find core log4j errors, yay!"
+
+      - name: Rerun Trivy vulnerability scanner for GitHub security
+        uses: aquasecurity/trivy-action@master
+        if: always()
+        with:
+          image-ref: "trivy-test"
+          format: "sarif"
+          output: "trivy-results.sarif"
+          timeout: "20m0s"
+          ignore-unfixed: true
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
