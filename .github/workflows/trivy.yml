@@ -15,6 +15,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Clean up Docker resources
+        run: docker system prune -af
+
       - name: Build an image from Dockerfile
         run: |
           git config --global --add safe.directory $GITHUB_WORKSPACE;
@@ -34,7 +37,7 @@ jobs:
           # If above doesn't find errors, return pass message:
           echo "Did not find core log4j errors, yay!"
 
-      - name: Rerun Trivy vulnerability scanner for GitHub security
+      - name: Run Trivy vulnerability scanner for GitHub security
         uses: aquasecurity/trivy-action@master
         if: always()
         with:
@@ -44,6 +47,7 @@ jobs:
           output: "trivy-results.sarif"
           timeout: "20m0s"
           ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
