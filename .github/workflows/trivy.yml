@@ -31,14 +31,6 @@ jobs:
           git config --global --add safe.directory $GITHUB_WORKSPACE;
           docker build -t trivy-test .
 
-      - name: Run Trivy vulnerability scanner, output as table
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: "trivy-test"
-          format: "table"
-          output: "trivy-results.tbl"
-          timeout: "20m0s"
-
       - name: Check for log4j CVEs
         run: |
           set -e
