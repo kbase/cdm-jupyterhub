@@ -39,5 +39,5 @@ jobs:
     secrets: inherit
   trivy-scans:
     if: (github.base_ref == 'develop' || github.base_ref == 'main' || github.base_ref == 'master' ) && github.event.pull_request.merged == false
-    uses: kbase/.github/.github/workflows/reusable_trivy-scans.yml@main
+    uses: ./.github/workflows/trivy.yml
     secrets: inherit

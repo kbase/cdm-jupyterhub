@@ -1,18 +1,7 @@
 name: "Trivy Scans"
 
 on:
-  pull_request:
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - ready_for_review
-  push:
-    # run workflow when merging to main or develop
-    branches:
-      - main
-      - master
-      - develop
+    workflow_call:
 
 jobs:
   build:
@@ -31,6 +20,7 @@ jobs:
           git config --global --add safe.directory $GITHUB_WORKSPACE;
           docker build -t trivy-test .
 
+      # Copied from https://github.com/kbase/.github/blob/main/.github/workflows/reusable_trivy-scans.yml
       - name: Check for log4j CVEs
         run: |
           set -e
@@ -50,6 +40,7 @@ jobs:
         with:
           image-ref: "trivy-test"
           format: "sarif"
+          template: "@/contrib/sarif.tpl"
           output: "trivy-results.sarif"
           timeout: "20m0s"
           ignore-unfixed: true
