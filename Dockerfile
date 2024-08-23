@@ -1,4 +1,4 @@
-FROM spark:3.5.2
+FROM apache/spark:3.5.1
 
 # Switch to root to install packages
 # https://github.com/bitnami/containers/tree/main/bitnami/spark#installing-additional-jars
