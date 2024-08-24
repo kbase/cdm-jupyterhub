@@ -1,46 +1,63 @@
-FROM bitnami/spark:3.5.1
+# Base image for building dependencies
+FROM bitnami/spark:3.5.1 AS build-stage
 
 # Switch to root to install packages
-# https://github.com/bitnami/containers/tree/main/bitnami/spark#installing-additional-jars
 USER root
 
 # Create a non-root user
-# User 1001 is not defined in /etc/passwd in the bitnami/spark image, causing various issues.
-# References:
-# https://github.com/bitnami/containers/issues/52698
-# https://github.com/bitnami/containers/pull/52661
 RUN groupadd -r spark && useradd -r -g spark spark_user
 
+# Install necessary build tools
 RUN apt-get update && apt-get install -y \
-    # GCC required to resolve error during JupyterLab installation: psutil could not be installed from sources because gcc is not installed.
-    gcc curl git graphviz graphviz-dev\
+    gcc curl git graphviz graphviz-dev python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
+# Set up environment variables
 ENV HADOOP_AWS_VER=3.3.4
-# NOTE: ensure Delta Spark jar version matches python pip delta-spark version specified in the Pipfile
 ENV DELTA_SPARK_VER=3.2.0
 ENV SCALA_VER=2.12
 ENV POSTGRES_JDBC_VER=42.2.23
 
-# Run Gradle task to download JARs to /gradle/gradle_jars location
+# Copy build files and run Gradle to download JARs
 COPY build.gradle settings.gradle gradlew /gradle/
 COPY gradle /gradle/gradle
 ENV GRADLE_JARS_DIR=gradle_jars
 RUN /gradle/gradlew -p /gradle build
-RUN cp -r /gradle/${GRADLE_JARS_DIR}/* /opt/bitnami/spark/jars/
 
-# make an empty yarn conf dir to prevent spark from complaining
-RUN mkdir -p /opt/yarn/conf && chown -R spark_user:spark /opt/yarn
-ENV YARN_CONF_DIR=/opt/yarn/conf
-
-# install pipenv
+# Install pipenv and Python dependencies
 RUN pip3 install pipenv
-
-# install python dependencies
 COPY Pipfile* ./
 RUN pipenv sync --system
 
-RUN chown -R spark_user:spark /opt/bitnami
+# Copy necessary files for the final stage
+COPY ./src/ /src
+COPY ./scripts/ /opt/scripts/
+COPY ./config/ /opt/config/
+
+# Create the runtime stage, based on the same image but without the build tools
+FROM bitnami/spark:3.5.1 AS runtime-stage
+
+# Switch to root to copy files and set permissions
+USER root
+
+# Create the same non-root user as in the build stage
+RUN groupadd -r spark && useradd -r -g spark spark_user
+
+# Copy pre-built JARs from the build stage
+COPY --from=build-stage /gradle/gradle_jars/* /opt/bitnami/spark/jars/
+
+# Copy Python environment and installed packages
+COPY --from=build-stage /usr/local/lib/python3.*/dist-packages /usr/local/lib/python3.*/dist-packages
+COPY --from=build-stage /usr/local/bin/pipenv /usr/local/bin/pipenv
+
+# Copy application code, scripts, and config files
+COPY --from=build-stage /src /src
+COPY --from=build-stage /opt/scripts /opt/scripts
+COPY --from=build-stage /opt/config /opt/config
+
+# Make an empty yarn conf dir to prevent spark from complaining
+RUN mkdir -p /opt/yarn/conf && chown -R spark_user:spark /opt/yarn
+ENV YARN_CONF_DIR=/opt/yarn/conf
 
 # Set up Jupyter directories
 ENV JUPYTER_CONFIG_DIR=/.jupyter
@@ -49,27 +66,20 @@ ENV JUPYTER_DATA_DIR=/.jupyter/data
 RUN mkdir -p ${JUPYTER_CONFIG_DIR} ${JUPYTER_RUNTIME_DIR} ${JUPYTER_DATA_DIR}
 RUN chown -R spark_user:spark /.jupyter
 
-COPY ./src/ /src
+# Set PYTHONPATH and other environment variables
 ENV PYTHONPATH "${PYTHONPATH}:/src"
 
 # Copy the startup script to the default profile location to automatically load pre-built functions in Jupyter Notebook
-COPY ./src/notebook_utils/startup.py /.ipython/profile_default/startup/
+COPY --from=build-stage /src/notebook_utils/startup.py /.ipython/profile_default/startup/
 RUN chown -R spark_user:spark /.ipython
 
-COPY ./scripts/ /opt/scripts/
-RUN chmod a+x /opt/scripts/*.sh
-
-# Copy the configuration files
-COPY ./config/ /opt/config/
-
-# Don't just do /opt since we already did bitnami
-RUN chown -R spark_user:spark /src /opt/scripts /opt/config
-
-# This is the shared directory between the spark master, worker and driver containers
+# Set up the shared directory between Spark components
 ENV CDM_SHARED_DIR=/cdm_shared_workspace
 RUN mkdir -p ${CDM_SHARED_DIR} && chmod -R 777 ${CDM_SHARED_DIR}
 RUN chown -R spark_user:spark $CDM_SHARED_DIR
-RUN apt-get remove gcc graphviz-dev; apt-get autoremove
+
+# Set correct permissions for non-root user
+RUN chown -R spark_user:spark /opt/bitnami /src /opt/scripts /opt/config
 
 # Switch back to non-root user
 USER spark_user
