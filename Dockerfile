@@ -1,4 +1,4 @@
-FROM apache/spark:3.5.1
+FROM bitnami/spark:3.5.1
 
 # Switch to root to install packages
 # https://github.com/bitnami/containers/tree/main/bitnami/spark#installing-additional-jars
@@ -69,6 +69,7 @@ RUN chown -R spark_user:spark /src /opt/scripts /opt/config
 ENV CDM_SHARED_DIR=/cdm_shared_workspace
 RUN mkdir -p ${CDM_SHARED_DIR} && chmod -R 777 ${CDM_SHARED_DIR}
 RUN chown -R spark_user:spark $CDM_SHARED_DIR
+RUN apt-get remove gcc graphviz-dev; apt-get autoremove
 
 # Switch back to non-root user
 USER spark_user
