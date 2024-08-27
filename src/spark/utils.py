@@ -170,6 +170,9 @@ def read_csv(
         path: str,
         header: bool = True,
         sep: str = None,
+        minio_url: str = None,
+        access_key: str = None,
+        secret_key: str = None,
         **kwargs
 ) -> DataFrame:
     """
@@ -179,13 +182,16 @@ def read_csv(
     :param path: The minIO path to the CSV file. e.g. s3a://bucket-name/file.csv or bucket-name/file.csv
     :param header: Whether the CSV file has a header. Default is True.
     :param sep: The delimiter to use. If not provided, the function will try to detect it.
+    :param minio_url: The minIO URL. Default is None (environment variable used if not provided).
+    :param access_key: The minIO access key. Default is None (environment variable used if not provided).
+    :param secret_key: The minIO secret key. Default is None (environment variable used if not provided).
     :param kwargs: Additional arguments to pass to spark.read.csv.
 
     :return: A DataFrame.
     """
 
     if not sep:
-        client = get_minio_client()
+        client = get_minio_client(minio_url=minio_url, access_key=access_key, secret_key=secret_key)
         bucket, key = path.replace("s3a://", "").split("/", 1)
         obj = client.get_object(bucket, key)
         sample = obj.read(8192).decode()
