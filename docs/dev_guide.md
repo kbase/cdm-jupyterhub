@@ -49,8 +49,9 @@ Please create a corresponding loading notebook for each namespace in the `data-l
 
 Please use the existing loading notebooks as examples.
 
-🚨 **Please DO NOT rerun the loading notebooks in the development environment. Instead, create a new notebook for each 
-new namespace and manually verify the data loading process.**
+🚨 **Please DO NOT rerun the existing loading notebooks in the development environment unless you are certain you 
+want to reload the existing table. Instead, create a new notebook for each new namespace and manually verify 
+the data loading process.**
 
 
 
