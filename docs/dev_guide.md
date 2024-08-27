@@ -23,7 +23,7 @@ This will open the JupyterLab Notebook interface running on the remote server.
 ## Accessing MinIO
 Please refer to the [MinIO Guide](minio_guide.md) for instructions on accessing MinIO.
 
-### MinIO username and password
+### Read/Write MinIO username and password
 Get the MinIO username and password with read/write permission from the above development JupiterLab environment.
 ```python
 import os
