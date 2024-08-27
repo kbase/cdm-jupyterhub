@@ -1,76 +1,70 @@
-FROM bitnami/spark:3.5.1
+# Stage 1: Build and Install Dependencies
+FROM bitnami/spark:3.5.1 AS build-stage
 
 # Switch to root to install packages
-# https://github.com/bitnami/containers/tree/main/bitnami/spark#installing-additional-jars
 USER root
 
 # Create a non-root user
-# User 1001 is not defined in /etc/passwd in the bitnami/spark image, causing various issues.
-# References:
-# https://github.com/bitnami/containers/issues/52698
-# https://github.com/bitnami/containers/pull/52661
 RUN groupadd -r spark && useradd -r -g spark spark_user
 
 # Install necessary build tools and dependencies
 RUN apt-get update && apt-get install -y \
-    gcc curl git graphviz graphviz-dev \
+    gcc curl git graphviz graphviz-dev python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
+# Environment variables for tools and libraries
 ENV HADOOP_AWS_VER=3.3.4
-# NOTE: ensure Delta Spark jar version matches python pip delta-spark version specified in the Pipfile
 ENV DELTA_SPARK_VER=3.2.0
 ENV SCALA_VER=2.12
 ENV POSTGRES_JDBC_VER=42.2.23
 
-# Run Gradle task to download JARs to /gradle/gradle_jars location
+# Copy build files and run Gradle to download JARs
 COPY build.gradle settings.gradle gradlew /gradle/
 COPY gradle /gradle/gradle
 ENV GRADLE_JARS_DIR=gradle_jars
 RUN /gradle/gradlew -p /gradle build
-RUN cp -r /gradle/${GRADLE_JARS_DIR}/* /opt/bitnami/spark/jars/
-
-# Make an empty yarn conf dir to prevent spark from complaining
-RUN mkdir -p /opt/yarn/conf && chown -R spark_user:spark /opt/yarn
-ENV YARN_CONF_DIR=/opt/yarn/conf
 
 # Install pipenv and Python dependencies
 RUN pip3 install pipenv
 COPY Pipfile* ./
 RUN pipenv sync --system
 
-# Remove unnecessary build tools and clean up
-RUN apt-get remove -y \
-    gcc graphviz-dev \
-    && apt-get autoremove -y \
-    && rm -rf /var/lib/apt/lists/*
+# Set up Jupyter directories
+RUN mkdir -p /.jupyter /.jupyter/runtime /.jupyter/data
 
-# Ensure correct ownership for non-root user
-RUN chown -R spark_user:spark /opt/bitnami
+# Copy application source and configuration files
+COPY ./src/ /src
+COPY ./config/ /opt/config/
+COPY ./scripts/ /opt/scripts/
+
+# Stage 2: Final Image (Slimmed Down)
+FROM bitnami/spark:3.5.1 AS runtime-stage
+
+# Switch to root to set up the environment
+USER root
+
+# Create the same non-root user
+RUN groupadd -r spark && useradd -r -g spark spark_user
+
+# Copy only necessary files from the build stage
+COPY --from=build-stage /opt/bitnami/spark/jars/ /opt/bitnami/spark/jars/
+
+# Copy Python packages from the correct path
+COPY --from=build-stage /opt/bitnami/python/lib/python3.11/site-packages/ /opt/bitnami/python/lib/python3.11/site-packages/
+
+# Copy pipenv from the correct path
+COPY --from=build-stage /opt/bitnami/python/bin/pipenv /opt/bitnami/python/bin/pipenv
+
+# Continue copying the rest of the necessary files
+COPY --from=build-stage /src /src
+COPY --from=build-stage /opt/config/ /opt/config/
+COPY --from=build-stage /opt/scripts/ /opt/scripts/
 
 # Set up Jupyter directories
-ENV JUPYTER_CONFIG_DIR=/.jupyter
-ENV JUPYTER_RUNTIME_DIR=/.jupyter/runtime
-ENV JUPYTER_DATA_DIR=/.jupyter/data
-RUN mkdir -p ${JUPYTER_CONFIG_DIR} ${JUPYTER_RUNTIME_DIR} ${JUPYTER_DATA_DIR}
-RUN chown -R spark_user:spark /.jupyter
+COPY --from=build-stage /.jupyter /.jupyter
 
-# Copy application code and scripts
-COPY ./src/ /src
-ENV PYTHONPATH "${PYTHONPATH}:/src"
-
-# Copy the startup script to the default profile location to automatically load pre-built functions in Jupyter Notebook
-COPY ./src/notebook_utils/startup.py /.ipython/profile_default/startup/
-RUN chown -R spark_user:spark /.ipython
-
-# Copy and set up scripts
-COPY ./scripts/ /opt/scripts/
-RUN chmod a+x /opt/scripts/*.sh
-
-# Copy the configuration files
-COPY ./config/ /opt/config/
-
-# Ensure correct ownership for all files
-RUN chown -R spark_user:spark /src /opt/scripts /opt/config
+# Set correct ownership and permissions
+RUN chown -R spark_user:spark /opt/bitnami /src /opt/scripts /opt/config /.jupyter
 
 # Set up shared directory between Spark components
 ENV CDM_SHARED_DIR=/cdm_shared_workspace
@@ -80,4 +74,6 @@ RUN chown -R spark_user:spark $CDM_SHARED_DIR
 # Switch back to non-root user
 USER spark_user
 
+# Entry point for the container
 ENTRYPOINT ["/opt/scripts/entrypoint.sh"]
+
