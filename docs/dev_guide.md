@@ -1,6 +1,7 @@
 # JupyterLab Developer Guide
 
 ## Accessing JupyterLab Development Environment
+(Please refer to the [JupyterLab User Guide](user_guide.md) for instructions on accessing the user environment.)
 
 ### 1. Create SSH Tunnel:
 
