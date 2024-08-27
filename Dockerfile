@@ -65,6 +65,8 @@ COPY --from=build-stage /.jupyter /.jupyter
 
 # Set correct ownership and permissions
 RUN chown -R spark_user:spark /opt/bitnami /src /opt/scripts /opt/config /.jupyter
+RUN chmod +x /opt/scripts/entrypoint.sh
+RUN ln -s /opt/scripts/entrypoint.sh /entrypoint.sh
 
 # Set up shared directory between Spark components
 ENV CDM_SHARED_DIR=/cdm_shared_workspace
@@ -75,5 +77,5 @@ RUN chown -R spark_user:spark $CDM_SHARED_DIR
 USER spark_user
 
 # Entry point for the container
-ENTRYPOINT ["/opt/scripts/entrypoint.sh"]
+# ENTRYPOINT ["/opt/scripts/entrypoint.sh"]
 
