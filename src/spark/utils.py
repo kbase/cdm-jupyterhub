@@ -62,10 +62,6 @@ def _get_delta_lake_conf() -> dict:
         "spark.sql.catalog.spark_catalog": "org.apache.spark.sql.delta.catalog.DeltaCatalog",
         "spark.databricks.delta.retentionDurationCheck.enabled": "false",
         "spark.sql.catalogImplementation": "hive",
-        # SparkMonitor extension configuration
-        # https://github.com/swan-cern/sparkmonitor?tab=readme-ov-file#setting-up-the-extension
-        "spark.extraListeners": "sparkmonitor.listener.JupyterSparkMonitorListener",
-        "spark.driver.extraClassPath": f"{site_packages_path}/sparkmonitor/listener_{SCALA_VER}.jar",
     }
 
 
