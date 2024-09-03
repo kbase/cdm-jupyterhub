@@ -56,8 +56,8 @@ COPY ./src/notebook_utils/startup.py ${JUPYTERHUB_CONFIG_DIR}/startup.py
 RUN chown -R spark_user:spark ${JUPYTERHUB_CONFIG_DIR}
 
 # Jupyter Hub user home directory
-RUN mkdir -p /home
-RUN chown -R spark_user:spark /home
+RUN mkdir -p /jupyterhub/users_home
+RUN chown -R spark_user:spark /jupyterhub/users_home
 
 RUN npm install -g configurable-http-proxy
 
