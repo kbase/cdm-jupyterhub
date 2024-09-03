@@ -173,7 +173,7 @@ services:
       - MINIO_SECRET_KEY=minio123
       - S3_YARN_BUCKET=yarn
       - MAX_EXECUTORS=4
-      # TODO: create postgres user w/ only write access to the hive tables
+      # TODO: create postgres user r/ only read access to the hive tables
       - POSTGRES_USER=hive
       - POSTGRES_PASSWORD=hivepassword
       - POSTGRES_DB=hive
