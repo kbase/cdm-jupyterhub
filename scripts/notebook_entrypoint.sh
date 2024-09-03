@@ -30,6 +30,6 @@ elif [ "$JUPYTER_MODE" = "jupyterhub" ]; then
 
   echo "TO BE IMPLEMENTED"
 else
-  echo "ERROR: SPARK_MODE is not set to jupyterlab or jupyterhub. Please set SPARK_MODE to either jupyterlab or jupyterhub."
+  echo "ERROR: JUPYTER_MODE is not set to jupyterlab or jupyterhub. Please set JUPYTER_MODE to either jupyterlab or jupyterhub."
   exit 1
 fi
