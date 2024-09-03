@@ -13,7 +13,7 @@ RUN groupadd -r spark && useradd -r -g spark spark_user
 
 RUN apt-get update && apt-get install -y \
     # GCC required to resolve error during JupyterLab installation: psutil could not be installed from sources because gcc is not installed.
-    gcc curl git graphviz graphviz-dev libgdal-dev build-essential python3-dev\
+    gcc curl git npm nodejs graphviz graphviz-dev libgdal-dev build-essential python3-dev\
     && rm -rf /var/lib/apt/lists/*
 
 ENV HADOOP_AWS_VER=3.3.4
@@ -42,12 +42,24 @@ RUN pipenv sync --system
 
 RUN chown -R spark_user:spark /opt/bitnami
 
-# Set up Jupyter directories
+# Set up Jupyter Lab directories
 ENV JUPYTER_CONFIG_DIR=/.jupyter
 ENV JUPYTER_RUNTIME_DIR=/.jupyter/runtime
 ENV JUPYTER_DATA_DIR=/.jupyter/data
 RUN mkdir -p ${JUPYTER_CONFIG_DIR} ${JUPYTER_RUNTIME_DIR} ${JUPYTER_DATA_DIR}
 RUN chown -R spark_user:spark /.jupyter
+
+# Set up Jupyter Hub directories
+ENV JUPYTERHUB_CONFIG_DIR=/srv/jupyterhub
+RUN mkdir -p ${JUPYTERHUB_CONFIG_DIR}
+COPY ./src/notebook_utils/startup.py ${JUPYTERHUB_CONFIG_DIR}/startup.py
+RUN chown -R spark_user:spark ${JUPYTERHUB_CONFIG_DIR}
+
+# Jupyter Hub user home directory
+RUN mkdir -p /jupyterhub/users_home
+RUN chown -R spark_user:spark /jupyterhub/users_home
+
+RUN npm install -g configurable-http-proxy
 
 COPY ./src/ /src
 ENV PYTHONPATH "${PYTHONPATH}:/src"

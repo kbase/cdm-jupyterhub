@@ -123,11 +123,11 @@ services:
       - ./config/yarn-write-policy.json:/config/yarn-write-policy.json
       - ./scripts/minio_create_bucket_entrypoint.sh:/scripts/minio_create_bucket_entrypoint.sh
 
-  dev_notebook:
+  dev_jupyterlab:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: spark-dev-notebook
+    container_name: dev-jupyterlab
     ports:
       - "4041:4041"
     depends_on:
@@ -135,9 +135,10 @@ services:
       - minio-create-bucket
     environment:
       - NOTEBOOK_PORT=4041
+      - JUPYTER_MODE=jupyterlab
       - YARN_RESOURCE_MANAGER_URL=http://yarn-resourcemanager:8032
       - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_DRIVER_HOST=spark-dev-notebook
+      - SPARK_DRIVER_HOST=dev-jupyterlab
       - MINIO_URL=http://minio:9002
       - MINIO_ACCESS_KEY=minio-readwrite
       - MINIO_SECRET_KEY=minio123
@@ -151,11 +152,11 @@ services:
     volumes:
       - ./cdr/cdm/jupyter:/cdm_shared_workspace
 
-  user_notebook:
+  user-jupyterlab:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: spark-user-notebook
+    container_name: user-jupyterlab
     ports:
       - "4042:4042"
     depends_on:
@@ -163,21 +164,81 @@ services:
       - minio-create-bucket
     environment:
       - NOTEBOOK_PORT=4042
+      - JUPYTER_MODE=jupyterlab
       - YARN_RESOURCE_MANAGER_URL=http://yarn-resourcemanager:8032
       - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_DRIVER_HOST=spark-user-notebook
+      - SPARK_DRIVER_HOST=user-jupyterlab
       - MINIO_URL=http://minio:9002
       - MINIO_ACCESS_KEY=minio-readonly
       - MINIO_SECRET_KEY=minio123
       - S3_YARN_BUCKET=yarn
       - MAX_EXECUTORS=4
-      # TODO: create postgres user w/ only write access to the hive tables
+      # TODO: create postgres user r/ only read access to the hive tables
       - POSTGRES_USER=hive
       - POSTGRES_PASSWORD=hivepassword
       - POSTGRES_DB=hive
       - POSTGRES_URL=postgres:5432
     volumes:
       - ./cdr/cdm/jupyter/user_shared_workspace:/cdm_shared_workspace/user_shared_workspace
+
+  dev_jupyterhub:
+      build:
+        context: .
+        dockerfile: Dockerfile
+      container_name: dev-jupyterhub
+      ports:
+        - "4043:4043"
+      depends_on:
+        - spark-master
+        - minio-create-bucket
+      environment:
+        - NOTEBOOK_PORT=4043
+        - JUPYTER_MODE=jupyterhub
+        - YARN_RESOURCE_MANAGER_URL=http://yarn-resourcemanager:8032
+        - SPARK_MASTER_URL=spark://spark-master:7077
+        - SPARK_DRIVER_HOST=dev-jupterhub
+        - MINIO_URL=http://minio:9002
+        - MINIO_ACCESS_KEY=minio-readwrite
+        - MINIO_SECRET_KEY=minio123
+        - S3_YARN_BUCKET=yarn
+        - MAX_EXECUTORS=4
+        - POSTGRES_USER=hive
+        - POSTGRES_PASSWORD=hivepassword
+        - POSTGRES_DB=hive
+        - POSTGRES_URL=postgres:5432
+        - USAGE_MODE=dev
+      volumes:
+        - ./cdr/cdm/jupyter:/cdm_shared_workspace
+        - ./cdr/cdm/jupyter/jupyterhub/users_home:/jupyterhub/users_home
+
+  user_jupyterhub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: user-jupyterhub
+    ports:
+      - "4044:4044"
+    depends_on:
+      - spark-master
+      - minio-create-bucket
+    environment:
+      - NOTEBOOK_PORT=4044
+      - JUPYTER_MODE=jupyterhub
+      - YARN_RESOURCE_MANAGER_URL=http://yarn-resourcemanager:8032
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_DRIVER_HOST=user-jupyterhub
+      - MINIO_URL=http://minio:9002
+      - MINIO_ACCESS_KEY=minio-readonly
+      - MINIO_SECRET_KEY=minio123
+      - S3_YARN_BUCKET=yarn
+      - JUPYTER_MODE=jupyterhub
+      - MAX_EXECUTORS=4
+      - POSTGRES_USER=hive
+      - POSTGRES_PASSWORD=hivepassword
+      - POSTGRES_DB=hive
+      - POSTGRES_URL=postgres:5432
+    volumes:
+      - ./cdr/cdm/jupyter/jupyterhub/users_home:/jupyterhub/users_home
 
   postgres:
     image: postgres:16.3
