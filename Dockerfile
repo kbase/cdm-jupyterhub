@@ -13,7 +13,19 @@ RUN groupadd -r spark && useradd -r -g spark spark_user
 
 RUN apt-get update && apt-get install -y \
     # GCC required to resolve error during JupyterLab installation: psutil could not be installed from sources because gcc is not installed.
-    gcc curl git npm nodejs graphviz graphviz-dev libgdal-dev build-essential python3-dev\
+    gcc \
+    curl \
+    git \
+    wget \
+    vim \
+    npm \
+    nodejs \
+    graphviz \
+    graphviz-dev \
+    libgdal-dev \
+    build-essential \
+    python3-dev \
+    sudo \
     && rm -rf /var/lib/apt/lists/*
 
 ENV HADOOP_AWS_VER=3.3.4
@@ -42,22 +54,26 @@ RUN pipenv sync --system
 
 RUN chown -R spark_user:spark /opt/bitnami
 
-# Set up Jupyter Lab directories
+# Set up JupyterLab directories
 ENV JUPYTER_CONFIG_DIR=/.jupyter
 ENV JUPYTER_RUNTIME_DIR=/.jupyter/runtime
 ENV JUPYTER_DATA_DIR=/.jupyter/data
 RUN mkdir -p ${JUPYTER_CONFIG_DIR} ${JUPYTER_RUNTIME_DIR} ${JUPYTER_DATA_DIR}
 RUN chown -R spark_user:spark /.jupyter
 
-# Set up Jupyter Hub directories
+# Set up JupyterHub directories
 ENV JUPYTERHUB_CONFIG_DIR=/srv/jupyterhub
 RUN mkdir -p ${JUPYTERHUB_CONFIG_DIR}
 COPY ./src/notebook_utils/startup.py ${JUPYTERHUB_CONFIG_DIR}/startup.py
+COPY ./config/jupyterhub_config.py ${JUPYTERHUB_CONFIG_DIR}/jupyterhub_config.py
+COPY ./scripts/spawn_notebook.sh ${JUPYTERHUB_CONFIG_DIR}/spawn_notebook.sh
+RUN chmod +x ${JUPYTERHUB_CONFIG_DIR}/spawn_notebook.sh
 RUN chown -R spark_user:spark ${JUPYTERHUB_CONFIG_DIR}
 
 # Jupyter Hub user home directory
-RUN mkdir -p /jupyterhub/users_home
-RUN chown -R spark_user:spark /jupyterhub/users_home
+ENV JUPYTERHUB_USER_HOME=/jupyterhub/users_home
+RUN mkdir -p $JUPYTERHUB_USER_HOME
+RUN chown -R spark_user:spark $JUPYTERHUB_USER_HOME
 
 RUN npm install -g configurable-http-proxy
 
@@ -81,6 +97,10 @@ RUN chown -R spark_user:spark /src /opt/scripts /opt/config
 ENV CDM_SHARED_DIR=/cdm_shared_workspace
 RUN mkdir -p ${CDM_SHARED_DIR} && chmod -R 777 ${CDM_SHARED_DIR}
 RUN chown -R spark_user:spark $CDM_SHARED_DIR
+
+# Allow spark_user to use sudo without a password
+# TODO: use `sudospawner` in JupyterHub to avoid this (https://jupyterhub.readthedocs.io/en/stable/howto/configuration/config-sudo.html)
+RUN echo "spark_user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 # Switch back to non-root user
 USER spark_user

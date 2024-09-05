@@ -196,7 +196,7 @@ services:
         - JUPYTER_MODE=jupyterhub
         - YARN_RESOURCE_MANAGER_URL=http://yarn-resourcemanager:8032
         - SPARK_MASTER_URL=spark://spark-master:7077
-        - SPARK_DRIVER_HOST=dev-jupterhub
+        - SPARK_DRIVER_HOST=dev-jupyterhub
         - MINIO_URL=http://minio:9002
         - MINIO_ACCESS_KEY=minio-readwrite
         - MINIO_SECRET_KEY=minio123
@@ -207,6 +207,7 @@ services:
         - POSTGRES_DB=hive
         - POSTGRES_URL=postgres:5432
         - USAGE_MODE=dev
+        - JUPYTERHUB_ADMIN_PASSWORD=testpassword123
       volumes:
         - ./cdr/cdm/jupyter:/cdm_shared_workspace
         - ./cdr/cdm/jupyter/jupyterhub/users_home:/jupyterhub/users_home
@@ -237,6 +238,7 @@ services:
       - POSTGRES_PASSWORD=hivepassword
       - POSTGRES_DB=hive
       - POSTGRES_URL=postgres:5432
+      - JUPYTERHUB_ADMIN_PASSWORD=testpassword123
     volumes:
       - ./cdr/cdm/jupyter/jupyterhub/users_home:/jupyterhub/users_home
 

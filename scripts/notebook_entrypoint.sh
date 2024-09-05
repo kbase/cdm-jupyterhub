@@ -28,7 +28,7 @@ if [ "$JUPYTER_MODE" = "jupyterlab" ]; then
 elif [ "$JUPYTER_MODE" = "jupyterhub" ]; then
   echo "starting jupyterhub"
 
-  echo "TO BE IMPLEMENTED"
+  jupyterhub -f "$JUPYTERHUB_CONFIG_DIR"/jupyterhub_config.py
 else
   echo "ERROR: JUPYTER_MODE is not set to jupyterlab or jupyterhub. Please set JUPYTER_MODE to either jupyterlab or jupyterhub."
   exit 1
