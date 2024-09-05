@@ -2,6 +2,7 @@
 This is the JupyterHub configuration file. It is used to configure the JupyterHub server.
 Refer to the JupyterHub documentation for more information:
 https://jupyterhub.readthedocs.io/en/latest/tutorial/getting-started/config-basics.html
+https://jupyterhub.readthedocs.io/en/stable/reference/config-reference.html
 """
 import os
 
