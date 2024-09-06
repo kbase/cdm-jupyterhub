@@ -53,6 +53,14 @@ def test_ensure_system_user_create_group_and_user(mock_run, mock_spawner):
     # Check that the expected calls were made in order
     mock_run.assert_has_calls(expected_calls, any_order=False)
 
+    expected_log_calls = [
+        unittest.mock.call(f'Creating system user: {username}'),
+        unittest.mock.call(f'Group {group} does not exist, creating it.')
+    ]
+
+    # Check that the expected log calls were made
+    mock_spawner.log.info.assert_has_calls(expected_log_calls, any_order=False)
+
 
 # Test when the user is created without a group
 @patch('subprocess.run')
