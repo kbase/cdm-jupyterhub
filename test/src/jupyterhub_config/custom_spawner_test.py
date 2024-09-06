@@ -1,4 +1,5 @@
 import subprocess
+import unittest
 from subprocess import CalledProcessError
 from unittest.mock import patch, MagicMock
 
@@ -23,31 +24,34 @@ def test_ensure_system_user_already_exists(mock_run, mock_spawner):
     username = 'testuser'
     mock_spawner._ensure_system_user(username)
 
-    mock_spawner.log.info.assert_called_with(f'User {username} already exists')
+    mock_spawner.log.info.assert_called_once_with(f'User {username} already exists')
     mock_run.assert_called_once_with(['id', username], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 
 # Test when the group and user need to be created
 @patch('subprocess.run')
 def test_ensure_system_user_create_group_and_user(mock_run, mock_spawner):
-    # Mock the 'id' and 'getent' command returncodes
-    def mock_run_side_effect(cmd, *args, **kwargs):
-        if cmd == ['id', 'testuser']:
-            return MagicMock(returncode=1)  # User does not exist
-        elif cmd == ['getent', 'group', 'testgroup']:
-            return MagicMock(returncode=2)  # Group does not exist
-        return MagicMock(returncode=0)  # Successful creation
-
-    mock_run.side_effect = mock_run_side_effect
+    # Define side_effect to simulate user does not exist, group does not exist, and then successful creation
+    mock_run.side_effect = [
+        MagicMock(returncode=1),  # 'id' command: User does not exist
+        MagicMock(returncode=2),  # 'getent' command: Group does not exist
+        MagicMock(returncode=0),  # 'groupadd' command: Group created successfully
+        MagicMock(returncode=0)  # 'useradd' command: User created successfully
+    ]
 
     username = 'testuser'
     group = 'testgroup'
     mock_spawner._ensure_system_user(username, group)
 
-    mock_spawner.log.info.assert_any_call(f'Creating system user: {username}')
-    mock_spawner.log.info.assert_any_call(f'Group {group} does not exist, creating it.')
-    mock_run.assert_any_call(['sudo', 'groupadd', group], check=True)
-    mock_run.assert_any_call(['sudo', 'useradd', '-r', '-g', group, username], check=True)
+    expected_calls = [
+        unittest.mock.call(['id', username], stdout=subprocess.PIPE, stderr=subprocess.PIPE),
+        unittest.mock.call(['getent', 'group', group], stdout=subprocess.PIPE, stderr=subprocess.PIPE),
+        unittest.mock.call(['sudo', 'groupadd', group], check=True),
+        unittest.mock.call(['sudo', 'useradd', '-r', '-g', group, username], check=True)
+    ]
+
+    # Check that the expected calls were made in order
+    mock_run.assert_has_calls(expected_calls, any_order=False)
 
 
 # Test when the user is created without a group
@@ -62,8 +66,13 @@ def test_ensure_system_user_create_user_without_group(mock_run, mock_spawner):
     username = 'testuser'
     mock_spawner._ensure_system_user(username)
 
-    mock_spawner.log.info.assert_any_call(f'Creating system user: {username}')
-    mock_run.assert_called_with(['sudo', 'useradd', '-r', username], check=True)
+    mock_spawner.log.info.assert_called_once_with(f'Creating system user: {username}')
+    expected_calls = [
+        unittest.mock.call(['id', username], stdout=subprocess.PIPE, stderr=subprocess.PIPE),
+        unittest.mock.call(['sudo', 'useradd', '-r', username], check=True)
+    ]
+
+    mock_run.assert_has_calls(expected_calls, any_order=False)
 
 
 # Test subprocess.CalledProcessError is handled correctly
@@ -79,5 +88,9 @@ def test_ensure_system_user_error(mock_run, mock_spawner):
     with pytest.raises(ValueError, match="Failed to create system user"):
         mock_spawner._ensure_system_user('testuser')
 
-    mock_run.assert_any_call(['id', 'testuser'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    mock_run.assert_any_call(['sudo', 'useradd', '-r', 'testuser'], check=True)
+    expected_calls = [
+        unittest.mock.call(['id', 'testuser'], stdout=subprocess.PIPE, stderr=subprocess.PIPE),
+        unittest.mock.call(['sudo', 'useradd', '-r', 'testuser'], check=True)
+    ]
+
+    mock_run.assert_has_calls(expected_calls, any_order=False)
