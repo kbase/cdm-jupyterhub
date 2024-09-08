@@ -95,8 +95,8 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
             # Change the directory's ownership to the user
             os.chown(user_dir, uid, gid)
 
-            # Set directory permissions to 750: Owner (rwx), Group (r-x), Others (---)
-            os.chmod(user_dir, 0o750)
+            # Set directory permissions to 700: Owner (rwx), Group (---), Others (---)
+            os.chmod(user_dir, 0o700)
 
         else:
             self.log.info(f'Reusing user directory for {username}')
