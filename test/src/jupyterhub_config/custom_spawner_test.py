@@ -127,7 +127,7 @@ def test_ensure_user_directory_with_logging(mock_chmod, mock_chown, mock_mkdir, 
     # Assert that mkdir, chown, and chmod were called with correct parameters
     mock_mkdir.assert_called_once_with(parents=True)
     mock_chown.assert_called_once_with(user_dir, 1000, 1000)
-    mock_chmod.assert_called_once_with(user_dir, 0o750)
+    mock_chmod.assert_called_once_with(user_dir, 0o700)
 
     assert f'Creating user directory for {username}' in caplog.text
 
