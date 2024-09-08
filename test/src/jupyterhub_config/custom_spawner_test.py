@@ -183,8 +183,12 @@ def test_ensure_user_directory_reuse_existing(mock_exists, mock_mkdir, mock_chow
 
 
 @patch('pathlib.Path.mkdir')
-def test_ensure_user_jupyter_directory(mock_mkdir):
+@patch('pathlib.Path.exists')
+def test_ensure_user_jupyter_directory(mock_exists, mock_mkdir):
     user_dir = Path('/home/testuser')
+
+    # Mock directory existence to simulate the user directory existing
+    mock_exists.return_value = True
 
     spawner = VirtualEnvSpawner()
     spawner._ensure_user_jupyter_directory(user_dir)
@@ -201,9 +205,22 @@ def test_ensure_user_jupyter_directory(mock_mkdir):
     # Expected directories
     jupyter_dir = user_dir / '.jupyter'
     jupyter_runtime_dir = jupyter_dir / 'runtime'
-    juputer_data_dir = jupyter_dir / 'data'
+    jupyter_data_dir = jupyter_dir / 'data'
 
     # Assert the JUPYTER environment variables are set correctly
     assert spawner.environment['JUPYTER_CONFIG_DIR'] == str(jupyter_dir)
     assert spawner.environment['JUPYTER_RUNTIME_DIR'] == str(jupyter_runtime_dir)
-    assert spawner.environment['JUPYTER_DATA_DIR'] == str(juputer_data_dir)
+    assert spawner.environment['JUPYTER_DATA_DIR'] == str(jupyter_data_dir)
+
+
+@patch('pathlib.Path.exists')
+def test_ensure_user_jupyter_directory_user_dir_does_not_exist(mock_exists):
+    user_dir = Path('/home/nonexistentuser')
+
+    # Mock directory existence to simulate the user directory not existing
+    mock_exists.return_value = False
+
+    spawner = VirtualEnvSpawner()
+
+    with pytest.raises(ValueError, match=f'User directory {user_dir} does not exist'):
+        spawner._ensure_user_jupyter_directory(user_dir)

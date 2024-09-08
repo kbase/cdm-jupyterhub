@@ -113,6 +113,9 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         environment variables for Jupyter to use these directories.
         """
 
+        if not user_dir.exists():
+            raise ValueError(f'User directory {user_dir} does not exist')
+
         jupyter_dir = user_dir / '.jupyter'
         jupyter_runtime_dir = jupyter_dir / 'runtime'
         juputer_data_dir = jupyter_dir / 'data'
