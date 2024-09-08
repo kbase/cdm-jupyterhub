@@ -129,7 +129,32 @@ def test_ensure_user_directory_with_logging(mock_chmod, mock_chown, mock_mkdir, 
     mock_chown.assert_called_once_with(user_dir, 1000, 1000)
     mock_chmod.assert_called_once_with(user_dir, 0o700)
 
+    assert f'Getting user info for {username}' in caplog.text
     assert f'Creating user directory for {username}' in caplog.text
+
+
+@patch('pwd.getpwnam')
+@patch('pathlib.Path.exists')
+@patch('pathlib.Path.mkdir')
+def test_ensure_user_directory_user_not_found(mock_mkdir, mock_exists, mock_getpwnam, caplog):
+    username = 'nonexistentuser'
+    user_dir = Path('/home/nonexistentuser')
+
+    # Mock directory existence check (directory does not exist)
+    mock_exists.return_value = False
+
+    # Mock pwd.getpwnam to raise KeyError
+    mock_getpwnam.side_effect = KeyError
+
+    with caplog.at_level(logging.INFO):
+        with pytest.raises(ValueError, match=f'System user {username} does not exist'):
+            spawner = VirtualEnvSpawner()
+            spawner._ensure_user_directory(user_dir, username)
+
+    # Ensure that mkdir was not called because the user does not exist
+    mock_mkdir.assert_not_called()
+
+    assert f'Getting user info for {username}' in caplog.text
 
 
 @patch('os.chown')
@@ -154,7 +179,6 @@ def test_ensure_user_directory_reuse_existing(mock_exists, mock_mkdir, mock_chow
     mock_chown.assert_not_called()
     mock_chmod.assert_not_called()
 
-    # Assert that the correct log message was created
     assert f'Reusing user directory for {username}' in caplog.text
 
 

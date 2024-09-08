@@ -60,7 +60,8 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
 
                 if group:
                     # Check if the group exists, create if necessary
-                    group_check = subprocess.run(['getent', 'group', group], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    group_check = subprocess.run(['getent', 'group', group],
+                                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     if group_check.returncode != 0:
                         self.log.info(f'Group {group} does not exist, creating it.')
                         subprocess.run(['sudo', 'groupadd', group], check=True)
@@ -84,13 +85,18 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         Ensure the user's home directory exists and is correctly owned and permissioned.
         """
         if not user_dir.exists():
-            self.log.info(f'Creating user directory for {username}')
-            user_dir.mkdir(parents=True)
 
+            self.log.info(f'Getting user info for {username}')
+            try:
+                user_info = pwd.getpwnam(username)
+            except KeyError:
+                raise ValueError(f'System user {username} does not exist')
             # Get the Jupyter user's UID and GID
-            user_info = pwd.getpwnam(username)
             uid = user_info.pw_uid
             gid = user_info.pw_gid
+
+            self.log.info(f'Creating user directory for {username}')
+            user_dir.mkdir(parents=True)
 
             # Change the directory's ownership to the user
             os.chown(user_dir, uid, gid)
