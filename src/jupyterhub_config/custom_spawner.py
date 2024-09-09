@@ -96,7 +96,7 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
             gid = user_info.pw_gid
 
             self.log.info(f'Creating user directory for {username}')
-            user_dir.mkdir(parents=True)
+            user_dir.mkdir(parents=True, exist_ok=True)  # guard against race conditions
 
             # Change the directory's ownership to the user
             os.chown(user_dir, uid, gid)
