@@ -1,4 +1,5 @@
 import logging
+import os
 import subprocess
 import tempfile
 import unittest
@@ -105,8 +106,7 @@ def test_ensure_system_user_error(mock_run):
 
 @patch('pwd.getpwnam')
 @patch('os.chown')
-@patch('os.chmod')
-def test_ensure_user_directory_with_logging(mock_chmod, mock_chown, mock_getpwnam, caplog):
+def test_ensure_user_directory_with_logging(mock_chown, mock_getpwnam, caplog):
     username = 'testuser'
 
     # Mock pwd.getpwnam to return a mock user info
@@ -126,9 +126,13 @@ def test_ensure_user_directory_with_logging(mock_chmod, mock_chown, mock_getpwna
         assert user_dir.exists()
         assert user_dir.is_dir()
 
-        # Assert that chown and chmod were called with correct parameters
+        # Assert that chown was called with correct parameters
         mock_chown.assert_called_once_with(user_dir, 1000, 1000)
-        mock_chmod.assert_called_once_with(user_dir, 0o700)
+
+        # Check directory permissions
+        st = os.stat(user_dir)
+        # Permissions should be 0o700 (rwx------)
+        assert (st.st_mode & 0o777) == 0o700
 
         # Check log messages
         assert f'Getting user info for {username}' in caplog.text
