@@ -1,6 +1,9 @@
 import logging
+import os
 import subprocess
+import tempfile
 import unittest
+from pathlib import Path
 from subprocess import CalledProcessError
 from unittest.mock import patch, MagicMock
 
@@ -99,3 +102,125 @@ def test_ensure_system_user_error(mock_run):
     ]
 
     mock_run.assert_has_calls(expected_calls, any_order=False)
+
+
+@patch('pwd.getpwnam')
+@patch('os.chown')
+def test_ensure_user_directory_with_logging(mock_chown, mock_getpwnam, caplog):
+    username = 'testuser'
+
+    # Mock pwd.getpwnam to return a mock user info
+    mock_user_info = MagicMock()
+    mock_user_info.pw_uid = 1000
+    mock_user_info.pw_gid = 1000
+    mock_getpwnam.return_value = mock_user_info
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        user_dir = Path(temp_dir) / username
+
+        with caplog.at_level(logging.INFO):
+            spawner = VirtualEnvSpawner()
+            spawner._ensure_user_directory(user_dir, username)
+
+        # Check if the directory was created
+        assert user_dir.exists()
+        assert user_dir.is_dir()
+
+        # Assert that chown was called with correct parameters
+        mock_chown.assert_called_once_with(user_dir, 1000, 1000)
+
+        # Check directory permissions
+        st = os.stat(user_dir)
+        # Permissions should be 0o700 (rwx------)
+        assert (st.st_mode & 0o777) == 0o700
+
+        # Check log messages
+        assert f'Getting user info for {username}' in caplog.text
+        assert f'Creating user directory for {username}' in caplog.text
+
+
+@patch('pwd.getpwnam')
+def test_ensure_user_directory_user_not_found(mock_getpwnam, caplog):
+    username = 'nonexistentuser'
+
+    # Mock pwd.getpwnam to raise KeyError (simulating that the user does not exist)
+    mock_getpwnam.side_effect = KeyError
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        user_dir = Path(temp_dir) / username
+
+        with caplog.at_level(logging.INFO):
+            with pytest.raises(ValueError, match=f'System user {username} does not exist'):
+                spawner = VirtualEnvSpawner()
+                spawner._ensure_user_directory(user_dir, username)
+
+        # Check that the directory was not created
+        assert not user_dir.exists()
+
+        # Check log messages
+        assert f'Getting user info for {username}' in caplog.text
+
+
+@patch('os.chown')
+@patch('os.chmod')
+def test_ensure_user_directory_reuse_existing(mock_chown, mock_chmod, caplog):
+    username = 'testuser'
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        user_dir = Path(temp_dir) / username
+
+        # Create the directory ahead of time to simulate that it already exists
+        user_dir.mkdir(parents=True, exist_ok=True)
+
+        with caplog.at_level(logging.INFO):
+            spawner = VirtualEnvSpawner()
+            spawner._ensure_user_directory(user_dir, username)
+
+        # Check that mkdir, chown, and chmod were not called since directory exists
+        assert user_dir.exists()
+        mock_chown.assert_not_called()
+        mock_chmod.assert_not_called()
+
+        # Check log message
+        assert f'Reusing user directory for {username}' in caplog.text
+
+
+def test_ensure_user_jupyter_directory():
+    username = 'testuser'
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        user_dir = Path(temp_dir) / username
+
+        # Create the user directory to simulate the existence of the user directory
+        user_dir.mkdir(parents=True, exist_ok=True)
+
+        spawner = VirtualEnvSpawner()
+        spawner._ensure_user_jupyter_directory(user_dir)
+
+        # Expected directories
+        jupyter_dir = user_dir / '.jupyter'
+        jupyter_runtime_dir = jupyter_dir / 'runtime'
+        jupyter_data_dir = jupyter_dir / 'data'
+
+        # Check if the directories were created
+        assert jupyter_dir.exists()
+        assert jupyter_runtime_dir.exists()
+        assert jupyter_data_dir.exists()
+
+        # Assert the JUPYTER environment variables are set correctly
+        assert spawner.environment['JUPYTER_CONFIG_DIR'] == str(jupyter_dir)
+        assert spawner.environment['JUPYTER_RUNTIME_DIR'] == str(jupyter_runtime_dir)
+        assert spawner.environment['JUPYTER_DATA_DIR'] == str(jupyter_data_dir)
+
+
+def test_ensure_user_jupyter_directory_user_dir_does_not_exist():
+    with tempfile.TemporaryDirectory() as temp_dir:
+        user_dir = Path(temp_dir) / 'nonexistentuser'
+
+        # Ensure the user directory does not exist
+        assert not user_dir.exists()
+
+        spawner = VirtualEnvSpawner()
+
+        with pytest.raises(ValueError, match=f'User directory {user_dir} does not exist'):
+            spawner._ensure_user_jupyter_directory(user_dir)
