@@ -31,7 +31,7 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         # Ensure the user directory exists and has correct permissions
         self._ensure_user_directory(user_dir, username)
 
-        # Ensure the user's Jupiter directory exists
+        # Ensure the user's Jupyter directory exists
         self._ensure_user_jupyter_directory(user_dir)
 
         return super().start()
