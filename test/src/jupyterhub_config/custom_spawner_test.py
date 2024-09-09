@@ -253,7 +253,6 @@ def test_create_virtual_environment(mock_venv_create, caplog, spawner):
 
 @patch('subprocess.run')
 def test_ensure_virtual_environment_raises(mock_run, caplog, spawner):
-
     with tempfile.TemporaryDirectory() as temp_dir:
         user_env_dir = Path(temp_dir) / 'venv'
 
@@ -317,11 +316,11 @@ def test_configure_environment(spawner, caplog):
     assert str(spawner.environment) in caplog.text
 
 
-@patch.dict(os.environ, {
-    'PATH': '/usr/local/bin:/usr/bin:/bin',
-    'JUPYTERHUB_CONFIG_DIR': '/etc/jupyterhub',
-})
+@patch.dict(os.environ, {}, clear=True)  # Clear the environment for the test
 def test_configure_environment_missing_pythonpath(spawner):
+    os.environ['PATH'] = '/usr/local/bin:/usr/bin:/bin'
+    os.environ['JUPYTERHUB_CONFIG_DIR'] = '/etc/jupyterhub'
+
     user_dir = Path('/home/testuser')
     user_env_dir = Path('/home/testuser/.venv')
     username = 'testuser'
@@ -329,4 +328,4 @@ def test_configure_environment_missing_pythonpath(spawner):
     spawner._configure_environment(user_dir, user_env_dir, username)
 
     # Check that PYTHONPATH is set correctly even when it's not in the original environment
-    assert f"{user_env_dir}/lib/python3.11/site-packages" in spawner.environment['PYTHONPATH']
+    assert f"{user_env_dir}/lib/python3.11/site-packages" == spawner.environment['PYTHONPATH']
