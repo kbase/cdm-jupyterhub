@@ -3,6 +3,7 @@ import os
 import pwd
 import subprocess
 import tempfile
+import venv
 from pathlib import Path
 
 from jupyterhub.spawner import SimpleLocalProcessSpawner
@@ -145,8 +146,10 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
             self.log.info(f'Creating virtual environment for {self.user.name}')
             try:
                 # Create a virtual environment with system site-packages access
-                subprocess.run(['python3', '-m', 'venv', str(user_env_dir), '--system-site-packages'],
-                               check=True)
+                venv.create(env_dir=user_env_dir, system_site_packages=True, with_pip=True)
+
+                # subprocess.run(['python3', '-m', 'venv', str(user_env_dir), '--system-site-packages'],
+                #                check=True)
             except subprocess.CalledProcessError as e:
                 raise ValueError(f'Failed to create virtual environment for {self.user.name}: {e}')
         else:
@@ -161,8 +164,11 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
 
         self.environment['HOME'] = str(user_dir)
         self.environment['PATH'] = f"{user_env_dir}/bin:{os.environ['PATH']}"
-        self.environment[
-            'PYTHONPATH'] = f"{user_env_dir}/lib/python3.11/site-packages:{os.environ.get('PYTHONPATH', '')}"
+        if 'PYTHONPATH' in os.environ:
+            self.environment['PYTHONPATH'] = f"{user_env_dir}/lib/python3.11/site-packages:{os.environ['PYTHONPATH']}"
+        else:
+            self.environment['PYTHONPATH'] = f"{user_env_dir}/lib/python3.11/site-packages"
+
         # Set path of the startup script for Notebook
         self.environment['PYTHONSTARTUP'] = os.path.join(os.environ['JUPYTERHUB_CONFIG_DIR'], 'startup.py')
         self.environment['JUPYTERHUB_USER'] = username

@@ -234,8 +234,8 @@ def test_ensure_user_jupyter_directory_user_dir_does_not_exist():
             spawner._ensure_user_jupyter_directory(user_dir)
 
 
-@patch('subprocess.run')
-def test_create_virtual_environment(mock_run, caplog, spawner):
+@patch('venv.create')
+def test_create_virtual_environment(mock_venv_create, caplog, spawner):
     with tempfile.TemporaryDirectory() as temp_dir:
         user_env_dir = Path(temp_dir) / 'venv'
 
@@ -244,9 +244,8 @@ def test_create_virtual_environment(mock_run, caplog, spawner):
             spawner._ensure_virtual_environment(user_env_dir)
 
             assert user_env_dir.exists()
-            mock_run.assert_called_once_with(
-                ['python3', '-m', 'venv', str(user_env_dir), '--system-site-packages'],
-                check=True
+            mock_venv_create.assert_called_once_with(
+                env_dir=user_env_dir, system_site_packages=True, with_pip=True
             )
 
         assert f'Creating virtual environment for {spawner.user.name}' in caplog.text
@@ -330,4 +329,4 @@ def test_configure_environment_missing_pythonpath(spawner):
     spawner._configure_environment(user_dir, user_env_dir, username)
 
     # Check that PYTHONPATH is set correctly even when it's not in the original environment
-    assert f"{user_env_dir}/lib/python3.11/site-packages:" in spawner.environment['PYTHONPATH']
+    assert f"{user_env_dir}/lib/python3.11/site-packages" in spawner.environment['PYTHONPATH']
