@@ -125,7 +125,7 @@ def test_ensure_user_directory_with_logging(mock_chmod, mock_chown, mock_mkdir, 
         spawner._ensure_user_directory(user_dir, username)
 
     # Assert that mkdir, chown, and chmod were called with correct parameters
-    mock_mkdir.assert_called_once_with(parents=True)
+    mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
     mock_chown.assert_called_once_with(user_dir, 1000, 1000)
     mock_chmod.assert_called_once_with(user_dir, 0o700)
 
