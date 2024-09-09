@@ -253,6 +253,20 @@ def test_create_virtual_environment(mock_run, caplog, spawner):
 
 
 @patch('subprocess.run')
+def test_ensure_virtual_environment_raises(mock_run, caplog, spawner):
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        user_env_dir = Path(temp_dir) / 'venv'
+
+        assert not user_env_dir.exists()
+
+        mock_run.side_effect = subprocess.CalledProcessError(1, 'venv')  # Simulate venv creation failure
+
+        with pytest.raises(ValueError, match=f'Failed to create virtual environment for {spawner.user.name}'):
+            spawner._ensure_virtual_environment(user_env_dir)
+
+
+@patch('subprocess.run')
 def test_reuse_virtual_environment(mock_run, caplog, spawner):
     with tempfile.TemporaryDirectory() as temp_dir:
         user_env_dir = Path(temp_dir) / 'venv'

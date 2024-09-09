@@ -148,8 +148,7 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
                 subprocess.run(['python3', '-m', 'venv', str(user_env_dir), '--system-site-packages'],
                                check=True)
             except subprocess.CalledProcessError as e:
-                self.log.error(f'Failed to create virtual environment: {e}')
-                raise
+                raise ValueError(f'Failed to create virtual environment for {self.user.name}: {e}')
         else:
             self.log.info(f'Reusing virtual environment for {self.user.name}')
 
@@ -162,7 +161,8 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
 
         self.environment['HOME'] = str(user_dir)
         self.environment['PATH'] = f"{user_env_dir}/bin:{os.environ['PATH']}"
-        self.environment['PYTHONPATH'] = f"{user_env_dir}/lib/python3.11/site-packages:{os.environ['PYTHONPATH']}"
+        self.environment[
+            'PYTHONPATH'] = f"{user_env_dir}/lib/python3.11/site-packages:{os.environ.get('PYTHONPATH', '')}"
         # Set path of the startup script for Notebook
         self.environment['PYTHONSTARTUP'] = os.path.join(os.environ['JUPYTERHUB_CONFIG_DIR'], 'startup.py')
         self.environment['JUPYTERHUB_USER'] = username
