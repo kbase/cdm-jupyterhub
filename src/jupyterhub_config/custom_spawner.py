@@ -147,9 +147,6 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
             try:
                 # Create a virtual environment with system site-packages access
                 venv.create(env_dir=user_env_dir, system_site_packages=True, with_pip=True)
-
-                # subprocess.run(['python3', '-m', 'venv', str(user_env_dir), '--system-site-packages'],
-                #                check=True)
             except subprocess.CalledProcessError as e:
                 raise ValueError(f'Failed to create virtual environment for {self.user.name}: {e}')
         else:
