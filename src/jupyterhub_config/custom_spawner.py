@@ -34,6 +34,13 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         # Ensure the user's Jupyter directory exists
         self._ensure_user_jupyter_directory(user_dir)
 
+        # Ensure the virtual environment is created or reused
+        user_env_dir = user_dir / '.virtualenvs' / 'envs' / f'{username}_default_env'
+        self._ensure_virtual_environment(user_env_dir)
+
+        # Configure the environment variables specific to the user's virtual environment
+        self._configure_environment(user_dir, user_env_dir, username)
+
         return super().start()
 
     def _ensure_system_user(self, username: str, group: str = None):
@@ -127,3 +134,37 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         self.environment['JUPYTER_CONFIG_DIR'] = str(jupyter_dir)
         self.environment['JUPYTER_RUNTIME_DIR'] = str(jupyter_runtime_dir)
         self.environment['JUPYTER_DATA_DIR'] = str(juputer_data_dir)
+
+    def _ensure_virtual_environment(self, user_env_dir: Path):
+        """
+        Ensure the user's virtual environment exists. If it does not exist, it is
+        created with the system site-packages included.
+        """
+        if not user_env_dir.exists():
+            user_env_dir.mkdir(parents=True)
+            self.log.info(f'Creating virtual environment for {self.user.name}')
+            try:
+                # Create a virtual environment with system site-packages access
+                subprocess.run(['python3', '-m', 'venv', str(user_env_dir), '--system-site-packages'],
+                               check=True)
+            except subprocess.CalledProcessError as e:
+                self.log.error(f'Failed to create virtual environment: {e}')
+                raise
+        else:
+            self.log.info(f'Reusing virtual environment for {self.user.name}')
+
+    def _configure_environment(self, user_dir: Path, user_env_dir: Path, username: str):
+        """
+        Configure the environment variables for the user's session, including
+        the PATH and PYTHONPATH to use the virtual environment.
+        """
+        self.environment.update({key: value for key, value in os.environ.items() if key not in self.environment})
+
+        self.environment['HOME'] = str(user_dir)
+        self.environment['PATH'] = f"{user_env_dir}/bin:{os.environ['PATH']}"
+        self.environment['PYTHONPATH'] = f"{user_env_dir}/lib/python3.11/site-packages:{os.environ['PYTHONPATH']}"
+        # Set path of the startup script for Notebook
+        self.environment['PYTHONSTARTUP'] = os.path.join(os.environ['JUPYTERHUB_CONFIG_DIR'], 'startup.py')
+        self.environment['JUPYTERHUB_USER'] = username
+
+        self.log.info(f"Environment variables for {username}: {self.environment}")
