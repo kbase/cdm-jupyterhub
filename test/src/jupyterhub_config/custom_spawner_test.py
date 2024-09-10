@@ -12,6 +12,14 @@ import pytest
 from jupyterhub_config.custom_spawner import VirtualEnvSpawner
 
 
+@pytest.fixture
+def spawner():
+    spawner = VirtualEnvSpawner()
+    spawner.user = MagicMock()
+    spawner.user.name = 'testuser'
+    return spawner
+
+
 # Test when the user already exists
 @patch('subprocess.run')
 def test_ensure_system_user_already_exists(mock_run, caplog):
@@ -224,3 +232,100 @@ def test_ensure_user_jupyter_directory_user_dir_does_not_exist():
 
         with pytest.raises(ValueError, match=f'User directory {user_dir} does not exist'):
             spawner._ensure_user_jupyter_directory(user_dir)
+
+
+@patch('venv.create')
+def test_create_virtual_environment(mock_venv_create, caplog, spawner):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        user_env_dir = Path(temp_dir) / 'venv'
+
+        assert not user_env_dir.exists()
+        with caplog.at_level(logging.INFO):
+            spawner._ensure_virtual_environment(user_env_dir)
+
+            assert user_env_dir.exists()
+            mock_venv_create.assert_called_once_with(
+                env_dir=user_env_dir, system_site_packages=True, with_pip=True
+            )
+
+        assert f'Creating virtual environment for {spawner.user.name}' in caplog.text
+
+
+@patch('subprocess.run')
+def test_ensure_virtual_environment_raises(mock_run, caplog, spawner):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        user_env_dir = Path(temp_dir) / 'venv'
+
+        assert not user_env_dir.exists()
+
+        mock_run.side_effect = subprocess.CalledProcessError(1, 'venv')  # Simulate venv creation failure
+
+        with pytest.raises(ValueError, match=f'Failed to create virtual environment for {spawner.user.name}'):
+            spawner._ensure_virtual_environment(user_env_dir)
+
+
+@patch('subprocess.run')
+def test_reuse_virtual_environment(mock_run, caplog, spawner):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        user_env_dir = Path(temp_dir) / 'venv'
+        user_env_dir.mkdir()
+
+        assert user_env_dir.exists()
+
+        with caplog.at_level(logging.INFO):
+            spawner._ensure_virtual_environment(user_env_dir)
+
+            mock_run.assert_not_called()
+
+            assert f'Reusing virtual environment for {spawner.user.name}' in caplog.text
+
+
+@patch.dict(os.environ, {
+    'PATH': '/usr/local/bin:/usr/bin:/bin',
+    'PYTHONPATH': '/usr/local/lib/python3.11/site-packages',
+    'JUPYTERHUB_CONFIG_DIR': '/etc/jupyterhub',
+    'EXISTING_VAR': 'existing_value',
+    'OVERWRITE_VAR': 'original_value'
+})
+def test_configure_environment(spawner, caplog):
+    user_dir = Path('/home/testuser')
+    user_env_dir = Path('/home/testuser/.venv')
+    username = 'testuser'
+
+    # Set a variable in the spawner's environment to test overwriting behavior
+    spawner.environment['OVERWRITE_VAR'] = 'spawner_value'
+
+    with caplog.at_level(logging.INFO):
+        spawner._configure_environment(user_dir, user_env_dir, username)
+
+    # Check that existing environment variables are copied
+    assert spawner.environment['EXISTING_VAR'] == 'existing_value'
+
+    # Check that the spawner's existing environment variables are not overwritten
+    assert spawner.environment['OVERWRITE_VAR'] == 'spawner_value'
+
+    # Check that new environment variables are set correctly
+    assert spawner.environment['HOME'] == str(user_dir)
+    assert spawner.environment['PATH'] == f"{user_env_dir}/bin:/usr/local/bin:/usr/bin:/bin"
+    assert spawner.environment[
+               'PYTHONPATH'] == f"{user_env_dir}/lib/python3.11/site-packages:/usr/local/lib/python3.11/site-packages"
+    assert spawner.environment['PYTHONSTARTUP'] == '/etc/jupyterhub/startup.py'
+    assert spawner.environment['JUPYTERHUB_USER'] == username
+
+    assert f"Environment variables for {username}" in caplog.text
+    assert str(spawner.environment) in caplog.text
+
+
+@patch.dict(os.environ, {}, clear=True)  # Clear the environment for the test
+def test_configure_environment_missing_pythonpath(spawner):
+    os.environ['PATH'] = '/usr/local/bin:/usr/bin:/bin'
+    os.environ['JUPYTERHUB_CONFIG_DIR'] = '/etc/jupyterhub'
+
+    user_dir = Path('/home/testuser')
+    user_env_dir = Path('/home/testuser/.venv')
+    username = 'testuser'
+
+    spawner._configure_environment(user_dir, user_env_dir, username)
+
+    # Check that PYTHONPATH is set correctly even when it's not in the original environment
+    assert f"{user_env_dir}/lib/python3.11/site-packages" == spawner.environment['PYTHONPATH']
