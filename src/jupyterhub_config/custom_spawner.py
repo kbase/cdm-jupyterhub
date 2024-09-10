@@ -42,6 +42,15 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         # Configure the environment variables specific to the user's virtual environment
         self._configure_environment(user_dir, user_env_dir, username)
 
+        # Configure the notebook directory based on whether the user is an admin
+        self._configure_notebook_dir(username, user_dir)
+
+        # Set the command to start the notebook
+        env_vars = [f'{key}={value}' for key, value in self.environment.items()]
+
+        self.cmd = ['sudo', '-E', '-u', username, 'env'] + env_vars + [
+            os.path.join(os.environ['JUPYTERHUB_CONFIG_DIR'], 'spawn_notebook.sh')]
+
         return super().start()
 
     def _ensure_system_user(self, username: str, group: str = None):
@@ -171,3 +180,16 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         self.environment['JUPYTERHUB_USER'] = username
 
         self.log.info(f"Environment variables for {username}: {self.environment}")
+
+    def _configure_notebook_dir(self, username: str, user_dir: Path):
+        """
+        Configure the notebook directory for the user. If the user is an admin,
+        the directory is set to a shared workspace. Otherwise, it is set to the
+        user's home directory.
+        """
+        if self.user.admin:
+            self.log.info(f'Admin user detected: {username}. Setting up admin workspace.')
+            self.notebook_dir = '/cdm_shared_workspace'
+        else:
+            self.log.info(f'Non-admin user detected: {username}. Setting up user-specific workspace.')
+            self.notebook_dir = str(user_dir)
