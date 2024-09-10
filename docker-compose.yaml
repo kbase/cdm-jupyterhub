@@ -240,6 +240,7 @@ services:
       - POSTGRES_URL=postgres:5432
       - JUPYTERHUB_ADMIN_PASSWORD=testpassword123
     volumes:
+      - ./cdr/cdm/jupyter:/cdm_shared_workspace
       - ./cdr/cdm/jupyter/jupyterhub/users_home:/jupyterhub/users_home
 
   postgres:
