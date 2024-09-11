@@ -29,8 +29,8 @@ c.Authenticator.admin_users = {'spark_user'}
 # ref: https://jupyterhub.readthedocs.io/en/latest/reference/api/auth.html#jupyterhub.auth.Authenticator.allow_all
 c.Authenticator.allow_all = True
 
-c.JupyterHub.cookie_secret_file = f"{os.environ['JUPYTERHUB_USER_HOME']}/jupyterhub_cookie_secret"
-c.JupyterHub.db_url = f"sqlite:///{os.environ['JUPYTERHUB_USER_HOME']}/jupyterhub.sqlite"
+c.JupyterHub.cookie_secret_file = f"{os.environ['JUPYTERHUB_SECRETS_DIR']}/jupyterhub_cookie_secret"
+c.JupyterHub.db_url = f"sqlite:///{os.environ['JUPYTERHUB_SECRETS_DIR']}/jupyterhub.sqlite"
 
 c.JupyterHub.spawner_class = VirtualEnvSpawner
 
