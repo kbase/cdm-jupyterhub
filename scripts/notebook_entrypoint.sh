@@ -1,16 +1,16 @@
 #!/bin/bash
 
-# Ensure NOTEBOOK_DIR is set
-if [ -z "$NOTEBOOK_DIR" ]; then
-    echo "ERROR: NOTEBOOK_DIR is not set. Please run setup.sh first."
-    exit 1
-fi
-
-mkdir -p "$NOTEBOOK_DIR" && cd "$NOTEBOOK_DIR"
-
-
 if [ "$JUPYTER_MODE" = "jupyterlab" ]; then
   echo "starting jupyterlab"
+
+  # Ensure NOTEBOOK_DIR is set
+  if [ -z "$NOTEBOOK_DIR" ]; then
+      echo "ERROR: NOTEBOOK_DIR is not set. Please run setup.sh first."
+      exit 1
+  fi
+
+  mkdir -p "$NOTEBOOK_DIR" && cd "$NOTEBOOK_DIR"
+
   # install Plotly extension
   jupyter labextension install jupyterlab-plotly@5.23.0
 
@@ -27,6 +27,8 @@ if [ "$JUPYTER_MODE" = "jupyterlab" ]; then
               --ServerApp.password=''
 elif [ "$JUPYTER_MODE" = "jupyterhub" ]; then
   echo "starting jupyterhub"
+  # unset global $NOTEBOOK_DIR var, as it should be configured individually for each user's spawner
+  unset NOTEBOOK_DIR
 
   jupyterhub -f "$JUPYTERHUB_CONFIG_DIR"/jupyterhub_config.py
 else
