@@ -156,7 +156,7 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
             try:
                 # Create a virtual environment with system site-packages access
                 venv.create(env_dir=user_env_dir, system_site_packages=True, with_pip=True)
-            except subprocess.CalledProcessError as e:
+            except Exception as e:
                 raise ValueError(f'Failed to create virtual environment for {self.user.name}: {e}')
         else:
             self.log.info(f'Reusing virtual environment for {self.user.name}')
