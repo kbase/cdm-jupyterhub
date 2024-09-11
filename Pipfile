@@ -4,16 +4,16 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-jupyterlab= "==4.2.4"
+jupyterlab= "==4.2.5"
 jupyterhub = "==5.1.0"
-oauthenticator = "==16.3.1"
+jupyterhub-nativeauthenticator = "==1.2.0"
 pyspark= "==3.5.2"
-boto3 = "==1.35.10"
+boto3 = "==1.35.16"
 minio = "==7.2.8"
 delta-spark = "==3.2.0"  # should match JAR version (DELTA_SPARK_VER) specified in the Dockerfile
 pandas = "==2.2.2"
 pyarrow = "==17.0.0"
-itables = "==2.1.4"
+itables = "==2.1.5"
 PyMySQL = "==1.1.1"
 urllib3 = "==2.2.2"
 jupyterlab-git = "==0.50.1"
@@ -39,7 +39,7 @@ pynhd = "==0.17.0"
 numpy = "==2.1.1"
 
 [dev-packages]
-pytest = "==8.3.2"
+pytest = "==8.3.3"
 coverage = "==7.6.1"
 pytest-cov = "==5.0.0"
 ipython = "==8.27.0"

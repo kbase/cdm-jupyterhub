@@ -210,6 +210,7 @@ services:
         - JUPYTERHUB_ADMIN_PASSWORD=testpassword123
       volumes:
         - ./cdr/cdm/jupyter:/cdm_shared_workspace
+        - ./cdr/cdm/jupyter/jupyterhub_secrets:/jupyterhub_secrets
         - ./cdr/cdm/jupyter/jupyterhub/users_home:/jupyterhub/users_home
 
   user_jupyterhub:
@@ -241,6 +242,7 @@ services:
       - JUPYTERHUB_ADMIN_PASSWORD=testpassword123
     volumes:
       - ./cdr/cdm/jupyter:/cdm_shared_workspace
+      - ./cdr/cdm/jupyter/jupyterhub_secrets:/jupyterhub_secrets
       - ./cdr/cdm/jupyter/jupyterhub/users_home:/jupyterhub/users_home
 
   postgres:

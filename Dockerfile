@@ -98,6 +98,11 @@ ENV CDM_SHARED_DIR=/cdm_shared_workspace
 RUN mkdir -p ${CDM_SHARED_DIR} && chmod -R 777 ${CDM_SHARED_DIR}
 RUN chown -R spark_user:spark $CDM_SHARED_DIR
 
+# Set a directory for hosting Jupyterhub db and cookie secret
+ENV JUPYTERHUB_SECRETS_DIR=/jupyterhub_secrets
+RUN mkdir -p ${JUPYTERHUB_SECRETS_DIR}
+RUN chown -R spark_user:spark ${JUPYTERHUB_SECRETS_DIR}
+
 # Allow spark_user to use sudo without a password
 # TODO: use `sudospawner` in JupyterHub to avoid this (https://jupyterhub.readthedocs.io/en/stable/howto/configuration/config-sudo.html)
 RUN echo "spark_user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
