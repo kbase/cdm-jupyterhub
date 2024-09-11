@@ -20,6 +20,57 @@ def spawner():
     return spawner
 
 
+@patch.dict(os.environ, {
+    'JUPYTERHUB_USER_HOME': '/jupyterhub/users_home',
+    'JUPYTERHUB_CONFIG_DIR': '/etc/jupyterhub'
+})
+@patch.object(VirtualEnvSpawner, '_ensure_system_user')
+@patch.object(VirtualEnvSpawner, '_ensure_user_directory')
+@patch.object(VirtualEnvSpawner, '_ensure_user_jupyter_directory')
+@patch.object(VirtualEnvSpawner, '_ensure_virtual_environment')
+@patch.object(VirtualEnvSpawner, '_configure_environment')
+@patch.object(VirtualEnvSpawner, '_configure_notebook_dir')
+def test_start(mock_configure_notebook_dir, mock_configure_environment, mock_ensure_virtual_environment,
+               mock_ensure_user_jupyter_directory, mock_ensure_user_directory, mock_ensure_system_user,
+               spawner):
+
+    # set spawner.environment (_configure_environment is mocked, so `self.environment` won't be set by the method)
+    spawner.environment = {
+        'JUPYTERHUB_USER_HOME': '/jupyterhub/users_home',
+        'JUPYTERHUB_CONFIG_DIR': '/etc/jupyterhub'
+    }
+
+    spawner.start()
+
+    # Ensure each method is called in the specified order
+    expected_calls = [
+        unittest.mock.call('testuser', group='jupyterhub'),
+        unittest.mock.call(Path('/jupyterhub/users_home/testuser'), 'testuser'),
+        unittest.mock.call(Path('/jupyterhub/users_home/testuser')),
+        unittest.mock.call(Path('/jupyterhub/users_home/testuser/.virtualenvs/envs/testuser_default_env')),
+        unittest.mock.call(Path('/jupyterhub/users_home/testuser'),
+                           Path('/jupyterhub/users_home/testuser/.virtualenvs/envs/testuser_default_env'),
+                           'testuser'),
+        unittest.mock.call('testuser', Path('/jupyterhub/users_home/testuser'))
+    ]
+
+    mock_ensure_system_user.assert_has_calls(expected_calls[0:1], any_order=False)
+    mock_ensure_user_directory.assert_has_calls(expected_calls[1:2], any_order=False)
+    mock_ensure_user_jupyter_directory.assert_has_calls(expected_calls[2:3], any_order=False)
+    mock_ensure_virtual_environment.assert_has_calls(expected_calls[3:4], any_order=False)
+    mock_configure_environment.assert_has_calls(expected_calls[4:5], any_order=False)
+    mock_configure_notebook_dir.assert_has_calls(expected_calls[5:6], any_order=False)
+
+    # Check if the command to start the notebook server is set correctly
+    expected_cmd = [
+        'sudo', '-E', '-u', 'testuser', 'env',
+        f'JUPYTERHUB_USER_HOME=/jupyterhub/users_home',
+        f'JUPYTERHUB_CONFIG_DIR=/etc/jupyterhub',
+        '/etc/jupyterhub/spawn_notebook.sh'
+    ]
+    assert spawner.cmd == expected_cmd
+
+
 # Test when the user already exists
 @patch('subprocess.run')
 def test_ensure_system_user_already_exists(mock_run, caplog):
@@ -329,3 +380,26 @@ def test_configure_environment_missing_pythonpath(spawner):
 
     # Check that PYTHONPATH is set correctly even when it's not in the original environment
     assert f"{user_env_dir}/lib/python3.11/site-packages" == spawner.environment['PYTHONPATH']
+
+
+@pytest.mark.parametrize("is_admin, expected_dir", [
+    (True, '/cdm_shared_workspace'),  # Admin user case
+    (False, 'to_be_defined_in_the_test')  # Non-admin user case
+])
+def test_configure_notebook_dir(is_admin, expected_dir, spawner, caplog):
+    spawner.user.admin = is_admin
+    username = 'testuser'
+    with tempfile.TemporaryDirectory() as temp_dir:
+        user_dir = Path(temp_dir) / 'testuser'
+        if not is_admin:
+            expected_dir = str(user_dir)
+
+        with caplog.at_level(logging.INFO):
+            spawner._configure_notebook_dir(username, user_dir)
+
+        assert spawner.notebook_dir == expected_dir
+
+        if is_admin:
+            assert f'Admin user detected: {username}. Setting up admin workspace.' in caplog.text
+        else:
+            assert f'Non-admin user detected: {username}. Setting up user-specific workspace.' in caplog.text
