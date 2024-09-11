@@ -17,9 +17,10 @@ c = get_config()
 # ref: https://native-authenticator.readthedocs.io/en/latest/quickstart.html
 c.JupyterHub.authenticator_class = 'native'
 c.JupyterHub.template_paths = [f"{os.path.dirname(nativeauthenticator.__file__)}/templates/"]
+# ref: https://native-authenticator.readthedocs.io/en/latest/options.html
 c.NativeAuthenticator.open_signup = True
 c.NativeAuthenticator.check_common_password = True
-c.NativeAuthenticator.minimum_password_length = 6
+c.NativeAuthenticator.minimum_password_length = 8
 
 # Set up the admin user
 c.Authenticator.admin_users = {'spark_user'}
