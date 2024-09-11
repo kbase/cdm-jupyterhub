@@ -23,7 +23,8 @@ c.NativeAuthenticator.check_common_password = True
 c.NativeAuthenticator.minimum_password_length = 8
 
 # Set up the admin user
-c.Authenticator.admin_users = {'spark_user'}
+admin_user = 'spark_user'
+c.Authenticator.admin_users = {admin_user}
 # TODO set admin user password to os.environ['JUPYTERHUB_ADMIN_PASSWORD'] automatically - currently spark_user is created manually with the signup page
 # Allow user who can successfully authenticate to access the JupyterHub server
 # ref: https://jupyterhub.readthedocs.io/en/latest/reference/api/auth.html#jupyterhub.auth.Authenticator.allow_all
@@ -36,7 +37,7 @@ c.JupyterHub.spawner_class = VirtualEnvSpawner
 
 # Create a group to indicate users with read/write access to MinIO
 c.JupyterHub.load_groups = {
-    'minio_rw': [],
+    VirtualEnvSpawner.RW_MINIO_GROUP: [],
 }
 
 # Set the JupyterHub IP address and port

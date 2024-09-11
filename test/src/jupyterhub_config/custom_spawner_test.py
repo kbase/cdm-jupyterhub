@@ -17,6 +17,8 @@ def spawner():
     spawner = VirtualEnvSpawner()
     spawner.user = MagicMock()
     spawner.user.name = 'testuser'
+    spawner.user.admin = False
+
     return spawner
 
 
@@ -335,10 +337,13 @@ def test_reuse_virtual_environment(mock_run, caplog, spawner):
     'PATH': '/usr/local/bin:/usr/bin:/bin',
     'PYTHONPATH': '/usr/local/lib/python3.11/site-packages',
     'JUPYTERHUB_CONFIG_DIR': '/etc/jupyterhub',
+    'MINIO_RW_ACCESS_KEY': 'minio_rw_access',
+    'MINIO_RW_SECRET_KEY': 'minio_rw_secret',
+    'JUPYTERHUB_ADMIN_PASSWORD': 'admin_password',
     'EXISTING_VAR': 'existing_value',
     'OVERWRITE_VAR': 'original_value'
 })
-def test_configure_environment(spawner, caplog):
+def test_configure_environment_non_admin(spawner, caplog):
     user_dir = Path('/home/testuser')
     user_env_dir = Path('/home/testuser/.venv')
     username = 'testuser'
@@ -363,8 +368,67 @@ def test_configure_environment(spawner, caplog):
     assert spawner.environment['PYTHONSTARTUP'] == '/etc/jupyterhub/startup.py'
     assert spawner.environment['JUPYTERHUB_USER'] == username
 
+    # Check that the admin credentials are removed for non-admin users
+    assert 'MINIO_RW_ACCESS_KEY' not in spawner.environment
+    assert 'MINIO_RW_SECRET_KEY' not in spawner.environment
+    assert 'JUPYTERHUB_ADMIN_PASSWORD' not in spawner.environment
+
     assert f"Environment variables for {username}" in caplog.text
     assert str(spawner.environment) in caplog.text
+    assert f'Non-admin user detected: {username}. Removing admin credentials.' in caplog.text
+
+@patch.dict(os.environ, {
+    'PATH': '/usr/local/bin:/usr/bin:/bin',
+    'PYTHONPATH': '/usr/local/lib/python3.11/site-packages',
+    'JUPYTERHUB_CONFIG_DIR': '/etc/jupyterhub',
+    'MINIO_RW_ACCESS_KEY': 'minio_rw_access',
+    'MINIO_RW_SECRET_KEY': 'minio_rw_secret',
+})
+def test_configure_environment_admin(spawner, caplog):
+    spawner.user.admin = True
+    user_dir = Path('/home/testadminuser')
+    user_env_dir = Path('/home/testuser/.venv')
+    username = 'testadminuser'
+
+    with caplog.at_level(logging.INFO):
+        spawner._configure_environment(user_dir, user_env_dir, username)
+
+    assert spawner.environment['MINIO_RW_ACCESS_KEY'] == 'minio_rw_access'
+    assert spawner.environment['MINIO_ACCESS_KEY'] == 'minio_rw_access'
+
+    assert spawner.environment['MINIO_RW_SECRET_KEY'] == 'minio_rw_secret'
+    assert spawner.environment['MINIO_SECRET_KEY'] == 'minio_rw_secret'
+
+    assert f'MinIO read/write user detected: {username}. Setting up minio_rw credentials.' in caplog.text
+
+
+@patch.dict(os.environ, {
+    'PATH': '/usr/local/bin:/usr/bin:/bin',
+    'PYTHONPATH': '/usr/local/lib/python3.11/site-packages',
+    'JUPYTERHUB_CONFIG_DIR': '/etc/jupyterhub',
+    'MINIO_RW_ACCESS_KEY': 'minio_rw_access',
+    'MINIO_RW_SECRET_KEY': 'minio_rw_secret',
+})
+def test_configure_environment_minio_rw_group(spawner, caplog):
+    # Mock the user's groups to include the minio_rw group
+    mock_group_minio_rw = MagicMock()
+    mock_group_minio_rw.name = 'minio_rw'
+    spawner.user.groups = [mock_group_minio_rw]
+
+    user_dir = Path('/home/testadminuser')
+    user_env_dir = Path('/home/testuser/.venv')
+    username = 'testadminuser'
+
+    with caplog.at_level(logging.INFO):
+        spawner._configure_environment(user_dir, user_env_dir, username)
+
+    assert spawner.environment['MINIO_RW_ACCESS_KEY'] == 'minio_rw_access'
+    assert spawner.environment['MINIO_ACCESS_KEY'] == 'minio_rw_access'
+
+    assert spawner.environment['MINIO_RW_SECRET_KEY'] == 'minio_rw_secret'
+    assert spawner.environment['MINIO_SECRET_KEY'] == 'minio_rw_secret'
+
+    assert f'MinIO read/write user detected: {username}. Setting up minio_rw credentials.' in caplog.text
 
 
 @patch.dict(os.environ, {}, clear=True)  # Clear the environment for the test

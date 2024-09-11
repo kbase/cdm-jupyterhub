@@ -181,57 +181,27 @@ services:
     volumes:
       - ./cdr/cdm/jupyter/user_shared_workspace:/cdm_shared_workspace/user_shared_workspace
 
-  dev_jupyterhub:
-      build:
-        context: .
-        dockerfile: Dockerfile
-      container_name: dev-jupyterhub
-      ports:
-        - "4043:4043"
-      depends_on:
-        - spark-master
-        - minio-create-bucket
-      environment:
-        - NOTEBOOK_PORT=4043
-        - JUPYTER_MODE=jupyterhub
-        - YARN_RESOURCE_MANAGER_URL=http://yarn-resourcemanager:8032
-        - SPARK_MASTER_URL=spark://spark-master:7077
-        - SPARK_DRIVER_HOST=dev-jupyterhub
-        - MINIO_URL=http://minio:9002
-        - MINIO_ACCESS_KEY=minio-readwrite
-        - MINIO_SECRET_KEY=minio123
-        - S3_YARN_BUCKET=yarn
-        - MAX_EXECUTORS=4
-        - POSTGRES_USER=hive
-        - POSTGRES_PASSWORD=hivepassword
-        - POSTGRES_DB=hive
-        - POSTGRES_URL=postgres:5432
-        - USAGE_MODE=dev
-        - JUPYTERHUB_ADMIN_PASSWORD=testpassword123
-      volumes:
-        - ./cdr/cdm/jupyter:/cdm_shared_workspace
-        - ./cdr/cdm/jupyter/jupyterhub_secrets:/jupyterhub_secrets
-        - ./cdr/cdm/jupyter/jupyterhub/users_home:/jupyterhub/users_home
-
-  user_jupyterhub:
+  cdm_jupyterhub:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: user-jupyterhub
+    container_name: cdm-jupyterhub
     ports:
-      - "4044:4044"
+      - "4043:4043"
     depends_on:
       - spark-master
       - minio-create-bucket
     environment:
-      - NOTEBOOK_PORT=4044
+      - NOTEBOOK_PORT=4043
       - JUPYTER_MODE=jupyterhub
       - YARN_RESOURCE_MANAGER_URL=http://yarn-resourcemanager:8032
       - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_DRIVER_HOST=user-jupyterhub
+      - SPARK_DRIVER_HOST=cdm-jupyterhub
       - MINIO_URL=http://minio:9002
       - MINIO_ACCESS_KEY=minio-readonly
       - MINIO_SECRET_KEY=minio123
+      - MINIO_RW_ACCESS_KEY=minio-readwrite
+      - MINIO_RW_SECRET_KEY=minio123
       - S3_YARN_BUCKET=yarn
       - JUPYTER_MODE=jupyterhub
       - MAX_EXECUTORS=4
