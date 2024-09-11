@@ -24,6 +24,8 @@ c.NativeAuthenticator.minimum_password_length = 6
 # Set up the admin user
 c.Authenticator.admin_users = {'spark_user'}
 # TODO set admin user password to os.environ['JUPYTERHUB_ADMIN_PASSWORD'] automatically - currently spark_user is created manually with the signup page
+# Allow user who can successfully authenticate to access the JupyterHub server
+# ref: https://jupyterhub.readthedocs.io/en/latest/reference/api/auth.html#jupyterhub.auth.Authenticator.allow_all
 c.Authenticator.allow_all = True
 
 c.JupyterHub.cookie_secret_file = f"{os.environ['JUPYTERHUB_USER_HOME']}/jupyterhub_cookie_secret"
