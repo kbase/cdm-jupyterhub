@@ -15,6 +15,8 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
     for each user, configuring their workspace based on their admin status.
     """
 
+    RW_MINIO_GROUP = 'minio_rw'
+
     def start(self):
         """
         Start the JupyterHub server for the user. This method ensures that the
@@ -118,8 +120,8 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
             # Change the directory's ownership to the user
             os.chown(user_dir, uid, gid)
 
-            # Set directory permissions to 700: Owner (rwx), Group (---), Others (---)
-            os.chmod(user_dir, 0o700)
+            # Set directory permissions to 750: Owner (rwx), Group (r-x), Others (---)
+            os.chmod(user_dir, 0o750)
 
         else:
             self.log.info(f'Reusing user directory for {username}')
@@ -178,6 +180,21 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         # Set path of the startup script for Notebook
         self.environment['PYTHONSTARTUP'] = os.path.join(os.environ['JUPYTERHUB_CONFIG_DIR'], 'startup.py')
         self.environment['JUPYTERHUB_USER'] = username
+
+        group_names = [group.name for group in self.user.groups]
+        self.log.info(f'User {self.user.name} groups: {group_names}')
+
+        if self.user.admin or self.RW_MINIO_GROUP in group_names:
+            self.log.info(f'MinIO read/write user detected: {username}. Setting up minio_rw credentials.')
+            self.environment['MINIO_ACCESS_KEY'] = self.environment['MINIO_RW_ACCESS_KEY']
+            self.environment['MINIO_SECRET_KEY'] = self.environment['MINIO_RW_SECRET_KEY']
+        else:
+            self.log.info(f'Non-admin user detected: {username}. Removing admin credentials.')
+            self.environment.pop('MINIO_RW_ACCESS_KEY', None)
+            self.environment.pop('MINIO_RW_SECRET_KEY', None)
+
+        # TODO: add a white list of environment variables to pass to the user's environment
+        self.environment.pop('JUPYTERHUB_ADMIN_PASSWORD', None)
 
         self.log.info(f"Environment variables for {username}: {self.environment}")
 
