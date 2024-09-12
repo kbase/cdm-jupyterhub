@@ -192,8 +192,8 @@ def test_ensure_user_directory_with_logging(mock_chown, mock_getpwnam, caplog):
 
         # Check directory permissions
         st = os.stat(user_dir)
-        # Permissions should be 0o700 (rwx------)
-        assert (st.st_mode & 0o777) == 0o700
+        # Permissions should be 0o750 (rwxr-x---)
+        assert (st.st_mode & 0o777) == 0o750
 
         # Check log messages
         assert f'Getting user info for {username}' in caplog.text
