@@ -384,7 +384,7 @@ def test_configure_environment_non_admin(spawner, caplog):
     'MINIO_RW_ACCESS_KEY': 'minio_rw_access',
     'MINIO_RW_SECRET_KEY': 'minio_rw_secret',
 })
-def test_configure_environment_admin(spawner, caplog):
+def test_configure_minio_environment_admin(spawner, caplog):
     spawner.user.admin = True
     user_dir = Path('/home/testadminuser')
     user_env_dir = Path('/home/testuser/.venv')
