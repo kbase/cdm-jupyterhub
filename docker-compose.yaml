@@ -150,7 +150,7 @@ services:
       - POSTGRES_URL=postgres:5432
       - USAGE_MODE=dev  # Enabling dev mode grants full access to MinIO and additional privileges for services like Hive, such as the ability to create tables as defined in the scripts/setup.sh.
     volumes:
-      - ./cdr/cdm/jupyter:/cdm_shared_workspace
+      - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
 
   user-jupyterlab:
     build:
@@ -179,7 +179,7 @@ services:
       - POSTGRES_DB=hive
       - POSTGRES_URL=postgres:5432
     volumes:
-      - ./cdr/cdm/jupyter/user_shared_workspace:/cdm_shared_workspace/user_shared_workspace
+      - ./cdr/cdm/jupyter/cdm_shared_workspace/user_shared_workspace:/cdm_shared_workspace/user_shared_workspace
 
   cdm_jupyterhub:
     build:
@@ -211,7 +211,7 @@ services:
       - POSTGRES_URL=postgres:5432
       - JUPYTERHUB_ADMIN_PASSWORD=testpassword123
     volumes:
-      - ./cdr/cdm/jupyter:/cdm_shared_workspace
+      - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
       - ./cdr/cdm/jupyter/jupyterhub_secrets:/jupyterhub_secrets
       - ./cdr/cdm/jupyter/jupyterhub/users_home:/jupyterhub/users_home
 
