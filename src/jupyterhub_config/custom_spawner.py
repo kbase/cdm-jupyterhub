@@ -207,18 +207,17 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
             user_info = pwd.getpwnam(username)
         except KeyError:
             raise ValueError(f'System user {username} does not exist')
-        # Get the Jupyter user's UID and GID
-        uid = user_info.pw_uid
+
         gid = user_info.pw_gid
+        group_name = grp.getgrgid(gid).gr_name
 
         self.log.info(f'Configuring workspace permissions for {username}')
         # Change the directory's ownership to the user
-        os.chown(user_dir, uid, gid)
+        subprocess.run(['sudo', 'chown', '-R', f'{username}:{group_name}', user_dir], check=True)
 
-        group_name = grp.getgrgid(gid).gr_name
         self.log.info(f'Add spark_user to the group of {group_name}')
         subprocess.run(['sudo', 'usermod', '-aG', group_name, 'spark_user'], check=True)
 
-        # TODO: Set directory permissions to 750: Owner (rwx), Group (r-x), Others (---)
+        # TODO: Set directory permissions to 700 or 750
         # Set directory permissions to 770: Owner (rwx), Group (rwx), Others (---)
-        os.chmod(user_dir, 0o770)
+        subprocess.run(['sudo', 'chmod', '-R', '770', user_dir], check=True)
