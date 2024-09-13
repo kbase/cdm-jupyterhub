@@ -115,7 +115,7 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
             gid = user_info.pw_gid
 
             self.log.info(f'Creating user directory for {username}')
-            user_dir.mkdir(parents=True, exist_ok=True)  # guard against race conditions
+            user_dir.mkdir(exist_ok=True)  # guard against race conditions
 
             # Change the directory's ownership to the user
             os.chown(user_dir, uid, gid)
@@ -139,9 +139,9 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         jupyter_runtime_dir = jupyter_dir / 'runtime'
         juputer_data_dir = jupyter_dir / 'data'
 
-        jupyter_dir.mkdir(parents=True, exist_ok=True)
-        jupyter_runtime_dir.mkdir(parents=True, exist_ok=True)
-        juputer_data_dir.mkdir(parents=True, exist_ok=True)
+        jupyter_dir.mkdir(exist_ok=True)
+        jupyter_runtime_dir.mkdir(exist_ok=True)
+        juputer_data_dir.mkdir(exist_ok=True)
 
         self.environment['JUPYTER_CONFIG_DIR'] = str(jupyter_dir)
         self.environment['JUPYTER_RUNTIME_DIR'] = str(jupyter_runtime_dir)
@@ -153,7 +153,7 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         created with the system site-packages included.
         """
         if not user_env_dir.exists():
-            user_env_dir.mkdir(parents=True)
+            user_env_dir.mkdir(exist_ok=True)
             self.log.info(f'Creating virtual environment for {self.user.name}')
             try:
                 # Create a virtual environment with system site-packages access
