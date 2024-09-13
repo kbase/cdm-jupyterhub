@@ -36,7 +36,7 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         self._ensure_user_directory(user_dir, username)
 
         # Ensure the user's Jupyter directory exists
-        self._ensure_user_jupyter_directory(user_dir)
+        # self._ensure_user_jupyter_directory(user_dir)
 
         # Ensure the virtual environment is created or reused
         user_env_dir = user_dir / '.virtualenvs' / 'envs' / f'{username}_default_env'
