@@ -105,9 +105,9 @@ RUN chown -R spark_user:spark ${JUPYTERHUB_SECRETS_DIR}
 
 # Allow spark_user to use sudo without a password
 # TODO: use `sudospawner` in JupyterHub to avoid this (https://jupyterhub.readthedocs.io/en/stable/howto/configuration/config-sudo.html)
-RUN echo "spark_user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+RUN echo "spark_usejupr ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 # Switch back to non-root user
-#USER spark_user
+USER spark_user
 
 ENTRYPOINT ["/opt/scripts/entrypoint.sh"]

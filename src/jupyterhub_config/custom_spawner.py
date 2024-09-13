@@ -1,4 +1,5 @@
 import fcntl
+import grp
 import os
 import pwd
 import subprocess
@@ -197,7 +198,7 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
             self.log.info(f'Non-admin user detected: {username}. Setting up user-specific workspace.')
             self.notebook_dir = str(user_dir)
 
-    def _change_ownership(self, user_dir: Path, username: str):
+    def _change_ownership(self, user_dir: Path, username: str, group: str = None):
         """
         Change the ownership of the user's directory to the user.
         """
@@ -206,16 +207,19 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
             user_info = pwd.getpwnam(username)
         except KeyError:
             raise ValueError(f'System user {username} does not exist')
-        # Get the Jupyter user's UID and GID
-        uid = user_info.pw_uid
         gid = user_info.pw_gid
 
-        for root, dirs, files in os.walk(user_dir):
-            for name in dirs + files:
-                filepath = os.path.join(root, name)
+        try:
+            group_info = grp.getgrgid(gid)
+        except KeyError:
+            raise ValueError(f'Group {gid} does not exist')
+        groupname = group_info.gr_name
 
-                # Change the directory's ownership to the user
-                os.chown(filepath, uid, gid)
+        self.log.info(f'Changing ownership of {user_dir} to {username}:{group}')
+        subprocess.run(['sudo', 'chown', '-R', f'{username}:{groupname}', user_dir], check=True)
 
-                # Set directory permissions to 750: Owner (rwx), Group (r-x), Others (---)
-                os.chmod(filepath, 0o750)
+        # Set directory permissions to 750: Owner (rwx), Group (r-x), Others (---)
+        self.log.info(f'Setting permissions for {user_dir}')
+        subprocess.run(['sudo', 'chmod', '-R', '750', user_dir], check=True)
+
+
