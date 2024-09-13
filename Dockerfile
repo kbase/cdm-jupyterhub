@@ -108,6 +108,6 @@ RUN chown -R spark_user:spark ${JUPYTERHUB_SECRETS_DIR}
 RUN echo "spark_user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 # Switch back to non-root user
-USER spark_user
+#USER spark_user
 
 ENTRYPOINT ["/opt/scripts/entrypoint.sh"]

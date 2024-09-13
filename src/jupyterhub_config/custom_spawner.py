@@ -209,19 +209,15 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
             user_info = pwd.getpwnam(username)
         except KeyError:
             raise ValueError(f'System user {username} does not exist')
+        uid = user_info.pw_uid
         gid = user_info.pw_gid
 
-        try:
-            group_info = grp.getgrgid(gid)
-        except KeyError:
-            raise ValueError(f'Group {gid} does not exist')
-        groupname = group_info.gr_name
-
-        self.log.info(f'Changing ownership of {user_dir} to {username}:{group}')
-        subprocess.run(['sudo', 'chown', '-R', f'{username}:{groupname}', user_dir], check=True)
+        # Change ownership of everything inside user_dir to the user
+        self.log.info(f'Changing ownership for {user_dir} to {username}')
+        os.chown(user_dir, uid, gid)
 
         # Set directory permissions to 750: Owner (rwx), Group (r-x), Others (---)
         self.log.info(f'Setting permissions for {user_dir}')
-        subprocess.run(['sudo', 'chmod', '-R', '750', user_dir], check=True)
+        os.chmod(user_dir, 0o750)
 
 
