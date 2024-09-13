@@ -32,8 +32,11 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         # Ensure the system user exists
         self._ensure_system_user(username, group='jupyterhub')
 
-        # Ensure the user directory exists and has correct permissions
+        # Ensure the user directory has correct permissions
         self._ensure_user_directory(user_dir, username)
+
+        # Ensure the user's workspace has the correct permissions
+        self._ensure_workspace_permission(user_dir, username)
 
         # Ensure the user's Jupyter directory exists
         self._ensure_user_jupyter_directory(user_dir)
@@ -47,9 +50,6 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
 
         # Configure the notebook directory based on whether the user is an admin
         self._configure_notebook_dir(username, user_dir)
-
-        # Ensure the user's workspace has the correct permissions
-        self._ensure_workspace_permission(user_dir, username)
 
         # Set the command to start the notebook
         env_vars = [f'{key}={value}' for key, value in self.environment.items()]
