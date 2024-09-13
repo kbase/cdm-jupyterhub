@@ -216,7 +216,7 @@ def test_ensure_user_directory_reuse_existing(mock_chown, mock_chmod, caplog):
         assert f'Reusing user directory for {username}' in caplog.text
 
 
-def test_ensure_user_jupyter_directory():
+def test_ensure_user_jupyter_directory(spawner):
     username = 'testuser'
 
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -225,7 +225,6 @@ def test_ensure_user_jupyter_directory():
         # Create the user directory to simulate the existence of the user directory
         user_dir.mkdir(parents=True, exist_ok=True)
 
-        spawner = VirtualEnvSpawner()
         spawner._ensure_user_jupyter_directory(user_dir)
 
         # Expected directories
