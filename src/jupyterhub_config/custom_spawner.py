@@ -126,11 +126,10 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         jupyter_runtime_dir = jupyter_dir / 'runtime'
         juputer_data_dir = jupyter_dir / 'data'
 
-        if not jupyter_dir.exists():
-            self.log.info(f'Creating Jupyter directory for {self.user.name}')
-            jupyter_dir.mkdir(parents=True, exist_ok=True)
-            jupyter_runtime_dir.mkdir(parents=True, exist_ok=True)
-            juputer_data_dir.mkdir(parents=True, exist_ok=True)
+        self.log.info(f'Creating Jupyter directory for {self.user.name}')
+        jupyter_dir.mkdir(parents=True, exist_ok=True)
+        jupyter_runtime_dir.mkdir(parents=True, exist_ok=True)
+        juputer_data_dir.mkdir(parents=True, exist_ok=True)
 
         self.environment['JUPYTER_CONFIG_DIR'] = str(jupyter_dir)
         self.environment['JUPYTER_RUNTIME_DIR'] = str(jupyter_runtime_dir)
