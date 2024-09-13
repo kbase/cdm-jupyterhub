@@ -74,7 +74,7 @@ RUN chown -R spark_user:spark ${JUPYTERHUB_CONFIG_DIR}
 # Jupyter Hub user home directory
 ENV JUPYTERHUB_USER_HOME=/jupyterhub/users_home
 RUN mkdir -p $JUPYTERHUB_USER_HOME
-RUN chown -R spark_user:spark $JUPYTERHUB_USER_HOME
+RUN chown -R spark_user:spark /jupyterhub
 
 RUN npm install -g configurable-http-proxy
 

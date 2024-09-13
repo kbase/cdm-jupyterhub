@@ -35,9 +35,6 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         # Ensure the user directory exists
         self._ensure_user_directory(user_dir, username)
 
-        # Ensure the user's workspace has the correct permissions
-        self._ensure_workspace_permission(user_dir, username)
-
         # Ensure the user's Jupyter directory exists
         self._ensure_user_jupyter_directory(user_dir)
 
@@ -50,6 +47,9 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
 
         # Configure the notebook directory based on whether the user is an admin
         self._configure_notebook_dir(username, user_dir)
+
+        # Ensure the user's workspace has the correct permissions
+        self._ensure_workspace_permission(user_dir, username)
 
         # Set the command to start the notebook
         env_vars = [f'{key}={value}' for key, value in self.environment.items()]
@@ -109,7 +109,7 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         """
         if not user_dir.exists():
             self.log.info(f'Creating user directory for {username}')
-            user_dir.mkdir(parents=True, exist_ok=True)  # guard against race conditions
+            user_dir.mkdir(exist_ok=True)  # guard against race conditions
         else:
             self.log.info(f'Reusing user directory for {username}')
 
@@ -126,9 +126,9 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         jupyter_runtime_dir = jupyter_dir / 'runtime'
         juputer_data_dir = jupyter_dir / 'data'
 
-        jupyter_dir.mkdir(parents=True, exist_ok=True)
-        jupyter_runtime_dir.mkdir(parents=True, exist_ok=True)
-        juputer_data_dir.mkdir(parents=True, exist_ok=True)
+        jupyter_dir.mkdir(exist_ok=True)
+        jupyter_runtime_dir.mkdir(exist_ok=True)
+        juputer_data_dir.mkdir(exist_ok=True)
 
         self.environment['JUPYTER_CONFIG_DIR'] = str(jupyter_dir)
         self.environment['JUPYTER_RUNTIME_DIR'] = str(jupyter_runtime_dir)
@@ -140,7 +140,7 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         created with the system site-packages included.
         """
         if not user_env_dir.exists():
-            user_env_dir.mkdir(parents=True)
+            user_env_dir.mkdir(exist_ok=True)
             self.log.info(f'Creating virtual environment for {self.user.name}')
             try:
                 # Create a virtual environment with system site-packages access
@@ -207,17 +207,16 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
             user_info = pwd.getpwnam(username)
         except KeyError:
             raise ValueError(f'System user {username} does not exist')
-
+        uid = user_info.pw_uid
         gid = user_info.pw_gid
         group_name = grp.getgrgid(gid).gr_name
 
         self.log.info(f'Configuring workspace permissions for {username}')
         # Change the directory's ownership to the user
-        subprocess.run(['sudo', 'chown', '-R', f'{username}:{group_name}', user_dir], check=True)
+        os.chown(user_dir, uid, gid)
 
         self.log.info(f'Add spark_user to the group of {group_name}')
         subprocess.run(['sudo', 'usermod', '-aG', group_name, 'spark_user'], check=True)
 
-        # TODO: Set directory permissions to 700 or 750
-        # Set directory permissions to 777: Owner (rwx), Group (rwx), Others (rwx)
-        subprocess.run(['sudo', 'chmod', '-R', '777', user_dir], check=True)
+        # Set directory permissions to 750: Owner (rwx), Group (r-x), Others (---)
+        os.chmod(user_dir, 0o750)
