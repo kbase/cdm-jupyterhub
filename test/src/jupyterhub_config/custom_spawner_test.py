@@ -445,25 +445,23 @@ def test_configure_environment_missing_pythonpath(spawner):
     # Check that PYTHONPATH is set correctly even when it's not in the original environment
     assert f"{user_env_dir}/lib/python3.11/site-packages" == spawner.environment['PYTHONPATH']
 
-
-@pytest.mark.parametrize("is_admin, expected_dir", [
-    (True, '/cdm_shared_workspace'),  # Admin user case
-    (False, 'to_be_defined_in_the_test')  # Non-admin user case
-])
-def test_configure_notebook_dir(is_admin, expected_dir, spawner, caplog):
-    spawner.user.admin = is_admin
+def test_configure_notebook_dir(spawner, caplog):
     username = 'testuser'
-    with tempfile.TemporaryDirectory() as temp_dir:
-        user_dir = Path(temp_dir) / 'testuser'
-        if not is_admin:
-            expected_dir = str(user_dir)
+    for is_admin in [True, False]:
+        spawner.user.admin = is_admin
+        with tempfile.TemporaryDirectory() as temp_dir:
+            user_dir = Path(temp_dir) / 'testuser'
+            if not is_admin:
+                expected_dir = str(user_dir)
+            else:
+                expected_dir = '/'
 
-        with caplog.at_level(logging.INFO):
-            spawner._configure_notebook_dir(username, user_dir)
+            with caplog.at_level(logging.INFO):
+                spawner._configure_notebook_dir(username, user_dir)
 
-        assert spawner.notebook_dir == expected_dir
+            assert spawner.notebook_dir == expected_dir
 
-        if is_admin:
-            assert f'Admin user detected: {username}. Setting up admin workspace.' in caplog.text
-        else:
-            assert f'Non-admin user detected: {username}. Setting up user-specific workspace.' in caplog.text
+            if is_admin:
+                assert f'Admin user detected: {username}. Setting up admin workspace.' in caplog.text
+            else:
+                assert f'Non-admin user detected: {username}. Setting up user-specific workspace.' in caplog.text
