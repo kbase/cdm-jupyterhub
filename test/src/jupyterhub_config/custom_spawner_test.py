@@ -446,17 +446,19 @@ def test_configure_environment_missing_pythonpath(spawner):
     assert f"{user_env_dir}/lib/python3.11/site-packages" == spawner.environment['PYTHONPATH']
 
 
-@pytest.mark.parametrize("is_admin, expected_dir", [
-    (True, '/cdm_shared_workspace'),  # Admin user case
-    (False, 'to_be_defined_in_the_test')  # Non-admin user case
+@pytest.mark.parametrize("is_admin", [
+    True,  # Admin user case
+    False  # Non-admin user case
 ])
-def test_configure_notebook_dir(is_admin, expected_dir, spawner, caplog):
+def test_configure_notebook_dir(is_admin, spawner, caplog):
     spawner.user.admin = is_admin
     username = 'testuser'
     with tempfile.TemporaryDirectory() as temp_dir:
         user_dir = Path(temp_dir) / 'testuser'
         if not is_admin:
             expected_dir = str(user_dir)
+        else:
+            expected_dir = str(user_dir.parent)
 
         with caplog.at_level(logging.INFO):
             spawner._configure_notebook_dir(username, user_dir)

@@ -206,7 +206,8 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         """
         if self.user.admin:
             self.log.info(f'Admin user detected: {username}. Setting up admin workspace.')
-            self.notebook_dir = '/cdm_shared_workspace'
+            # global users' home directory
+            self.notebook_dir = str(user_dir.parent)
         else:
             self.log.info(f'Non-admin user detected: {username}. Setting up user-specific workspace.')
             self.notebook_dir = str(user_dir)
