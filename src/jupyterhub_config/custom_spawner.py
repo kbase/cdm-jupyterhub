@@ -32,7 +32,7 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         # Ensure the system user exists
         self._ensure_system_user(username, group='jupyterhub')
 
-        # Ensure the user directory has correct permissions
+        # Ensure the user directory exists
         self._ensure_user_directory(user_dir, username)
 
         # Ensure the user's workspace has the correct permissions
@@ -219,5 +219,5 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         subprocess.run(['sudo', 'usermod', '-aG', group_name, 'spark_user'], check=True)
 
         # TODO: Set directory permissions to 700 or 750
-        # Set directory permissions to 770: Owner (rwx), Group (rwx), Others (---)
-        subprocess.run(['sudo', 'chmod', '-R', '770', user_dir], check=True)
+        # Set directory permissions to 777: Owner (rwx), Group (rwx), Others (rwx)
+        subprocess.run(['sudo', 'chmod', '-R', '777', user_dir], check=True)
