@@ -32,8 +32,14 @@ def spawner():
 @patch.object(VirtualEnvSpawner, '_ensure_virtual_environment')
 @patch.object(VirtualEnvSpawner, '_configure_environment')
 @patch.object(VirtualEnvSpawner, '_configure_notebook_dir')
-def test_start(mock_configure_notebook_dir, mock_configure_environment, mock_ensure_virtual_environment,
-               mock_ensure_user_jupyter_directory, mock_ensure_user_directory, mock_ensure_system_user,
+@patch.object(VirtualEnvSpawner, '_ensure_workspace_permission')
+def test_start(mock_ensure_workspace_permission,
+               mock_configure_notebook_dir,
+               mock_configure_environment,
+               mock_ensure_virtual_environment,
+               mock_ensure_user_jupyter_directory,
+               mock_ensure_user_directory,
+               mock_ensure_system_user,
                spawner):
 
     # set spawner.environment (_configure_environment is mocked, so `self.environment` won't be set by the method)
@@ -165,16 +171,8 @@ def test_ensure_system_user_error(mock_run):
     mock_run.assert_has_calls(expected_calls, any_order=False)
 
 
-@patch('pwd.getpwnam')
-@patch('os.chown')
-def test_ensure_user_directory_with_logging(mock_chown, mock_getpwnam, caplog):
+def test_ensure_user_directory_with_logging(caplog):
     username = 'testuser'
-
-    # Mock pwd.getpwnam to return a mock user info
-    mock_user_info = MagicMock()
-    mock_user_info.pw_uid = 1000
-    mock_user_info.pw_gid = 1000
-    mock_getpwnam.return_value = mock_user_info
 
     with tempfile.TemporaryDirectory() as temp_dir:
         user_dir = Path(temp_dir) / username
@@ -187,44 +185,10 @@ def test_ensure_user_directory_with_logging(mock_chown, mock_getpwnam, caplog):
         assert user_dir.exists()
         assert user_dir.is_dir()
 
-        # Assert that chown was called with correct parameters
-        mock_chown.assert_called_once_with(user_dir, 1000, 1000)
-
-        # Check directory permissions
-        st = os.stat(user_dir)
-        # Permissions should be 0o750 (rwxr-x---)
-        assert (st.st_mode & 0o777) == 0o750
-
         # Check log messages
-        assert f'Getting user info for {username}' in caplog.text
         assert f'Creating user directory for {username}' in caplog.text
 
-
-@patch('pwd.getpwnam')
-def test_ensure_user_directory_user_not_found(mock_getpwnam, caplog):
-    username = 'nonexistentuser'
-
-    # Mock pwd.getpwnam to raise KeyError (simulating that the user does not exist)
-    mock_getpwnam.side_effect = KeyError
-
-    with tempfile.TemporaryDirectory() as temp_dir:
-        user_dir = Path(temp_dir) / username
-
-        with caplog.at_level(logging.INFO):
-            with pytest.raises(ValueError, match=f'System user {username} does not exist'):
-                spawner = VirtualEnvSpawner()
-                spawner._ensure_user_directory(user_dir, username)
-
-        # Check that the directory was not created
-        assert not user_dir.exists()
-
-        # Check log messages
-        assert f'Getting user info for {username}' in caplog.text
-
-
-@patch('os.chown')
-@patch('os.chmod')
-def test_ensure_user_directory_reuse_existing(mock_chown, mock_chmod, caplog):
+def test_ensure_user_directory_reuse_existing(caplog):
     username = 'testuser'
 
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -236,11 +200,6 @@ def test_ensure_user_directory_reuse_existing(mock_chown, mock_chmod, caplog):
         with caplog.at_level(logging.INFO):
             spawner = VirtualEnvSpawner()
             spawner._ensure_user_directory(user_dir, username)
-
-        # Check that mkdir, chown, and chmod were not called since directory exists
-        assert user_dir.exists()
-        mock_chown.assert_not_called()
-        mock_chmod.assert_not_called()
 
         # Check log message
         assert f'Reusing user directory for {username}' in caplog.text

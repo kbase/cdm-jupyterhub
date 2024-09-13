@@ -1,4 +1,5 @@
 import fcntl
+import grp
 import os
 import pwd
 import subprocess
@@ -46,6 +47,9 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
 
         # Configure the notebook directory based on whether the user is an admin
         self._configure_notebook_dir(username, user_dir)
+
+        # Ensure the user's workspace has the correct permissions
+        self._ensure_workspace_permission(user_dir, username)
 
         # Set the command to start the notebook
         env_vars = [f'{key}={value}' for key, value in self.environment.items()]
@@ -104,25 +108,8 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         Ensure the user's home directory exists and is correctly owned and permissioned.
         """
         if not user_dir.exists():
-
-            self.log.info(f'Getting user info for {username}')
-            try:
-                user_info = pwd.getpwnam(username)
-            except KeyError:
-                raise ValueError(f'System user {username} does not exist')
-            # Get the Jupyter user's UID and GID
-            uid = user_info.pw_uid
-            gid = user_info.pw_gid
-
             self.log.info(f'Creating user directory for {username}')
             user_dir.mkdir(parents=True, exist_ok=True)  # guard against race conditions
-
-            # Change the directory's ownership to the user
-            os.chown(user_dir, uid, gid)
-
-            # Set directory permissions to 750: Owner (rwx), Group (r-x), Others (---)
-            os.chmod(user_dir, 0o750)
-
         else:
             self.log.info(f'Reusing user directory for {username}')
 
@@ -211,3 +198,27 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         else:
             self.log.info(f'Non-admin user detected: {username}. Setting up user-specific workspace.')
             self.notebook_dir = str(user_dir)
+
+    def _ensure_workspace_permission(self, user_dir: Path, username: str):
+        """
+        Ensure the user's workspace has the correct permissions.
+        """
+        try:
+            user_info = pwd.getpwnam(username)
+        except KeyError:
+            raise ValueError(f'System user {username} does not exist')
+        # Get the Jupyter user's UID and GID
+        uid = user_info.pw_uid
+        gid = user_info.pw_gid
+
+        self.log.info(f'Configuring workspace permissions for {username}')
+        # Change the directory's ownership to the user
+        os.chown(user_dir, uid, gid)
+
+        group_name = grp.getgrgid(gid).gr_name
+        self.log.info(f'Add spark_user to the group of {group_name}')
+        subprocess.run(['sudo', 'usermod', '-aG', group_name, 'spark_user'], check=True)
+
+        # TODO: Set directory permissions to 750: Owner (rwx), Group (r-x), Others (---)
+        # Set directory permissions to 770: Owner (rwx), Group (rwx), Others (---)
+        os.chmod(user_dir, 0o770)

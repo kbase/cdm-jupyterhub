@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     python3-dev \
     sudo \
+    acl \
     && rm -rf /var/lib/apt/lists/*
 
 ENV HADOOP_AWS_VER=3.3.4
