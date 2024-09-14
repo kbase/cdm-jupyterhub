@@ -213,10 +213,10 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
 
         self.log.info(f'Configuring workspace permissions for {username}')
         # Change the directory's ownership to the user
-        os.chown(user_dir, uid, gid)
+        subprocess.run(['sudo', 'chown', '-R', f'{username}:{group_name}', user_dir], check=True)
 
         self.log.info(f'Add spark_user to the group of {group_name}')
         subprocess.run(['sudo', 'usermod', '-aG', group_name, 'spark_user'], check=True)
 
         # Set directory permissions to 750: Owner (rwx), Group (r-x), Others (---)
-        os.chmod(user_dir, 0o750)
+        subprocess.run(['sudo', 'chmod', '-R', '750', user_dir], check=True)
