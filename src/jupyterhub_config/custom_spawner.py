@@ -153,7 +153,7 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         created with the system site-packages included.
         """
         if not user_env_dir.exists():
-            user_env_dir.mkdir(exist_ok=True)
+            user_env_dir.mkdir(exist_ok=True, parents=True)
             self.log.info(f'Creating virtual environment for {self.user.name}')
             try:
                 # Create a virtual environment with system site-packages access
