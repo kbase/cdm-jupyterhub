@@ -60,7 +60,8 @@ ENV JUPYTER_CONFIG_DIR=/.jupyter
 ENV JUPYTER_RUNTIME_DIR=/.jupyter/runtime
 ENV JUPYTER_DATA_DIR=/.jupyter/data
 RUN mkdir -p ${JUPYTER_CONFIG_DIR} ${JUPYTER_RUNTIME_DIR} ${JUPYTER_DATA_DIR}
-RUN chown -R spark_user:spark /.jupyter
+RUN chown -R spark_user:spark ${JUPYTER_CONFIG_DIR}
+RUN chmod -R 777 ${JUPYTER_CONFIG_DIR}
 
 # Set up JupyterHub directories
 ENV JUPYTERHUB_CONFIG_DIR=/srv/jupyterhub
