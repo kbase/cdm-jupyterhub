@@ -36,7 +36,7 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         self._ensure_user_directory(user_dir, username)
 
         # Ensure the user's Jupyter directory exists
-        # self._ensure_user_jupyter_directory(user_dir)
+        self._ensure_user_jupyter_directory(user_dir)
 
         # Ensure the virtual environment is created or reused
         user_env_dir = user_dir / '.virtualenvs' / 'envs' / f'{username}_default_env'
@@ -218,5 +218,6 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
         self.log.info(f'Add spark_user to the group of {group_name}')
         subprocess.run(['sudo', 'usermod', '-aG', group_name, 'spark_user'], check=True)
 
-        # Set directory permissions to 750: Owner (rwx), Group (r-x), Others (---)
-        subprocess.run(['sudo', 'chmod', '-R', '750', user_dir], check=True)
+        # TODO: Set directory permissions to 750 or 700 or switch to use docker spawner
+        # Set directory permissions to 777: Owner (rwx), Group (rwx), Others (rwx)
+        subprocess.run(['sudo', 'chmod', '-R', '777', user_dir], check=True)
