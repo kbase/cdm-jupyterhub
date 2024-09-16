@@ -105,7 +105,7 @@ class VirtualEnvSpawner(SimpleLocalProcessSpawner):
 
     def _ensure_user_directory(self, user_dir: Path, username: str):
         """
-        Ensure the user's home directory exists and is correctly owned and permissioned.
+        Ensure the user's home directory exists.
         """
         if not user_dir.exists():
             self.log.info(f'Creating user directory for {username}')
