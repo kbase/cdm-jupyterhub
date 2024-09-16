@@ -201,6 +201,8 @@ def test_ensure_user_directory_reuse_existing(caplog):
             spawner = VirtualEnvSpawner()
             spawner._ensure_user_directory(user_dir, username)
 
+        assert user_dir.exists()
+
         # Check log message
         assert f'Reusing user directory for {username}' in caplog.text
 
