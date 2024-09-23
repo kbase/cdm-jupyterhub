@@ -29,6 +29,9 @@ class CustomDockerSpawner(DockerSpawner):
         # Configure the notebook directory based on whether the user is an admin
         self._configure_notebook_dir(username, user_dir)
 
+        # Ensure the user's volume is correctly mounted in the container
+        self._ensure_user_volume()
+
         return super().start()
 
     def _ensure_user_directory(self, user_dir: Path, username: str):
@@ -101,10 +104,7 @@ class CustomDockerSpawner(DockerSpawner):
         self.environment['PYTHONSTARTUP'] = os.path.join(os.environ['JUPYTERHUB_CONFIG_DIR'], 'startup.py')
         self.environment['JUPYTERHUB_USER'] = username
 
-        group_names = [group.name for group in self.user.groups]
-        self.log.info(f'User {self.user.name} groups: {group_names}')
-
-        if self.user.admin or self.RW_MINIO_GROUP in group_names:
+        if self._is_rw_minio_user():
             self.log.info(f'MinIO read/write user detected: {self.user.name}. Setting up minio_rw credentials.')
             self.environment['MINIO_ACCESS_KEY'] = self.environment['MINIO_RW_ACCESS_KEY']
             self.environment['MINIO_SECRET_KEY'] = self.environment['MINIO_RW_SECRET_KEY']
@@ -131,3 +131,39 @@ class CustomDockerSpawner(DockerSpawner):
         else:
             self.log.info(f'Non-admin user detected: {username}. Setting up user-specific workspace.')
             self.notebook_dir = str(user_dir)
+
+    def _is_rw_minio_user(self):
+        """
+        Check if the user is a read/write MinIO user.
+
+        Admin users and users in the minio_rw group are considered read/write MinIO users.
+        """
+        group_names = [group.name for group in self.user.groups]
+        return self.user.admin or self.RW_MINIO_GROUP in group_names
+
+    def _ensure_user_volume(self):
+        """
+        Ensure the user's volume is correctly mounted in the container.
+        """
+
+        user_home_dir = Path(os.environ['JUPYTERHUB_USER_HOME'])
+        mount_base_dir = Path(os.environ['JUPYTERHUB_MOUNT_BASE_DIR'])
+        hub_secrets_dir = Path(os.environ['JUPYTERHUB_SECRETS_DIR'])
+
+        cdm_shared_dir = Path(os.environ['CDM_SHARED_DIR'])  # Legacy data volume from JupyterLab
+        hive_metastore_dir = Path(os.environ['HIVE_METASTORE_DIR'])  # within cdm_shared_dir
+
+        if self.user.admin:
+            self.log.info(f'Admin user detected: {self.user.name}. Setting up admin mount points.')
+            self.volumes.update({
+                f'{mount_base_dir}/{user_home_dir}': f'{user_home_dir}',  # Global users home directory
+                f'{mount_base_dir}/{hub_secrets_dir}': f'{hub_secrets_dir}',
+                f'{mount_base_dir}/{cdm_shared_dir}': f'{cdm_shared_dir}',  # Legacy data volume from JupyterLab
+            })
+        else:
+            self.log.info(f'Non-admin user detected: {self.user.name}. Setting up user-specific mount points.')
+            access_mode = 'rw' if self._is_rw_minio_user() else 'ro'
+            self.volumes.update({
+                f'{mount_base_dir}/{hive_metastore_dir}': {'bind': f'{hive_metastore_dir}', 'mode': access_mode},
+                f'{mount_base_dir}/{user_home_dir}/{self.user.name}': f'{user_home_dir}/{self.user.name}'  # User specific home directory
+            })
