@@ -111,7 +111,7 @@ class SingleUserEnvManager:
 
         self.log.info(f'Configuring workspace permissions for {self.username}')
         subprocess.run(['sudo', 'chown', '-R', f'{self.username}:{group_name}', self.user_dir], check=True)
-        subprocess.run(['sudo', 'chmod', '-R', '777', self.user_dir], check=True)
+        subprocess.run(['sudo', 'chmod', '-R', '770', self.user_dir], check=True)
 
     def _init_logger(self):
         """
