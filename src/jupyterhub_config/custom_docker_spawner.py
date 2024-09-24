@@ -86,11 +86,13 @@ class CustomDockerSpawner(DockerSpawner):
         Configure the environment variables for the user's session, including
         the PATH and PYTHONPATH to use the virtual environment.
         """
-
         self.environment.update({key: value for key, value in os.environ.items() if key not in self.environment})
 
         self.environment['JUPYTER_MODE'] = 'jupyterhub-singleuser'
         self.environment['JUPYTERHUB_ADMIN'] = self.user.admin
+
+        self.log.info(f'Setting spark driver host to {self.container_name}')
+        self.environment['SPARK_DRIVER_HOST'] = self.container_name
 
         self.environment['HOME'] = str(user_dir)
         self.environment['PATH'] = f"{user_env_dir}/bin:{os.environ['PATH']}"
