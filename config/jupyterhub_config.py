@@ -35,7 +35,7 @@ c.JupyterHub.db_url = f"sqlite:///{os.environ['JUPYTERHUB_SECRETS_DIR']}/jupyter
 
 # Create a group to indicate users with read/write access to MinIO
 c.JupyterHub.load_groups = {
-    'minio_rw': [],
+    CustomDockerSpawner.RW_MINIO_GROUP: [],
 }
 
 c.JupyterHub.spawner_class = CustomDockerSpawner
