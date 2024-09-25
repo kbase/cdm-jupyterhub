@@ -56,6 +56,7 @@ if network_name:
     c.DockerSpawner.network_name = network_name
 c.DockerSpawner.use_internal_ip = True
 environment = os.environ.get('ENVIRONMENT', 'prod').lower()
+# for troubleshooting purposes, keep the container in non-prod environment
 c.DockerSpawner.remove = environment != 'dev'
 c.DockerSpawner.debug = True
 
