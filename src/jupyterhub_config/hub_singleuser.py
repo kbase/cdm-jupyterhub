@@ -31,9 +31,9 @@ class SingleUserEnvManager:
         self.environment = dict(os.environ)
 
         # TODO: config Rancher to resolve the container hostname automatically within network
-        ip = self._get_container_ip()
-        self.log.info(f'Setting SPARK_DRIVER_HOST to {ip}')
-        self.environment['SPARK_DRIVER_HOST'] = ip
+        # ip = self._get_container_ip()
+        # self.log.info(f'Setting SPARK_DRIVER_HOST to {ip}')
+        # self.environment['SPARK_DRIVER_HOST'] = ip
 
         self.global_home = Path(os.environ['JUPYTERHUB_USER_HOME'])
         self.user_dir = self.global_home / username

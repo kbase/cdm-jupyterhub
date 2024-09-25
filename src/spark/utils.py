@@ -86,7 +86,7 @@ def _get_base_spark_conf(
     sc = (SparkConf()
           .set("spark.app.name", app_name)
           .set("spark.executor.cores", str(executor_cores))
-          # .set("spark.driver.host", "localhost")
+          .set("spark.driver.host", os.environ.get("SPARK_DRIVER_HOST", "localhost"))
           )
     if yarn:
         yarnparse = urlparse(os.environ.get("YARN_RESOURCE_MANAGER_URL"))
