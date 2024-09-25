@@ -16,6 +16,8 @@ services:
       - MINIO_URL=http://minio:9002
       - MINIO_ACCESS_KEY=yarnuser
       - MINIO_SECRET_KEY=yarnpass
+    networks:
+      - cdm-jupyterhub-network
 
   yarn-nodemanager:
     image: ghcr.io/kbase/cdm-prototype-yarn:pr-8
@@ -29,6 +31,8 @@ services:
       - MINIO_URL=http://minio:9002
       - MINIO_ACCESS_KEY=yarnuser
       - MINIO_SECRET_KEY=yarnpass
+    networks:
+      - cdm-jupyterhub-network
 
   spark-master:
     # The latest image from cdm-jupyterhub that includes spark standalone mode
@@ -47,6 +51,8 @@ services:
       - POSTGRES_URL=postgres:5432
     volumes:
       - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
+    networks:
+      - cdm-jupyterhub-network
 
   spark-worker-1:
     # The latest image from cdm-jupyterhub that includes spark standalone mode
@@ -69,6 +75,8 @@ services:
       - POSTGRES_URL=postgres:5432
     volumes:
       - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
+    networks:
+      - cdm-jupyterhub-network
 
   spark-worker-2:
     # The latest image from cdm-jupyterhub that includes spark standalone mode
@@ -91,6 +99,8 @@ services:
       - POSTGRES_URL=postgres:5432
     volumes:
       - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
+    networks:
+      - cdm-jupyterhub-network
 
   minio:
     image: minio/minio
@@ -110,6 +120,8 @@ services:
       retries: 5
     # Note there is no bucket by default
     command: server --address 0.0.0.0:9002 --console-address 0.0.0.0:9003 /data
+    networks:
+      - cdm-jupyterhub-network
 
   minio-create-bucket:
     image: minio/mc
@@ -122,6 +134,8 @@ services:
       - ./config/cdm-read-write-policy.json:/config/cdm-read-write-policy.json
       - ./config/yarn-write-policy.json:/config/yarn-write-policy.json
       - ./scripts/minio_create_bucket_entrypoint.sh:/scripts/minio_create_bucket_entrypoint.sh
+    networks:
+      - cdm-jupyterhub-network
 
   dev_jupyterlab:
     build:
@@ -151,6 +165,8 @@ services:
       - USAGE_MODE=dev  # Enabling dev mode grants full access to MinIO and additional privileges for services like Hive, such as the ability to create tables as defined in the scripts/setup.sh.
     volumes:
       - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
+    networks:
+      - cdm-jupyterhub-network
 
   user-jupyterlab:
     build:
@@ -180,6 +196,8 @@ services:
       - POSTGRES_URL=postgres:5432
     volumes:
       - ./cdr/cdm/jupyter/cdm_shared_workspace/user_shared_workspace:/cdm_shared_workspace/user_shared_workspace
+    networks:
+      - cdm-jupyterhub-network
 
   cdm_jupyterhub:
     build:
@@ -210,10 +228,16 @@ services:
       - POSTGRES_DB=hive
       - POSTGRES_URL=postgres:5432
       - JUPYTERHUB_ADMIN_PASSWORD=testpassword123
+      - NETWORK_NAME=cdm-jupyterhub-network
+      - JUPYTERHUB_USER_IMAGE=cdm-jupyterhub-cdm_jupyterhub:latest
+      - JUPYTERHUB_MOUNT_BASE_DIR=/cdr/cdm/jupyter
     volumes:
-      - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace  # Legacy data volume from JupyterLab
+      - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
       - ./cdr/cdm/jupyter/jupyterhub_secrets:/jupyterhub_secrets
       - ./cdr/cdm/jupyter/jupyterhub/users_home:/jupyterhub/users_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - cdm-jupyterhub-network
 
   postgres:
     image: postgres:16.3
@@ -233,3 +257,10 @@ services:
       - POSTGRES_DB=hive
     volumes:
       - ./cdr/cdm/jupyter/cdm-postgres:/var/lib/postgresql/data  # For local development only. In Rancher development, PostgreSQL data shouldn't be stored in a shared mount.
+    networks:
+      - cdm-jupyterhub-network
+
+networks:
+  # Created by `docker network create cdm-jupyterhub-network`
+  cdm-jupyterhub-network:
+    external: true

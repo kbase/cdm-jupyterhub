@@ -9,7 +9,7 @@ import os
 
 import nativeauthenticator
 
-from jupyterhub_config.custom_spawner import VirtualEnvSpawner
+from jupyterhub_config.custom_docker_spawner import CustomDockerSpawner
 
 c = get_config()
 
@@ -33,12 +33,33 @@ c.Authenticator.allow_all = True
 c.JupyterHub.cookie_secret_file = f"{os.environ['JUPYTERHUB_SECRETS_DIR']}/jupyterhub_cookie_secret"
 c.JupyterHub.db_url = f"sqlite:///{os.environ['JUPYTERHUB_SECRETS_DIR']}/jupyterhub.sqlite"
 
-c.JupyterHub.spawner_class = VirtualEnvSpawner
-
 # Create a group to indicate users with read/write access to MinIO
 c.JupyterHub.load_groups = {
-    VirtualEnvSpawner.RW_MINIO_GROUP: [],
+    CustomDockerSpawner.RW_MINIO_GROUP: [],
 }
+
+c.JupyterHub.spawner_class = CustomDockerSpawner
+
+c.DockerSpawner.hub_connect_url = f"http://{os.environ['SPARK_DRIVER_HOST']}:{os.environ['NOTEBOOK_PORT']}"
+# Set the Docker image to use for user containers
+c.DockerSpawner.image = os.environ['JUPYTERHUB_USER_IMAGE']
+
+c.DockerSpawner.cmd = ['echo', 'Starting JupiterHub Single User Server With DockerSpawner ...']
+
+# Container resource limits
+c.DockerSpawner.cpu_limit = 4
+c.DockerSpawner.mem_limit = '16G'
+
+# The network name that Docker containers will use to communicate
+network_name = os.environ.get('NETWORK_NAME')
+if network_name:
+    c.DockerSpawner.network_name = network_name
+c.DockerSpawner.use_internal_ip = True
+environment = os.environ.get('ENVIRONMENT', 'prod').lower()
+# for troubleshooting purposes, keep the container in non-prod environment
+# ref: https://jupyterhub-dockerspawner.readthedocs.io/en/latest/api/index.html#dockerspawner.DockerSpawner.remove
+c.DockerSpawner.remove = environment != 'dev'
+c.DockerSpawner.debug = True
 
 # Set the JupyterHub IP address and port
 c.JupyterHub.ip = '0.0.0.0'

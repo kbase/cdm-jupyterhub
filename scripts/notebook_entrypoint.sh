@@ -31,6 +31,12 @@ elif [ "$JUPYTER_MODE" = "jupyterhub" ]; then
   unset NOTEBOOK_DIR
 
   jupyterhub -f "$JUPYTERHUB_CONFIG_DIR"/jupyterhub_config.py
+elif [ "$JUPYTER_MODE" = "jupyterhub-singleuser" ]; then
+  echo "Starting Jupyter Notebook for user: $JUPYTERHUB_USER"
+  unset NOTEBOOK_DIR
+
+  python /src/jupyterhub_config/hub_singleuser.py
+
 else
   echo "ERROR: JUPYTER_MODE is not set to jupyterlab or jupyterhub. Please set JUPYTER_MODE to either jupyterlab or jupyterhub."
   exit 1
