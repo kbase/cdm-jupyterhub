@@ -55,7 +55,8 @@ network_name = os.environ.get('NETWORK_NAME')
 if network_name:
     c.DockerSpawner.network_name = network_name
 c.DockerSpawner.use_internal_ip = True
-c.DockerSpawner.remove = True
+environment = os.environ.get('ENVIRONMENT', 'prod').lower()
+c.DockerSpawner.remove = environment != 'dev'
 c.DockerSpawner.debug = True
 
 # Set the JupyterHub IP address and port
