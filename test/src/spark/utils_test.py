@@ -45,7 +45,8 @@ def spark_session_non_local(mock_spark_master):
     print(f"Using Spark master URL: {spark_master_url}")
 
     with mock.patch.dict('os.environ', {"SPARK_MASTER_URL": spark_master_url,
-                                        "SPARK_TIMEOUT_SECONDS": "2"}):
+                                        "SPARK_TIMEOUT_SECONDS": "2",
+                                        "SPARK_DRIVER_HOST": "localhost"}):
         spark_session = get_spark_session("TestApp", local=False, delta_lake=False, yarn=False)
         print("Created non-local Spark session.")
         try:
@@ -96,21 +97,27 @@ def test_get_base_spark_conf():
     expected_master_url = "spark://spark-master:7077"
     expected_app_name = app_name
     executor_cores = 3
+    expected_driver_host = "127.0.0.1"
 
-    with mock.patch.dict('os.environ', {}):
+    with mock.patch.dict('os.environ', {
+        "SPARK_DRIVER_HOST": expected_driver_host
+    }):
         result = _get_base_spark_conf(app_name, executor_cores, False)
         assert isinstance(result, SparkConf)
         assert result.get("spark.master") == expected_master_url
         assert result.get("spark.app.name") == expected_app_name
         assert result.get("spark.executor.cores") == str(executor_cores)
+        assert result.get("spark.driver.host") == expected_driver_host
 
 
 def test_get_base_spark_conf_with_env():
     app_name = "test_app"
     custom_master_url = "spark://custom-master:7077"
     executor_cores = 3
+    expected_driver_host = "127.0.0.1"
 
-    with mock.patch.dict('os.environ', {"SPARK_MASTER_URL": custom_master_url}):
+    with mock.patch.dict('os.environ', {"SPARK_MASTER_URL": custom_master_url,
+                                        "SPARK_DRIVER_HOST": expected_driver_host}):
         result = _get_base_spark_conf(app_name, executor_cores, False)
         assert isinstance(result, SparkConf)
         assert result.get("spark.master") == custom_master_url
