@@ -3,6 +3,7 @@ import grp
 import logging
 import os
 import pwd
+import socket
 import subprocess
 import tempfile
 from pathlib import Path
@@ -24,12 +25,19 @@ class SingleUserEnvManager:
         self.username = username  # OS system username
         self.groupname = groupname  # OS system group
 
+        self.log = self._init_logger()
+
         # Inherit the current environment variables
         self.environment = dict(os.environ)
 
+        # TODO: config Rancher to resolve the container hostname automatically within network
+        ip = self._get_container_ip()
+        self.log.info(f'Setting SPARK_DRIVER_HOST to {ip}')
+        self.environment['SPARK_DRIVER_HOST'] = ip
+
         self.global_home = Path(os.environ['JUPYTERHUB_USER_HOME'])
         self.user_dir = self.global_home / username
-        self.log = self._init_logger()
+
 
     def setup_environment(self):
         """
@@ -112,6 +120,15 @@ class SingleUserEnvManager:
         self.log.info(f'Configuring workspace permissions for {self.username}')
         subprocess.run(['sudo', 'chown', '-R', f'{self.username}:{group_name}', self.user_dir], check=True)
         subprocess.run(['sudo', 'chmod', '-R', '750', self.user_dir], check=True)
+
+    def _get_container_ip(self):
+        """
+        Get the IP address of the container.
+        """
+        self.log.info('Getting container IP address')
+        hostname = socket.gethostname()
+        ip_address = socket.gethostbyname(hostname)
+        return ip_address
 
     def _init_logger(self):
         """

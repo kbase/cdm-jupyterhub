@@ -21,9 +21,9 @@ fi
     echo "spark.dynamicAllocation.maxExecutors $MAX_EXECUTORS"
 
     # Set spark.driver.host if SPARK_DRIVER_HOST is set
-    if [ -n "$SPARK_DRIVER_HOST" ]; then
-        echo "spark.driver.host $SPARK_DRIVER_HOST"
-    fi
+#    if [ -n "$SPARK_DRIVER_HOST" ]; then
+#        echo "spark.driver.host $SPARK_DRIVER_HOST"
+#    fi
 } >> "$SPARK_CONF_FILE"
 
 # Config hive-site.xml for Hive support

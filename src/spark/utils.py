@@ -83,7 +83,11 @@ def _get_base_spark_conf(
 
     :return: A SparkConf object with the base configuration
     """
-    sc = SparkConf().set("spark.app.name", app_name).set("spark.executor.cores", executor_cores)
+    sc = (SparkConf()
+          .set("spark.app.name", app_name)
+          .set("spark.executor.cores", str(executor_cores))
+          .set("spark.driver.host", os.environ["SPARK_DRIVER_HOST"])
+          )
     if yarn:
         yarnparse = urlparse(os.environ.get("YARN_RESOURCE_MANAGER_URL"))
         sc.setMaster("yarn"
