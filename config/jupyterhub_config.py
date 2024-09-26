@@ -69,6 +69,8 @@ c.DockerSpawner.extra_create_kwargs = {
     }
 }
 
+c.DockerSpawner.shutdown_no_activity_timeout = 60 * 60  # 1 hour
+
 # Set the JupyterHub IP address and port
 c.JupyterHub.ip = '0.0.0.0'
 c.JupyterHub.port = int(os.getenv('NOTEBOOK_PORT'))
