@@ -61,6 +61,14 @@ environment = os.environ.get('ENVIRONMENT', 'prod').lower()
 c.DockerSpawner.remove = environment != 'dev'
 c.DockerSpawner.debug = True
 
+# Set extra labels in order to use Rancher's network policies
+# ref: https://rancher.com/docs/rancher/v1.6/en/rancher-services/networking/#containers-created-with-the-docker-cli
+c.DockerSpawner.extra_create_kwargs = {
+    'labels': {
+        'io.rancher.container.network': 'true'
+    }
+}
+
 # Set the JupyterHub IP address and port
 c.JupyterHub.ip = '0.0.0.0'
 c.JupyterHub.port = int(os.getenv('NOTEBOOK_PORT'))
