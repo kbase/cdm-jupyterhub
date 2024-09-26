@@ -54,6 +54,10 @@ c.DockerSpawner.mem_limit = '16G'
 network_name = os.environ.get('NETWORK_NAME')
 if network_name:
     c.DockerSpawner.network_name = network_name
+    c.DockerSpawner.extra_host_config = {
+        'network_mode': 'none'
+    }
+
 c.DockerSpawner.use_internal_ip = True
 environment = os.environ.get('ENVIRONMENT', 'prod').lower()
 # for troubleshooting purposes, keep the container in non-prod environment
@@ -61,14 +65,12 @@ environment = os.environ.get('ENVIRONMENT', 'prod').lower()
 c.DockerSpawner.remove = environment != 'dev'
 c.DockerSpawner.debug = True
 
-c.DockerSpawner.extra_container_spec = {
-    'Labels': {
-        'io.rancher.container.network': 'true'
-    }
+c.DockerSpawner.extra_create_kwargs = {
+    'labels': {'io.rancher.container.network': 'true'}
 }
 
 # Set the JupyterHub IP address and port
-c.JupyterHub.ip = '0.0.0.0'
+# c.JupyterHub.ip = '0.0.0.0'
 c.JupyterHub.port = int(os.getenv('NOTEBOOK_PORT'))
 
 c.JupyterHub.log_level = 'DEBUG'
