@@ -66,11 +66,13 @@ c.DockerSpawner.remove = environment != 'dev'
 c.DockerSpawner.debug = True
 
 c.DockerSpawner.extra_create_kwargs = {
-    'labels': {'io.rancher.container.network': 'true'}
+    'labels': {
+        'io.rancher.container.network': 'true'
+    }
 }
 
 # Set the JupyterHub IP address and port
-# c.JupyterHub.ip = '0.0.0.0'
+c.JupyterHub.ip = '0.0.0.0'
 c.JupyterHub.port = int(os.getenv('NOTEBOOK_PORT'))
 
 c.JupyterHub.log_level = 'DEBUG'
