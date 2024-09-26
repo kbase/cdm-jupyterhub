@@ -54,9 +54,6 @@ c.DockerSpawner.mem_limit = '16G'
 network_name = os.environ.get('NETWORK_NAME')
 if network_name:
     c.DockerSpawner.network_name = network_name
-    c.DockerSpawner.extra_host_config = {
-        'network_mode': network_name
-    }
 
 c.DockerSpawner.use_internal_ip = True
 environment = os.environ.get('ENVIRONMENT', 'prod').lower()
