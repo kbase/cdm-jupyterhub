@@ -4,6 +4,7 @@ from pathlib import Path
 
 import json5
 from dockerspawner import DockerSpawner
+from filelock import FileLock
 
 
 class CustomDockerSpawner(DockerSpawner):
@@ -191,31 +192,36 @@ class CustomDockerSpawner(DockerSpawner):
 
         favorites_dir.mkdir(parents=True, exist_ok=True)
 
-        if jupyterlab_favorites_path.exists():
-            with open(jupyterlab_favorites_path, 'r') as f:
-                # JupyterHub writes JSON comments in the file
-                exist_favorites = json5.load(f)
-        else:
-            exist_favorites = {"favorites": []}
+        # Create a file lock to prevent race conditions
+        lock_path = str(jupyterlab_favorites_path) + ".lock"
+        lock = FileLock(lock_path)
 
-        existing_fav_set = {(fav["root"], fav["path"]) for fav in exist_favorites.get('favorites', [])}
+        with lock:
+            if jupyterlab_favorites_path.exists():
+                with open(jupyterlab_favorites_path, 'r') as f:
+                    # JupyterHub writes JSON comments in the file
+                    exist_favorites = json5.load(f)
+            else:
+                exist_favorites = {"favorites": []}
 
-        for fav in favorites:
+            existing_fav_set = {(fav["root"], fav["path"]) for fav in exist_favorites.get('favorites', [])}
 
-            if not fav.is_dir():
-                raise ValueError(f"Favorite {fav} is not a directory or does not exist")
+            for fav in favorites:
 
-            root_str = str(fav)
-            path_str = ""
+                if not fav.is_dir():
+                    raise ValueError(f"Favorite {fav} is not a directory or does not exist")
 
-            if (root_str, path_str) not in existing_fav_set:
-                exist_favorites["favorites"].append({
-                    "root": root_str,
-                    "path": path_str,
-                    "contentType": "directory",
-                    "iconLabel": "ui-components:folder",
-                    "name": "$HOME" if root_str == str(user_dir) else fav.name,
-                })
+                root_str = str(fav)
+                path_str = ""
 
-        with open(jupyterlab_favorites_path, 'w') as f:
-            json5.dump(exist_favorites, f, indent=4)
+                if (root_str, path_str) not in existing_fav_set:
+                    exist_favorites["favorites"].append({
+                        "root": root_str,
+                        "path": path_str,
+                        "contentType": "directory",
+                        "iconLabel": "ui-components:folder",
+                        "name": "$HOME" if root_str == str(user_dir) else fav.name,
+                    })
+
+            with open(jupyterlab_favorites_path, 'w') as f:
+                json5.dump(exist_favorites, f, indent=4)
