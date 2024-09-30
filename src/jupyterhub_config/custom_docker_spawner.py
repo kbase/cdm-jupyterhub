@@ -176,25 +176,20 @@ class CustomDockerSpawner(DockerSpawner):
                 f'{mount_base_dir}/{user_home_dir}/{self.user.name}': f'{user_home_dir}/{self.user.name}'
             })
 
-    def _add_favorite_dir(self, user_dir: Path, favorites: list[Path] = None):
+    def _add_favorite_dir(self, user_dir: Path, favorites: set[Path] = None):
         """
         Configure the JupyterLab favorites for the user.
         """
         self.log.info('Configuring JupyterLab favorites for user')
 
-        if not favorites:
-            favorites = [user_dir]
-
         # Ensure the user's home directory is always in the favorites
-        if user_dir not in favorites:
-            favorites.append(user_dir)
+        favorites = {user_dir} if not favorites else favorites | {user_dir}
 
         # Path to the JupyterLab favorites configuration file
         jupyterlab_favorites_path = user_dir / '.jupyter' / 'lab' / 'user-settings' / '@jlab-enhanced' / 'favorites' / 'favorites.jupyterlab-settings'
         favorites_dir = jupyterlab_favorites_path.parent
 
-        if not favorites_dir.exists():
-            favorites_dir.mkdir(parents=True, exist_ok=True)
+        favorites_dir.mkdir(parents=True, exist_ok=True)
 
         if jupyterlab_favorites_path.exists():
             with open(jupyterlab_favorites_path, 'r') as f:
