@@ -185,14 +185,20 @@ class CustomDockerSpawner(DockerSpawner):
         if not favorites:
             favorites = [user_dir]
 
-        jupyterlab_favorites_path = user_dir / '.jupyter' / 'lab' / 'user-settings' / '@jlab-enhanced' / 'favorites' / 'favorites.jupyterlab-settings'
+        # Ensure the user's home directory is always in the favorites
+        if user_dir not in favorites:
+            favorites.append(user_dir)
 
+        # Path to the JupyterLab favorites configuration file
+        jupyterlab_favorites_path = user_dir / '.jupyter' / 'lab' / 'user-settings' / '@jlab-enhanced' / 'favorites' / 'favorites.jupyterlab-settings'
         favorites_dir = jupyterlab_favorites_path.parent
+
         if not favorites_dir.exists():
             favorites_dir.mkdir(parents=True, exist_ok=True)
 
         if jupyterlab_favorites_path.exists():
             with open(jupyterlab_favorites_path, 'r') as f:
+                # JupyterHub writes JSON comments in the file
                 exist_favorites = json5.load(f)
         else:
             exist_favorites = {"favorites": []}
