@@ -15,7 +15,7 @@ class SingleUserEnvManager:
 
     def __init__(self,
                  username,
-                 groupname: str = 'kbase', ):
+                 groupname: str = 'jupyterhub', ):
         """
         Initializes the environment manager for the specified user.
         :param username: The name of the user for whom the environment is set up.
