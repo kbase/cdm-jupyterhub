@@ -2,7 +2,9 @@ import os
 import venv
 from pathlib import Path
 
+import json5
 from dockerspawner import DockerSpawner
+from filelock import FileLock
 
 
 class CustomDockerSpawner(DockerSpawner):
@@ -31,6 +33,10 @@ class CustomDockerSpawner(DockerSpawner):
 
         # Ensure the user's volume is correctly mounted in the container
         self._ensure_user_volume()
+
+        # Add the user's home directory to JupyterLab favorites
+        # TODO: include shared group directories in favorites
+        self._add_favorite_dir(user_dir)
 
         return super().start()
 
@@ -167,5 +173,55 @@ class CustomDockerSpawner(DockerSpawner):
             access_mode = 'rw' if self._is_rw_minio_user() else 'ro'
             self.volumes.update({
                 f'{mount_base_dir}/{hive_metastore_dir}': {'bind': f'{hive_metastore_dir}', 'mode': access_mode},
-                f'{mount_base_dir}/{user_home_dir}/{self.user.name}': f'{user_home_dir}/{self.user.name}'  # User specific home directory
+                # User specific home directory
+                f'{mount_base_dir}/{user_home_dir}/{self.user.name}': f'{user_home_dir}/{self.user.name}'
             })
+
+    def _add_favorite_dir(self, user_dir: Path, favorites: set[Path] = None):
+        """
+        Configure the JupyterLab favorites for the user.
+        """
+        self.log.info('Configuring JupyterLab favorites for user')
+
+        # Ensure the user's home directory is always in the favorites
+        favorites = {user_dir} if not favorites else favorites | {user_dir}
+
+        # Path to the JupyterLab favorites configuration file
+        jupyterlab_favorites_path = user_dir / '.jupyter' / 'lab' / 'user-settings' / '@jlab-enhanced' / 'favorites' / 'favorites.jupyterlab-settings'
+        favorites_dir = jupyterlab_favorites_path.parent
+
+        favorites_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create a file lock to prevent race conditions
+        lock_path = str(jupyterlab_favorites_path) + ".lock"
+        lock = FileLock(lock_path)
+
+        with lock:
+            if jupyterlab_favorites_path.exists():
+                with open(jupyterlab_favorites_path, 'r') as f:
+                    # JupyterHub writes JSON comments in the file
+                    exist_favorites = json5.load(f)
+            else:
+                exist_favorites = {"favorites": []}
+
+            existing_fav_set = {(fav["root"], fav["path"]) for fav in exist_favorites.get('favorites', [])}
+
+            for fav in favorites:
+
+                if not fav.is_dir():
+                    raise ValueError(f"Favorite {fav} is not a directory or does not exist")
+
+                root_str = str(fav)
+                path_str = ""
+
+                if (root_str, path_str) not in existing_fav_set:
+                    exist_favorites["favorites"].append({
+                        "root": root_str,
+                        "path": path_str,
+                        "contentType": "directory",
+                        "iconLabel": "ui-components:folder",
+                        "name": "$HOME" if root_str == str(user_dir) else fav.name,
+                    })
+
+            with open(jupyterlab_favorites_path, 'w') as f:
+                json5.dump(exist_favorites, f, indent=4)
