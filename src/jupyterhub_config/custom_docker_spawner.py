@@ -34,9 +34,8 @@ class CustomDockerSpawner(DockerSpawner):
         # Ensure the user's volume is correctly mounted in the container
         self._ensure_user_volume()
 
-        # Add the user's home directory to JupyterLab favorites
-        # TODO: include shared group directories in favorites
-        self._add_favorite_dir(user_dir)
+        # Add the user's home and group shared directory to Jupyterhub favorites
+        self._add_favorite_dir(user_dir, favorites={Path(os.environ['KBASE_GROUP_SHARED_DIR'])})
 
         return super().start()
 
@@ -138,7 +137,9 @@ class CustomDockerSpawner(DockerSpawner):
             self.notebook_dir = str('/')
         else:
             self.log.info(f'Non-admin user detected: {username}. Setting up user-specific workspace.')
-            self.notebook_dir = str(user_dir)
+            # TODO: It appears that notebook_dir must be the parent of the favorites directory - investigate if it's possible to set notebook_dir to user_dir
+            # self.notebook_dir = str(user_dir)
+            self.notebook_dir = str('/')
 
     def _is_rw_minio_user(self):
         """
@@ -160,6 +161,7 @@ class CustomDockerSpawner(DockerSpawner):
 
         cdm_shared_dir = Path(os.environ['CDM_SHARED_DIR'])  # Legacy data volume from JupyterLab
         hive_metastore_dir = Path(os.environ['HIVE_METASTORE_DIR'])  # within cdm_shared_dir
+        kbase_shared_dir = Path(os.environ['KBASE_GROUP_SHARED_DIR'])  # within cdm_shared_dir
 
         if self.user.admin:
             self.log.info(f'Admin user detected: {self.user.name}. Setting up admin mount points.')
@@ -174,7 +176,8 @@ class CustomDockerSpawner(DockerSpawner):
             self.volumes.update({
                 f'{mount_base_dir}/{hive_metastore_dir}': {'bind': f'{hive_metastore_dir}', 'mode': access_mode},
                 # User specific home directory
-                f'{mount_base_dir}/{user_home_dir}/{self.user.name}': f'{user_home_dir}/{self.user.name}'
+                f'{mount_base_dir}/{user_home_dir}/{self.user.name}': f'{user_home_dir}/{self.user.name}',
+                f'{mount_base_dir}/{kbase_shared_dir}': f'{kbase_shared_dir}',
             })
 
     def _add_favorite_dir(self, user_dir: Path, favorites: set[Path] = None):
@@ -211,8 +214,9 @@ class CustomDockerSpawner(DockerSpawner):
                 if not fav.is_dir():
                     raise ValueError(f"Favorite {fav} is not a directory or does not exist")
 
-                root_str = str(fav)
-                path_str = ""
+                # same approach used by NERSC JupyterHub
+                root_str = "/"
+                path_str = str(fav.relative_to(root_str))
 
                 if (root_str, path_str) not in existing_fav_set:
                     exist_favorites["favorites"].append({
@@ -220,7 +224,7 @@ class CustomDockerSpawner(DockerSpawner):
                         "path": path_str,
                         "contentType": "directory",
                         "iconLabel": "ui-components:folder",
-                        "name": "$HOME" if root_str == str(user_dir) else fav.name,
+                        "name": "$HOME" if str(fav) == str(user_dir) else fav.name,
                     })
 
             with open(jupyterlab_favorites_path, 'w') as f:

@@ -98,6 +98,11 @@ ENV CDM_SHARED_DIR=/cdm_shared_workspace
 RUN mkdir -p ${CDM_SHARED_DIR} && chmod -R 777 ${CDM_SHARED_DIR}
 RUN chown -R spark_user:spark $CDM_SHARED_DIR
 
+# TODO: Config through a config file or DB as the number of groups increases.
+ENV KBASE_GROUP_SHARED_DIR=$CDM_SHARED_DIR/kbase_group_shared
+RUN mkdir -p ${KBASE_GROUP_SHARED_DIR} && chmod -R 777 ${KBASE_GROUP_SHARED_DIR}
+RUN chown -R spark_user:spark $KBASE_GROUP_SHARED_DIR
+
 # Set a directory for hosting Hive metastore files - defined in config/hive-site-template.xml
 ENV HIVE_METASTORE_DIR=$CDM_SHARED_DIR/hive_metastore
 RUN mkdir -p ${HIVE_METASTORE_DIR}
