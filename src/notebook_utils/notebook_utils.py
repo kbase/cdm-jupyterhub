@@ -1,9 +1,16 @@
 from threading import RLock
 
 import itables.options as opt
+import pandas as pd
+from IPython.core.display_functions import clear_output
+from IPython.display import display
+from ipywidgets import Accordion, VBox, HTML, Button, IntSlider
 from itables import init_notebook_mode, show
 from pandas import DataFrame as PandasDataFrame
-from pyspark.sql import DataFrame as SparkDataFrame
+from pyspark.sql import DataFrame as SparkDataFrame, SparkSession
+from sidecar import Sidecar
+
+from spark.utils import get_spark_session
 
 lock = RLock()
 
@@ -71,3 +78,42 @@ def display_df(
     with lock:
         opt.layout = layout
         show(df, buttons=buttons, lengthMenu=length_menu)
+
+
+def _fetch_namespaces(spark: SparkSession) -> list:
+    """
+    Retrieve all database namespaces using an active Spark session.
+    """
+    return spark.sql("SHOW DATABASES").collect()
+
+
+def _fetch_tables_for_namespace(spark: SparkSession, namespace: str) -> pd.DataFrame:
+    """
+    Retrieve all tables for a given namespace.
+    """
+    return spark.sql(f"SHOW TABLES IN {namespace}").toPandas()
+
+
+def _create_namespace_accordion(spark: SparkSession, namespaces: list) -> Accordion:
+    """
+    Create an Accordion widget displaying namespaces and their tables.
+
+    ref: https://ipywidgets.readthedocs.io/en/latest/examples/Widget%20List.html#accordion
+    """
+    accordion = Accordion()
+    children_list = []
+
+    for namespace in namespaces:
+        namespace_name = namespace.namespace
+        tables_df = _fetch_tables_for_namespace(spark, namespace_name)
+
+        table_content = '<br>'.join(tables_df['tableName']) if not tables_df.empty else "No tables available"
+        table_list = HTML(value=table_content)
+
+        namespace_section = VBox([table_list])
+        children_list.append(namespace_section)
+
+        accordion.children = tuple(children_list)
+        accordion.set_title(len(accordion.children) - 1, f"Namespace: {namespace_name}")
+
+    return accordion
