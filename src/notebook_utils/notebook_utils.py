@@ -96,7 +96,7 @@ def _create_namespace_accordion(spark: SparkSession, namespaces: list) -> Accord
     ref: https://ipywidgets.readthedocs.io/en/latest/examples/Widget%20List.html#accordion
     """
     accordion = Accordion()
-    children_list = []
+    accordion.children = []
 
     for namespace in namespaces:
         namespace_name = namespace.namespace
@@ -106,9 +106,10 @@ def _create_namespace_accordion(spark: SparkSession, namespaces: list) -> Accord
         table_list = HTML(value=table_content)
 
         namespace_section = VBox([table_list])
-        children_list.append(namespace_section)
+        accordion.children += (namespace_section,)
 
-        accordion.children = tuple(children_list)
         accordion.set_title(len(accordion.children) - 1, f"Namespace: {namespace_name}")
+
+    accordion.children = tuple(accordion.children)
 
     return accordion
