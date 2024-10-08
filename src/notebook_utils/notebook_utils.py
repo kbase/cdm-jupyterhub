@@ -106,7 +106,7 @@ def _create_namespace_accordion(spark: SparkSession, namespaces: list) -> Accord
         table_list = HTML(value=table_content)
 
         namespace_section = VBox([table_list])
-        accordion.children += (namespace_section,)
+        accordion.children.append(namespace_section)
 
         accordion.set_title(len(accordion.children) - 1, f"Namespace: {namespace_name}")
 
