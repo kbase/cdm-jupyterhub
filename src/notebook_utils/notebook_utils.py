@@ -2,15 +2,10 @@ from threading import RLock
 
 import itables.options as opt
 import pandas as pd
-from IPython.core.display_functions import clear_output
-from IPython.display import display
-from ipywidgets import Accordion, VBox, HTML, Button, IntSlider
+from ipywidgets import Accordion, VBox, HTML
 from itables import init_notebook_mode, show
 from pandas import DataFrame as PandasDataFrame
 from pyspark.sql import DataFrame as SparkDataFrame, SparkSession
-from sidecar import Sidecar
-
-from spark.utils import get_spark_session
 
 lock = RLock()
 
