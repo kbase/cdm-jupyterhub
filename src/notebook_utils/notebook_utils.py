@@ -2,10 +2,15 @@ from threading import RLock
 
 import itables.options as opt
 import pandas as pd
+from IPython.core.display_functions import clear_output
+from IPython.display import display
 from ipywidgets import Accordion, VBox, HTML
 from itables import init_notebook_mode, show
 from pandas import DataFrame as PandasDataFrame
 from pyspark.sql import DataFrame as SparkDataFrame, SparkSession
+from sidecar import Sidecar
+
+from spark.utils import get_spark_session
 
 lock = RLock()
 
@@ -109,3 +114,30 @@ def _create_namespace_accordion(spark: SparkSession, namespaces: list) -> Accord
         accordion.set_title(len(accordion.children) - 1, f"Namespace: {namespace_name}")
 
     return accordion
+
+
+def _update_namespace_view(sidecar: Sidecar, yarn: bool) -> None:
+    """
+    Update the namespace viewer in the sidecar with the latest namespaces and tables.
+    """
+    with get_spark_session(yarn=yarn) as spark:
+        namespaces = _fetch_namespaces(spark)
+        print("Available Namespaces:", [ns.namespace for ns in namespaces])
+        updated_accordion = _create_namespace_accordion(spark, namespaces)
+
+    ui = VBox([updated_accordion])
+
+    with sidecar:
+        clear_output(wait=True)
+        display(ui)
+
+
+def display_namespace_viewer(yarn: bool = True) -> None:
+    """
+    Display the namespace viewer in the Jupyter Notebook Sidecar.
+
+    Args:
+        yarn (bool): Whether to use YARN as the spark resource manager. Defaults to True.
+    """
+    sidecar = Sidecar(title='Database Namespaces & Tables')
+    _update_namespace_view(sidecar, yarn)
