@@ -17,4 +17,5 @@ from minio_utils.minio_utils import get_minio_client
 from notebook_utils.notebook_utils import (
     display_df,
     spark_to_pandas,
+    display_namespace_viewer,
 )
