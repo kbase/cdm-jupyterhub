@@ -115,6 +115,8 @@ class CustomDockerSpawner(DockerSpawner):
             self.log.info(f'MinIO read/write user detected: {self.user.name}. Setting up minio_rw credentials.')
             self.environment['MINIO_ACCESS_KEY'] = self.environment['MINIO_RW_ACCESS_KEY']
             self.environment['MINIO_SECRET_KEY'] = self.environment['MINIO_RW_SECRET_KEY']
+            # USAGE_MODE is used by the setup.sh script to determine the appropriate configuration for the user.
+            self.environment['USAGE_MODE'] = 'dev'
         else:
             self.log.info(f'Non-admin user detected: {self.user.name}. Removing admin credentials.')
             self.environment.pop('MINIO_RW_ACCESS_KEY', None)
