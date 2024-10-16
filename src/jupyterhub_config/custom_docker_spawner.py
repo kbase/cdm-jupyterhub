@@ -60,6 +60,8 @@ class CustomDockerSpawner(DockerSpawner):
         bashrc_tmpl = config_dir / '.bashrc.tmpl'
         bash_profile_tmpl = config_dir / '.bash_profile.tmpl'
 
+        # Keep a copy of the template files in the user's home directory in case they are needed later
+        # for recovery or debugging. They are not used by the user's shell.
         shutil.copy2(bashrc_tmpl, user_dir/'.bashrc.tmpl')
         shutil.copy2(bash_profile_tmpl, user_dir/'.bash_profile.tmpl')
 
