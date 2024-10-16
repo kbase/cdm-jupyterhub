@@ -1,0 +1,16 @@
+
+# Load the default virtual environment if available
+if [[ -n "${VIRTUAL_ENV}" && -d "${VIRTUAL_ENV}/bin" ]]; then
+    source "${VIRTUAL_ENV}/bin/activate"
+elif [[ -z "${VIRTUAL_ENV}" ]]; then
+    echo "VIRTUAL_ENV is not set; skipping virtual environment activation."
+else
+    echo "Directory ${VIRTUAL_ENV}/bin not found; unable to activate virtual environment."
+fi
+
+# Custom prompt: include username, hostname, and current directory
+PS1='\[\e[0;32m\]\u@\h \[\e[0;36m\]\w\[\e[0m\]$ '
+
+# Alias to show colorized output of common commands
+alias ls='ls --color=auto'
+alias grep='grep --color=auto'
