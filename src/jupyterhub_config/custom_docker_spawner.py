@@ -57,22 +57,22 @@ class CustomDockerSpawner(DockerSpawner):
         """
 
         config_dir = Path(os.environ['CONFIG_DIR'])
-        bashrc_ext_src = config_dir / '.bashrc.tmpl'
-        bash_profile_ext_src = config_dir / '.bash_profile.tmpl'
+        bashrc_tmpl = config_dir / '.bashrc.tmpl'
+        bash_profile_tmpl = config_dir / '.bash_profile.tmpl'
 
-        shutil.copy2(bashrc_ext_src, user_dir/'.bashrc.tmpl')
-        shutil.copy2(bash_profile_ext_src, user_dir/'.bash_profile.tmpl')
+        shutil.copy2(bashrc_tmpl, user_dir/'.bashrc.tmpl')
+        shutil.copy2(bash_profile_tmpl, user_dir/'.bash_profile.tmpl')
 
         bashrc_dest = user_dir / '.bashrc'
         bash_profile_dest = user_dir / '.bash_profile'
 
         if not bashrc_dest.exists():
             self.log.info(f'Creating .bashrc file for {user_dir}')
-            shutil.copy2(bashrc_ext_src, bashrc_dest)
+            shutil.copy2(bashrc_tmpl, bashrc_dest)
 
         if not bash_profile_dest.exists():
             self.log.info(f'Creating .bash_profile file for {user_dir}')
-            shutil.copy2(bash_profile_ext_src, bash_profile_dest)
+            shutil.copy2(bash_profile_tmpl, bash_profile_dest)
 
     def _ensure_user_jupyter_directory(self, user_dir: Path):
         """
