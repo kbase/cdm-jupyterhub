@@ -88,7 +88,8 @@ COPY ./scripts/ /opt/scripts/
 RUN chmod a+x /opt/scripts/*.sh
 
 # Copy the configuration files
-COPY ./config/ /opt/config/
+ENV CONFIG_DIR=/opt/config
+COPY ./config/ ${CONFIG_DIR}
 
 # Don't just do /opt since we already did bitnami
 RUN chown -R spark_user:spark /src /opt/scripts /opt/config
