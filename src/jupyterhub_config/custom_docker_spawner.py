@@ -1,4 +1,5 @@
 import os
+import shutil
 import venv
 from pathlib import Path
 
@@ -17,6 +18,7 @@ class CustomDockerSpawner(DockerSpawner):
 
         # Ensure the user directory exists
         self._ensure_user_directory(user_dir, username)
+        self._ensure_bashrc(user_dir)
 
         # Ensure the user's Jupyter directory exists
         self._ensure_user_jupyter_directory(user_dir)
@@ -48,6 +50,29 @@ class CustomDockerSpawner(DockerSpawner):
             user_dir.mkdir(parents=True, exist_ok=True)  # guard against race conditions
         else:
             self.log.info(f'Reusing user directory for {username}')
+
+    def _ensure_bashrc(self, user_dir: Path):
+        """
+        Ensure the user's .bashrc and .bash_profile files exist, copying them from .tmpl templates if needed.
+        """
+
+        config_dir = Path(os.environ['CONFIG_DIR'])
+        bashrc_ext_src = config_dir / '.bashrc.tmpl'
+        bash_profile_ext_src = config_dir / '.bash_profile.tmpl'
+
+        shutil.copy2(bashrc_ext_src, user_dir/'.bashrc.tmpl')
+        shutil.copy2(bash_profile_ext_src, user_dir/'.bash_profile.tmpl')
+
+        bashrc_dest = user_dir / '.bashrc'
+        bash_profile_dest = user_dir / '.bash_profile'
+
+        if not bashrc_dest.exists():
+            self.log.info(f'Creating .bashrc file for {user_dir}')
+            shutil.copy2(bashrc_ext_src, bashrc_dest)
+
+        if not bash_profile_dest.exists():
+            self.log.info(f'Creating .bash_profile file for {user_dir}')
+            shutil.copy2(bash_profile_ext_src, bash_profile_dest)
 
     def _ensure_user_jupyter_directory(self, user_dir: Path):
         """
@@ -110,6 +135,8 @@ class CustomDockerSpawner(DockerSpawner):
         # Set path of the startup script for Notebook
         self.environment['PYTHONSTARTUP'] = os.path.join(os.environ['JUPYTERHUB_CONFIG_DIR'], 'startup.py')
         self.environment['JUPYTERHUB_USER'] = username
+
+        self.environment['SHELL'] = '/usr/bin/bash'
 
         if self._is_rw_minio_user():
             self.log.info(f'MinIO read/write user detected: {self.user.name}. Setting up minio_rw credentials.')
