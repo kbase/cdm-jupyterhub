@@ -1,35 +1,18 @@
-# JupyterLab Developer Guide
+# JupyterHub Developer Guide
 
-## Accessing JupyterLab Development Environment
-(Please refer to the [JupyterLab User Guide](user_guide.md) for instructions on accessing the user environment.)
+## Accessing JupyterHub Environment
+For instructions on accessing the KBase JupyterHub environment, please refer to the [KBase JupyterHub User Guide](user_guide.md).
 
-### 1. Create SSH Tunnel:
-
-Execute the following command to create an SSH tunnel to the remote server (`login1.berkeley.kbase.us`):
-
-```bash
-ssh -f -N -L localhost:44041:10.58.2.201:4041 <ac.anl_username>@login1.berkeley.kbase.us
-```
-   
-### 2. Access JupyterLab Notebooks:
-   
-Open a web browser and navigate to the following URL:
-
-```
-http://localhost:44041
-```
-This will open the JupyterLab Notebook interface running on the remote server.
-
+(*If you require `write` access to MinIO and the database catalog, please contact the KBase CDM Tech team.*)
 
 ## Accessing MinIO
 Please refer to the [MinIO Guide](minio_guide.md) for instructions on accessing MinIO.
 
 ### Read/Write MinIO username and password
-Get the MinIO username and password with read/write permission from the above development JupiterLab environment.
+Get the MinIO username and password with read/write permission from the above JupiterHub environment.
 ```python
 import os
 minio_username, minio_password = os.environ['MINIO_ACCESS_KEY'], os.environ['MINIO_SECRET_KEY']
-print(f"MinIO username: {minio_username},\nMinIO password: {minio_password}")
 ```
 
 ### Naming conventions

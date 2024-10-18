@@ -1,4 +1,4 @@
-# User Guide: Accessing Spark Jupyter Notebook
+# User Guide: Accessing KBase Jupyterhub
 
 ## Prerequisites
 
@@ -13,12 +13,12 @@
 Execute the following command to create an SSH tunnel to the remote server (`login1.berkeley.kbase.us`):
 
 ```bash
-ssh -f -N -L localhost:44042:10.58.2.201:4042 <ac.anl_username>@login1.berkeley.kbase.us
+ssh -f -N -L localhost:44043:10.58.2.201:4043 <ac.anl_username>@login1.berkeley.kbase.us
 ```
    
 * `-f`: Run SSH command in the background.
 * `-N`: Do not execute a remote command.
-* `-L localhost:44042:10.58.2.201:4042`: Forward port `44042` on your local machine to port `4042` on the remote machine `10.58.2.201`.
+* `-L localhost:44043:10.58.2.201:4043`: Forward port `44043` on your local machine to port `4043` on the remote machine `10.58.2.201`.
 * `<ac.anl_username>`: Your username for SSH access. Contact the KBase System Admin team if you do not have access.
 * `@login1.berkeley.kbase.us`: The remote SSH server.   
    
@@ -27,24 +27,46 @@ ssh -f -N -L localhost:44042:10.58.2.201:4042 <ac.anl_username>@login1.berkeley.
 Open a web browser and navigate to the following URL:
 
 ```
-http://localhost:44042
+http://localhost:44043
 ```
-This will open the Jupyter Notebook interface running on the remote server.
+This will open the JupyterHub Notebook interface running on the remote server.
 
-### 3. Working in the Shared Jupiter Notebook Environment:
+### 3. Access JupyterHub:
 
-Since this is a shared environment, it’s important to create your own directory and keep your work organized.
+#### 3.1 Create a new account:
+For first-time users, click the "Sign Up" button to create a new account.
 
-![user_folders](screen_shots/user_folders.png)
+***Note: Please use your KBase account username during sign-up. This ensures that when we transition to KBase 
+authentication, your data will remain intact.***
 
+![sign_up](screen_shots/sign_up.png)
 
-We have provided a collection of example notebooks to help you get started. You can find them in the `examples` directory.
+#### 3.2. Log in with Existing Credentials:
+If you already have an account, simply log in using your username and password.
 
-### 4. Using Pre-loaded Functions:
+(*If you previously used JupyterLab (port `4041` and `4042`), please contact the CDM Tech team to migrate your existing 
+data to the new environment.*)
+
+### 4. Request MinIO Access:
+By default, you have `read-only` access to MinIO and the database catalog. If you require `write` access to create or 
+modify tables, please reach out to the KBase CDM Tech team.
+
+### 5. Access the Workspace:
+#### 5.1 Home Directory:
+After logging in, click on `$HOME` under the `FAVORITES` section to access your personal home directory. 
+This directory is exclusive to your account and is where you can store your notebooks and files.
+
+#### 5.2 Shared Directory:
+To access shared resources and example notebooks, click on the `kbase_group_shared` folder icon. This directory contains 
+shared content available to all users.
+
+![shared_folder](screen_shots/favorites.png)
+
+### 6. Using Pre-loaded Functions:
 
 To make your development easier, several helper functions and extensions are preloaded in the Jupyter environment.
 
-#### 4.1. Creating a Spark Session:
+#### 6.1. Creating a Spark Session:
 
 Use the `get_spark_session` function to create or get a Spark session. 
 
@@ -57,7 +79,7 @@ properly configured to interact with the cluster.
 spark = get_spark_session()
 ```
 
-#### 4.2. Displaying DataFrames:
+#### 6.2. Displaying DataFrames:
 Use the `display_df` function to display pandas or Spark DataFrames interactively.
 
 The `display_df` function is designed to provide an interactive tabular display of DataFrames within Jupyter Notebooks. 
@@ -70,9 +92,15 @@ display_df(spark.sql(f"SELECT * FROM {namespace}.annotation"))
 ```
 ![display_df](screen_shots/display_func.png)
 
-### 5. Accessing Data:
+### 7. Accessing Data:
 
-#### 5.1. Showing Available Namespaces and Listing Tables:
+#### 7.1 Viewing Tables:
+Run `display_namespace_viewer()` in a code cell to display a list of available namespaces along with their 
+corresponding tables.
+
+![namespace_viewer](screen_shots/namespace_viewer.png)
+
+#### 7.2 Showing Available Namespaces and Listing Tables:
 To list all namespaces (databases) and display the tables within each namespace, you can use the following code snippet:
 
 ```python
@@ -85,7 +113,7 @@ for namespace in namespaces:
     spark.sql(f"SHOW TABLES IN {namespace_name}").show(50, truncate=False)
 ```
 
-### 6. Closing the Spark Session:
+### 8. Closing the Spark Session:
 Please remember to close the Spark session when you are done with your work. This will release the resources and 
 prevent any memory leaks.
 
@@ -96,9 +124,9 @@ spark.stop()
 Please be aware that your session will automatically close after `1 hour`. Should you require an extension, simply invoke 
 `get_spark_session()` to initiate a new session.
 
-### 7. Common Issues and Troubleshooting:
+### 9. Common Issues and Troubleshooting:
 
-#### 7.1. Resource Issues:
+#### 9.1. Resource Issues:
 
 ##### Error Message:
 ```python
@@ -107,37 +135,3 @@ Please be aware that your session will automatically close after `1 hour`. Shoul
 
 This warning indicates that the Spark job could not acquire the necessary resources to start execution. Please contact
 the CDM team for assistance in resolving this issue.
-
-#### 7.2 SparkMonitor Issues:
-
-##### Error Message:
-```python
-Exception in thread Thread-5:
-Traceback (most recent call last):
-  File "/opt/bitnami/python/lib/python3.11/threading.py", line 1045, in _bootstrap_inner
-    self.run()
-  File "/opt/bitnami/python/lib/python3.11/site-packages/sparkmonitor/kernelextension.py", line 126, in run
-    self.onrecv(msg)
-  File "/opt/bitnami/python/lib/python3.11/site-packages/sparkmonitor/kernelextension.py", line 143, in onrecv
-    sendToFrontEnd({
-  File "/opt/bitnami/python/lib/python3.11/site-packages/sparkmonitor/kernelextension.py", line 223, in sendToFrontEnd
-    monitor.send(msg)
-  File "/opt/bitnami/python/lib/python3.11/site-packages/sparkmonitor/kernelextension.py", line 57, in send
-    self.comm.send(msg)
-    ^^^^^^^^^
-AttributeError: 'ScalaMonitor' object has no attribute 'comm'
-```
-
-This error occurs when there is an issue with the SparkMonitor kernel extension, specifically related to the 
-communication between the kernel and the front end. The error indicates that the comm attribute is missing from the 
-ScalaMonitor object.
-
-##### Solution:
-
-Restart the Jupyter kernel associated with your notebook to reset the SparkMonitor extension. 
-
-* Click on the "Kernel" menu and select "Restart Kernel" to restart the kernel
-![restart_kernel](screen_shots/restart_kernel.png)
-
-If the issue persists after restarting the kernel, please contact the CDM team for further assistance.
-
