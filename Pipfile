@@ -27,7 +27,7 @@ jupyter-ai = "==2.25.0"
 langchain-openai = "==0.1.25"
 huggingface_hub = "==0.26.0"
 
-# Frequently utilized scientific libraries by the science team
+# Frequently utilized data visualization libraries by the science team
 plotly = "==5.24.1"
 tqdm = "==4.66.5"
 ipywidgets = "==8.1.5"
