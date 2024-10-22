@@ -64,6 +64,7 @@ RUN chown -R spark_user:spark /.jupyter
 # Set up JupyterHub directories
 ENV JUPYTERHUB_CONFIG_DIR=/srv/jupyterhub
 RUN mkdir -p ${JUPYTERHUB_CONFIG_DIR}
+COPY ./config/jupyter_jupyter_ai_config.json ${JUPYTERHUB_CONFIG_DIR}/jupyter_jupyter_ai_config.json
 COPY ./src/notebook_utils/startup.py ${JUPYTERHUB_CONFIG_DIR}/startup.py
 COPY ./config/jupyterhub_config.py ${JUPYTERHUB_CONFIG_DIR}/jupyterhub_config.py
 COPY ./scripts/spawn_notebook.sh ${JUPYTERHUB_CONFIG_DIR}/spawn_notebook.sh
