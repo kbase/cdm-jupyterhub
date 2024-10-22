@@ -95,8 +95,8 @@ class CustomDockerSpawner(DockerSpawner):
 
         # copy the jupyter_jupyter_ai_config.json file to the user's .jupyter directory
         # ref: https://jupyter-ai.readthedocs.io/en/latest/users/index.html#configuring-as-a-config-file
-        jupyter_notebook_config = Path(os.environ['JUPYTERHUB_CONFIG_DIR']) / 'jupyter_jupyter_ai_config.json'
-        shutil.copy2(jupyter_notebook_config, jupyter_dir / 'jupyter_jupyter_ai_config.json')
+        jupyter_notebook_config = Path(os.environ['JUPYTERHUB_CONFIG_DIR']) / os.environ['JUPYTER_AI_CONFIG_FILE']
+        shutil.copy2(jupyter_notebook_config, jupyter_dir / os.environ['JUPYTER_AI_CONFIG_FILE'])
 
         self.environment['JUPYTER_CONFIG_DIR'] = str(jupyter_dir)
         self.environment['JUPYTER_RUNTIME_DIR'] = str(jupyter_runtime_dir)
