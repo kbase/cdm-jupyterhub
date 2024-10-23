@@ -1,0 +1,8 @@
+{
+  "AiExtension": {
+    "allowed_providers": [
+      "openai",
+      "openai-chat"
+    ]
+  }
+}
