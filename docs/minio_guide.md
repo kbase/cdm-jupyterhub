@@ -9,8 +9,8 @@ interacting with MinIO.
 1. Establish a tunnel to connect to the MinIO server:
 
     ```bash
-    ssh -f -N -L 9002:ci07:9002 <ac.anl_username>@login1.berkeley.kbase.us 
-    ssh -f -N -L 9003:ci07:9003 <ac.anl_username>@login1.berkeley.kbase.us 
+    ssh -f -N -L 9002:10.58.1.104:9002 <ac.anl_username>@login1.berkeley.kbase.us 
+    ssh -f -N -L 9003:10.58.1.104:9003 <ac.anl_username>@login1.berkeley.kbase.us 
     ```
 
    `<ac.anl_username>`: Your username for SSH access. Contact the KBase System Admin team if you do not have access.
