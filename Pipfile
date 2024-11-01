@@ -27,6 +27,8 @@ jupyter-ai = "==2.26.0"
 langchain-openai = "==0.1.25"
 langchain-anthropic = "==0.1.23"
 huggingface_hub = "==0.26.0"
+jupyter-ai-cborg = {git = "https://github.com/kbaseincubator/cdm-jupyter-ai-cborg.git", ref = "v0.1.0"}
+
 
 # Frequently utilized data visualization libraries by the science team
 plotly = "==5.24.1"
