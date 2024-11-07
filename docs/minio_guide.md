@@ -6,7 +6,7 @@ interacting with MinIO.
 
 ## Prerequisites
 
-1. Establish a tunnel to connect to the MinIO server (this step can be skipped if you are using the JupyterHub environment):
+1. Establish a tunnel to connect to the MinIO server (this step can be skipped if you are already in the JupyterHub environment):
 
     ```bash
     ssh -f -N -L 9002:10.58.1.104:9002 <ac.anl_username>@login1.berkeley.kbase.us 
