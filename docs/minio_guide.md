@@ -21,9 +21,7 @@ Open a web browser and navigate to the following URL:
 ```
 http://localhost:9003
 ```
-
-Please note that UI access requires a MinIO username and password. The access key and secret key will not work for 
-UI access. Please contact the KBase System Admin team for the username and password.
+Please consult the [developer guidance](dev_guide.md#readwrite-minio-username-and-password) for MinIO username (access key) and password (secret key).
 
 ## Using MinIO Client (`mc`)
 
@@ -38,10 +36,10 @@ Download and install the MinIO Client (`mc`) from the [MinIO official website](h
     ```bash
     mc alias set cdm-minio http://localhost:9002
     ```
-    It will prompt you to enter the access key and secret key. Please contact the KBase System Admin team for the 
-    access key and secret key.
+    It will prompt you to enter the access key and secret key. Please refer to the [developer guidance](dev_guide.md#readwrite-minio-username-and-password) for instructions on obtaining MinIO access key and secret key.
 
-2. Verify the configuration and connection:
+
+3. Verify the configuration and connection:
 
     ```bash
     mc ls cdm-minio
