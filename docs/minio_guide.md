@@ -6,7 +6,7 @@ interacting with MinIO.
 
 ## Prerequisites
 
-1. Establish a tunnel to connect to the MinIO server:
+1. Establish a tunnel to connect to the MinIO server (this step can be skipped if you are using the JupyterHub environment):
 
     ```bash
     ssh -f -N -L 9002:10.58.1.104:9002 <ac.anl_username>@login1.berkeley.kbase.us 
@@ -34,7 +34,7 @@ Download and install the MinIO Client (`mc`) from the [MinIO official website](h
 1. Add MinIO server to the `mc` configuration:
 
     ```bash
-    mc alias set cdm-minio http://localhost:9002
+    mc alias set cdm-minio http://localhost:9002  # http://10.58.1.104:9002 if you're already in the JupyterHub environment
     ```
     It will prompt you to enter the access key and secret key. Please refer to the [developer guidance](dev_guide.md#readwrite-minio-username-and-password) for instructions on obtaining MinIO access key and secret key.
 
@@ -94,7 +94,7 @@ from pathlib import Path
 import boto3
 
 # MinIO configuration
-endpoint_url = 'http://localhost:9002'
+endpoint_url = 'http://localhost:9002' # http://10.58.1.104:9002 if you're already in the JupyterHub environment
 access_key = 'MINIOACCESSKEY'
 secret_key = 'MINIOSECRETKEY'
 
