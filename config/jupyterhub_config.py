@@ -47,8 +47,12 @@ c.DockerSpawner.image = os.environ['JUPYTERHUB_USER_IMAGE']
 c.DockerSpawner.cmd = ['echo', 'Starting JupiterHub Single User Server With DockerSpawner ...']
 
 # Container resource limits
-# c.DockerSpawner.cpu_limit = 4
-# c.DockerSpawner.mem_limit = '16G'
+c.DockerSpawner.cpu_limit = 4
+c.DockerSpawner.mem_limit = '16G'
+
+c.DockerSpawner.http_timeout = 120 # 2 minutes (default is 30 seconds)
+c.DockerSpawner.start_timeout = 300  # 5 minutes (default is 60 seconds)
+
 
 # The network name that Docker containers will use to communicate
 network_name = os.environ.get('NETWORK_NAME')
