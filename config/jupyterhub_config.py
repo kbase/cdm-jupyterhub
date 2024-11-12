@@ -3,6 +3,9 @@ This is the JupyterHub configuration file. It is used to configure the JupyterHu
 Refer to the JupyterHub documentation for more information:
 https://jupyterhub.readthedocs.io/en/latest/tutorial/getting-started/config-basics.html
 https://jupyterhub.readthedocs.io/en/stable/reference/config-reference.html
+
+Refer to DockerSpawner documentation for dockerspawner settings information:
+https://jupyterhub-dockerspawner.readthedocs.io/en/latest/api/index.html#dockerspawner-api
 """
 
 import os
@@ -50,6 +53,9 @@ c.DockerSpawner.cmd = ['echo', 'Starting JupiterHub Single User Server With Dock
 c.DockerSpawner.cpu_limit = 4
 c.DockerSpawner.mem_limit = '16G'
 
+c.DockerSpawner.http_timeout = 120 # 2 minutes (default is 30 seconds)
+c.DockerSpawner.start_timeout = 300  # 5 minutes (default is 60 seconds)
+
 # The network name that Docker containers will use to communicate
 network_name = os.environ.get('NETWORK_NAME')
 if network_name:
@@ -57,7 +63,6 @@ if network_name:
 c.DockerSpawner.use_internal_ip = True
 environment = os.environ.get('ENVIRONMENT', 'prod').lower()
 # for troubleshooting purposes, keep the container in non-prod environment
-# ref: https://jupyterhub-dockerspawner.readthedocs.io/en/latest/api/index.html#dockerspawner.DockerSpawner.remove
 c.DockerSpawner.remove = environment != 'dev'
 c.DockerSpawner.debug = True
 
