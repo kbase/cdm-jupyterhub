@@ -1,6 +1,7 @@
 import os
 import shutil
 import venv
+from datetime import timedelta, datetime
 from pathlib import Path
 
 import json5
@@ -10,11 +11,13 @@ from filelock import FileLock
 
 class CustomDockerSpawner(DockerSpawner):
     RW_MINIO_GROUP = 'minio_rw'
+    DEFAULT_IDLE_TIMEOUT_MINUTES = 180
 
     def start(self):
         username = self.user.name
         global_home = Path(os.environ['JUPYTERHUB_USER_HOME'])
         user_dir = global_home / username
+        self.idle_timeout = self._get_idle_timeout()
 
         # Ensure the user directory exists
         self._ensure_user_directory(user_dir, username)
@@ -40,6 +43,59 @@ class CustomDockerSpawner(DockerSpawner):
         self._add_favorite_dir(user_dir, favorites={Path(os.environ['KBASE_GROUP_SHARED_DIR'])})
 
         return super().start()
+
+    def _get_idle_timeout(self):
+        """
+        Retrieves the idle timeout from the environment variable `IDLE_TIMEOUT_MINUTES`.
+        If not set, defaults to 180 minutes.
+
+        Returns:
+            timedelta: Idle timeout duration.
+        """
+        idle_timeout_minutes = int(os.getenv("IDLE_TIMEOUT_MINUTES", self.DEFAULT_IDLE_TIMEOUT_MINUTES))
+        self.log.info(f"Idle timeout set to {idle_timeout_minutes} minutes")
+        return timedelta(minutes=idle_timeout_minutes)
+
+    async def poll(self):
+        """
+        Overrides the poll method to periodically checks the status of the user’s JupyterHub container.
+
+        ref:
+        https://github.com/jupyterhub/dockerspawner/blob/main/dockerspawner/dockerspawner.py#L1004
+        https://jupyterhub-dockerspawner.readthedocs.io/en/latest/api/index.html#dockerspawner.DockerSpawner.poll
+
+        - If the container is stopped, returns the status immediately.
+        - If the container is running, checks how long the user has been idle.
+        - If idle time exceeds the defined threshold, stops the container to save resources.
+
+        The poll method is invoked at regular intervals by the Spawner, with the frequency determined by the JupyterHub
+        server's configuration (default is 30 seconds).
+
+        Returns:
+            int or None: Returns an exit code (0) if the container has been stopped due
+                         to inactivity. Returns None if the container is still active
+                         and running.
+        """
+        # Check if the container has already stopped
+        status = await super().poll()
+        if status is not None:
+            # Container has already stopped, return its status code immediately
+            return status
+
+        last_activity = self.user.last_activity
+        self.log.info(f"Last activity for {self.container_name}: {last_activity}")
+
+        if last_activity:
+            idle_time = datetime.utcnow() - last_activity
+            self.log.info(f"Idle time for {self.container_name}: {idle_time}")
+
+            if idle_time > self.idle_timeout:
+                self.log.warn(f"Container {self.container_name} has been idle for {idle_time}. Stopping...")
+                await self.stop()
+                return 0  # Return an exit code to indicate the container has stopped
+
+        # Return status (None) to indicate that the container is still running and active
+        return status
 
     def _ensure_user_directory(self, user_dir: Path, username: str):
         """
