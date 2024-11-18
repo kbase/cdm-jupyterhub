@@ -86,7 +86,7 @@ class CustomDockerSpawner(DockerSpawner):
         self.log.info(f"Last activity for {self.container_name}: {last_activity}")
 
         if last_activity:
-            idle_time = datetime.utcnow() - last_activity
+            idle_time = datetime.now() - last_activity
             self.log.info(f"Idle time for {self.container_name}: {idle_time}")
 
             if idle_time > self.idle_timeout:
