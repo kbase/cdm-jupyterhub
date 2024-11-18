@@ -58,7 +58,7 @@ class CustomDockerSpawner(DockerSpawner):
 
     async def poll(self):
         """
-        Overrides the poll method to periodically checks the status of the user’s JupyterHub container.
+        Overrides the poll method to periodically check the status of the user’s JupyterHub container.
 
         ref:
         https://github.com/jupyterhub/dockerspawner/blob/main/dockerspawner/dockerspawner.py#L1004
