@@ -6,6 +6,7 @@ services:
 
   yarn-resourcemanager:
     image: ghcr.io/kbase/cdm-prototype-yarn:pr-8
+    container_name: yarn-resourcemanager
     # Images from the ghcr.io/kbase registry are exclusively available for Linux/AMD64 platforms.
     platform: linux/amd64
     ports:
@@ -20,6 +21,7 @@ services:
 
   yarn-nodemanager:
     image: ghcr.io/kbase/cdm-prototype-yarn:pr-8
+    container_name: yarn-nodemanager
     platform: linux/amd64
     ports:
       - 8042:8042  # web ui
@@ -35,6 +37,7 @@ services:
   spark-master:
     # The latest image from cdm-jupyterhub that includes spark standalone mode
     image: ghcr.io/kbase/cdm-jupyterhub:pr-74
+    container_name: spark-master
     platform: linux/amd64
     ports:
       - "8090:8090"
@@ -54,6 +57,7 @@ services:
   spark-worker-1:
     # The latest image from cdm-jupyterhub that includes spark standalone mode
     image: ghcr.io/kbase/cdm-jupyterhub:pr-74
+    container_name: spark-worker-1
     platform: linux/amd64
     ports:
       - "8081:8081"
@@ -75,6 +79,7 @@ services:
   spark-worker-2:
     # The latest image from cdm-jupyterhub that includes spark standalone mode
     image: ghcr.io/kbase/cdm-jupyterhub:pr-74
+    container_name: spark-worker-2
     platform: linux/amd64
     ports:
       - "8082:8082"
@@ -95,6 +100,7 @@ services:
 
   minio:
     image: minio/minio
+    container_name: spark-minio
     ports:
       - "9002:9002"
       # MinIO Console is available at http://localhost:9003
@@ -131,6 +137,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: cdm-jupyterhub
     platform: linux/amd64
     ports:
       - "4043:4043"
@@ -170,6 +177,7 @@ services:
   postgres:
     image: postgres:16.3
     restart: always
+    container_name: postgres
     # To avoid incorrect user permissions, manually create the volume directory before running Docker.
     # export UID=$(id -u)
     # export GID=$(id -g)
