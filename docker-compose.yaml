@@ -6,7 +6,6 @@ services:
 
   yarn-resourcemanager:
     image: ghcr.io/kbase/cdm-prototype-yarn:pr-8
-    container_name: yarn-resourcemanager
     # Images from the ghcr.io/kbase registry are exclusively available for Linux/AMD64 platforms.
     platform: linux/amd64
     ports:
@@ -21,7 +20,6 @@ services:
 
   yarn-nodemanager:
     image: ghcr.io/kbase/cdm-prototype-yarn:pr-8
-    container_name: yarn-nodemanager
     platform: linux/amd64
     ports:
       - 8042:8042  # web ui
@@ -37,7 +35,6 @@ services:
   spark-master:
     # The latest image from cdm-jupyterhub that includes spark standalone mode
     image: ghcr.io/kbase/cdm-jupyterhub:pr-74
-    container_name: spark-master
     platform: linux/amd64
     ports:
       - "8090:8090"
@@ -57,10 +54,7 @@ services:
   spark-worker-1:
     # The latest image from cdm-jupyterhub that includes spark standalone mode
     image: ghcr.io/kbase/cdm-jupyterhub:pr-74
-    container_name: spark-worker-1
     platform: linux/amd64
-    depends_on:
-      - spark-master
     ports:
       - "8081:8081"
     environment:
@@ -81,10 +75,7 @@ services:
   spark-worker-2:
     # The latest image from cdm-jupyterhub that includes spark standalone mode
     image: ghcr.io/kbase/cdm-jupyterhub:pr-74
-    container_name: spark-worker-2
     platform: linux/amd64
-    depends_on:
-      - spark-master
     ports:
       - "8082:8082"
     environment:
@@ -137,77 +128,15 @@ services:
     networks:
       - cdm-jupyterhub-network
 
-  dev_jupyterlab:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: dev-jupyterlab
-    ports:
-      - "4041:4041"
-    depends_on:
-      - spark-master
-      - minio-create-bucket
-    environment:
-      - NOTEBOOK_PORT=4041
-      - JUPYTER_MODE=jupyterlab
-      - YARN_RESOURCE_MANAGER_URL=http://yarn-resourcemanager:8032
-      - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_DRIVER_HOST=dev-jupyterlab
-      - MINIO_URL=http://minio:9002
-      - MINIO_ACCESS_KEY=minio-readwrite
-      - MINIO_SECRET_KEY=minio123
-      - S3_YARN_BUCKET=yarn
-      - MAX_EXECUTORS=4
-      - POSTGRES_USER=hive
-      - POSTGRES_PASSWORD=hivepassword
-      - POSTGRES_DB=hive
-      - POSTGRES_URL=postgres:5432
-      - USAGE_MODE=dev  # Enabling dev mode grants full access to MinIO and additional privileges for services like Hive, such as the ability to create tables as defined in the scripts/setup.sh.
-    volumes:
-      - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
-    networks:
-      - cdm-jupyterhub-network
-
-  user-jupyterlab:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: user-jupyterlab
-    ports:
-      - "4042:4042"
-    depends_on:
-      - spark-master
-      - minio-create-bucket
-    environment:
-      - NOTEBOOK_PORT=4042
-      - JUPYTER_MODE=jupyterlab
-      - YARN_RESOURCE_MANAGER_URL=http://yarn-resourcemanager:8032
-      - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_DRIVER_HOST=user-jupyterlab
-      - MINIO_URL=http://minio:9002
-      - MINIO_ACCESS_KEY=minio-readonly
-      - MINIO_SECRET_KEY=minio123
-      - S3_YARN_BUCKET=yarn
-      - MAX_EXECUTORS=4
-      # TODO: create postgres user r/ only read access to the hive tables
-      - POSTGRES_USER=hive
-      - POSTGRES_PASSWORD=hivepassword
-      - POSTGRES_DB=hive
-      - POSTGRES_URL=postgres:5432
-    volumes:
-      - ./cdr/cdm/jupyter/cdm_shared_workspace/user_shared_workspace:/cdm_shared_workspace/user_shared_workspace
-    networks:
-      - cdm-jupyterhub-network
-
   cdm_jupyterhub:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: cdm-jupyterhub
+    platform: linux/amd64
     ports:
       - "4043:4043"
     depends_on:
-      - spark-master
       - minio-create-bucket
     environment:
       - NOTEBOOK_PORT=4043
@@ -231,6 +160,7 @@ services:
       - NETWORK_NAME=cdm-jupyterhub-network
       - JUPYTERHUB_USER_IMAGE=cdm-jupyterhub-cdm_jupyterhub:latest
       - JUPYTERHUB_MOUNT_BASE_DIR=/cdr/cdm/jupyter
+      - ENVIRONMENT=dev
     volumes:
       - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
       - ./cdr/cdm/jupyter/jupyterhub_secrets:/jupyterhub_secrets
