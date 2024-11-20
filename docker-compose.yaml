@@ -95,7 +95,6 @@ services:
 
   minio:
     image: minio/minio
-    container_name: spark-minio
     ports:
       - "9002:9002"
       # MinIO Console is available at http://localhost:9003
@@ -132,7 +131,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: cdm-jupyterhub
     platform: linux/amd64
     ports:
       - "4043:4043"
@@ -172,7 +170,6 @@ services:
   postgres:
     image: postgres:16.3
     restart: always
-    container_name: postgres
     # To avoid incorrect user permissions, manually create the volume directory before running Docker.
     # export UID=$(id -u)
     # export GID=$(id -g)
