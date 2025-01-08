@@ -2,7 +2,6 @@ import csv
 import os
 import site
 from datetime import datetime
-from threading import Timer
 from urllib.parse import urlparse
 
 from pyspark.conf import SparkConf
