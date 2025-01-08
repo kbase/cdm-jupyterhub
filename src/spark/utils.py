@@ -2,7 +2,6 @@ import csv
 import os
 import site
 from datetime import datetime
-from threading import Timer
 from urllib.parse import urlparse
 
 from pyspark.conf import SparkConf
@@ -65,11 +64,6 @@ def _get_delta_lake_conf() -> dict:
     }
 
 
-def _stop_spark_session(spark):
-    print("Stopping Spark session after timeout...")
-    spark.stop()
-
-
 def _get_base_spark_conf(
         app_name: str,
         executor_cores: int,
@@ -99,15 +93,14 @@ def get_spark_session(
         local: bool = False,
         yarn: bool = True,
         delta_lake: bool = True,
-        timeout_sec: int = 4 * 60 * 60,
         executor_cores: int = DEFAULT_EXECUTOR_CORES) -> SparkSession:
     """
     Helper to get and manage the SparkSession and keep all of our spark configuration params in one place.
 
     :param app_name: The name of the application. If not provided, a default name will be generated.
     :param local: Whether to run the spark session locally or not. Default is False.
+    :param yarn: Whether to run the spark session on YARN or not. Default is True.
     :param delta_lake: Build the spark session with Delta Lake support. Default is True.
-    :param timeout_sec: The timeout in seconds to stop the Spark session forcefully. Default is 4 hours.
     :param executor_cores: The number of CPU cores that each Spark executor will use. Default is 1.
 
     :return: A SparkSession object
@@ -137,8 +130,6 @@ def get_spark_session(
     for key, value in sc.items():
         spark_conf.set(key, value)
     spark = SparkSession.builder.config(conf=spark_conf).getOrCreate()
-    timeout_sec = os.getenv('SPARK_TIMEOUT_SECONDS', timeout_sec)
-    Timer(int(timeout_sec), _stop_spark_session, [spark]).start()
 
     return spark
 
