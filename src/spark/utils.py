@@ -65,11 +65,6 @@ def _get_delta_lake_conf() -> dict:
     }
 
 
-def _stop_spark_session(spark):
-    print("Stopping Spark session after timeout...")
-    spark.stop()
-
-
 def _get_base_spark_conf(
         app_name: str,
         executor_cores: int,
