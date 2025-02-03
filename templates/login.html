@@ -1,0 +1,134 @@
+{% extends "page.html" %}
+{% if announcement_login is string %}
+  {% set announcement = announcement_login %}
+{% endif %}
+{% block login_widget %}
+{% endblock login_widget %}
+{% block main %}
+  {% block login %}
+    <div id="login-main" class="container">
+      {% block login_container %}
+      <div class="service-login">
+        <p id='insecure-login-warning' class='hidden alert alert-warning'>
+          Warning: JupyterHub seems to be served over an unsecured HTTP connection.
+          We strongly recommend enabling HTTPS for JupyterHub.
+        </p>
+        <a role="button"
+           class='btn btn-jupyter btn-lg'
+           href='{{ authenticator_login_url | safe }}'>Sign in with {{ login_service }}</a>
+      </div>
+
+
+          <form action="{{ authenticator_login_url | safe }}"
+                method="post"
+                role="form">
+            <div class="auth-form-header">
+              <h1>Sign in</h1>
+            </div>
+            <div class='auth-form-body m-auto'>
+              <p id='insecure-login-warning' class='hidden alert alert-warning'>
+                Warning: JupyterHub seems to be served over an unsecured HTTP connection.
+                We strongly recommend enabling HTTPS for JupyterHub.
+              </p>
+
+              {% if login_error %}<p class="login_error">{{ login_error }}</p>{% endif %}
+              <input type="hidden" name="_xsrf" value="{{ xsrf }}" />
+              
+              <div class="feedback-container">
+                <input id="login_not_ok"
+                       type="button"
+                       class='btn btn-jupyter form-control hidden'
+                       value='Please log in to KBase to continue'
+                       tabindex="3" />
+                <input id="login_submit"
+                       type="submit"
+                       class='btn btn-jupyter form-control hidden'
+                       value='Log In with your KBase Account'
+                       tabindex="3" />
+                <div class="feedback-widget hidden">
+                  <i class="fa fa-spinner"></i>
+                </div>
+              </div>
+
+              {% block login_terms %}
+                {% if login_term_url %}
+                  <div id="login_terms" class="login_terms">
+                    <input type="checkbox"
+                           id="login_terms_checkbox"
+                           name="login_terms_checkbox"
+                           required />
+                    {% block login_terms_text %}
+                      {# allow overriding the text #}
+                      By logging into the platform you accept the <a href="{{ login_term_url }}">terms and conditions</a>.
+                    {% endblock login_terms_text %}
+                  </div>
+                {% endif %}
+              {% endblock login_terms %}
+            </div>
+          </form>
+      {% endblock login_container %}
+    </div>
+  {% endblock login %}
+{% endblock main %}
+{% block script %}
+  {{ super() }}
+  <script>
+    if (!window.isSecureContext) {
+      // unhide http warning
+      var warning = document.getElementById('insecure-login-warning');
+      warning.className = warning.className.replace(/\bhidden\b/, '');
+    }
+    // setup onSubmit feedback
+    $('form').submit((e) => {
+      var form = $(e.target);
+      form.find('.feedback-container>input').attr('disabled', true);
+      form.find('.feedback-container>*').toggleClass('hidden');
+      form.find('.feedback-widget>*').toggleClass('fa-pulse');
+    });
+
+    const enviromentOrigin = "https://ci.kbase.us"
+
+    $('#login_not_ok').click(function () {
+      window.location.href = enviromentOrigin + '/login';
+    })
+
+    // Check KBase token is present and valid
+    checkKBaseCookie().then((username) => {
+      if (username) {
+        const buttonText = 'Log in with KBase as "' + username + '"';
+        $('#login_submit').attr('value', buttonText);
+        $('#login_submit').toggleClass('hidden', false);
+        $('#login_not_ok').toggleClass('hidden', true);
+      } else {
+        $('#login_submit').toggleClass('hidden', false);
+        $('#login_not_ok').toggleClass('hidden', true);
+      }
+    })
+
+    function checkKBaseCookie() {
+      const tokenCookie = getCookie('kbase_session');
+      return fetch(enviromentOrigin + '/services/auth/api/V2/me', {
+        headers: {
+          Authorization: tokenCookie,
+        },
+        method: 'GET'
+      }).then((resp) => {
+        return resp.json();
+      }).then(json => {
+        if ('user' in json) {
+          return json.user
+        } else {
+          return null;
+        }
+      }).catch((resp) => {
+        return null;
+      });
+    }
+
+    function getCookie(name) {
+      const escapedName = name.replace(/([.*+?\^$(){}|\[\]\/\\])/g, '\\$1');
+      var match = document.cookie.match(RegExp('(?:^|;\\s*)' + escapedName + '=([^;]*)'));
+      return match ? match[1] : null;
+    }
+  </script>
+{% endblock script %}
