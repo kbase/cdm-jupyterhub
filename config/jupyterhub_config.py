@@ -19,7 +19,10 @@ c = get_config()
 # Set the authenticator class to nativeauthenticator
 # ref: https://native-authenticator.readthedocs.io/en/latest/quickstart.html
 c.JupyterHub.authenticator_class = 'native'
-c.JupyterHub.template_paths = [f"{os.path.dirname(os.path.realpath(__file__))}/../templates/",f"{os.path.dirname(nativeauthenticator.__file__)}/templates/"]
+c.JupyterHub.template_paths = [
+    os.path.abspath("/templates"),
+    f"{os.path.dirname(nativeauthenticator.__file__)}/templates/"
+]
 # ref: https://native-authenticator.readthedocs.io/en/latest/options.html
 c.NativeAuthenticator.open_signup = True
 c.NativeAuthenticator.check_common_password = True

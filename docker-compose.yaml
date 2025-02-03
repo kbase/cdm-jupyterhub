@@ -170,6 +170,7 @@ services:
       - ./cdr/cdm/jupyter/jupyterhub_secrets:/jupyterhub_secrets
       - ./cdr/cdm/jupyter/jupyterhub/users_home:/jupyterhub/users_home
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./templates:/templates
     networks:
       - cdm-jupyterhub-network
 
