@@ -1,4 +1,4 @@
-from src.service.errors import ErrorType
+from service.errors import ErrorType
 
 
 def test_noop():

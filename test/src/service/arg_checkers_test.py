@@ -1,4 +1,4 @@
-from src.service.arg_checkers import not_falsy
+from service.arg_checkers import not_falsy
 
 
 def test_noop():
