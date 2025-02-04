@@ -25,6 +25,9 @@ class KBaseAuthenticator(Authenticator):
     Custom JupyterHub Authenticator for KBase.
     Authenticates users by verifying the 'kbase_session' cookie
     against the KBase Auth2 API.
+
+    For custom authenticators, refer to the JupyterHub documentation:
+    https://jupyterhub.readthedocs.io/en/latest/reference/authenticators.html#authenticators
     """
 
     SESSION_COOKIE_NAME = "kbase_session"
@@ -52,6 +55,7 @@ class KBaseAuthenticator(Authenticator):
         if not session_token:
             raise MissingTokenError(f"Authentication required - missing {self.SESSION_COOKIE_NAME} cookie.")
 
+        # TODO: create the auth client once and reuse it or disable URL check logic and cache
         kb_auth = await KBaseAuth.create(self.kbase_auth_url, self.auth_full_admin_roles)
         kb_user = await kb_auth.get_user(session_token)
 
