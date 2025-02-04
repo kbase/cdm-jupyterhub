@@ -155,7 +155,6 @@ services:
       - MINIO_RW_ACCESS_KEY=minio-readwrite
       - MINIO_RW_SECRET_KEY=minio123
       - S3_YARN_BUCKET=yarn
-      - JUPYTER_MODE=jupyterhub
       - MAX_EXECUTORS=4
       - POSTGRES_USER=hive
       - POSTGRES_PASSWORD=hivepassword
