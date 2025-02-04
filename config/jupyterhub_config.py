@@ -21,7 +21,6 @@ c = get_config()
 c.JupyterHub.authenticator_class = 'native'
 c.JupyterHub.template_paths = [
     os.environ['JUPYTERHUB_TEMPLATES_DIR'],
-    f"{os.path.dirname(nativeauthenticator.__file__)}/templates/"
 ]
 # ref: https://native-authenticator.readthedocs.io/en/latest/options.html
 c.NativeAuthenticator.open_signup = True

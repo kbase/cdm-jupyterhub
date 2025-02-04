@@ -13,9 +13,6 @@
           Warning: JupyterHub seems to be served over an unsecured HTTP connection.
           We strongly recommend enabling HTTPS for JupyterHub.
         </p>
-        <a role="button"
-           class='btn btn-jupyter btn-lg'
-           href='{{ authenticator_login_url | safe }}'>Sign in with {{ login_service }}</a>
       </div>
 
 
@@ -100,13 +97,14 @@
         $('#login_submit').toggleClass('hidden', false);
         $('#login_not_ok').toggleClass('hidden', true);
       } else {
-        $('#login_submit').toggleClass('hidden', false);
-        $('#login_not_ok').toggleClass('hidden', true);
+        $('#login_submit').toggleClass('hidden', true);
+        $('#login_not_ok').toggleClass('hidden', false);
       }
     })
 
     function checkKBaseCookie() {
       const tokenCookie = getCookie('kbase_session');
+      if (!tokenCookie) return Promise.resolve(null);
       return fetch(enviromentOrigin + '/services/auth/api/V2/me', {
         headers: {
           Authorization: tokenCookie,
