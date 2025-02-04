@@ -19,7 +19,13 @@ c = get_config()
 # Set the authenticator class to nativeauthenticator
 # ref: https://native-authenticator.readthedocs.io/en/latest/quickstart.html
 c.JupyterHub.authenticator_class = 'native'
-c.JupyterHub.template_paths = [f"{os.path.dirname(nativeauthenticator.__file__)}/templates/"]
+c.JupyterHub.template_paths = [
+    os.environ['JUPYTERHUB_TEMPLATES_DIR'],
+]
+kbase_env = (os.environ['JUPYTERHUB_KB_ENV']).lower() if 'JUPYTERHUB_KB_ENV' in os.environ else "ci"
+c.JupyterHub.template_vars = {
+    'kbase_origin': 'https://narrative.kbase.us' if kbase_env == "prod" else f'https://{kbase_env}.kbase.us'
+}
 # ref: https://native-authenticator.readthedocs.io/en/latest/options.html
 c.NativeAuthenticator.open_signup = True
 c.NativeAuthenticator.check_common_password = True
