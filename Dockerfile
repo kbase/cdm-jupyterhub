@@ -77,6 +77,11 @@ ENV JUPYTERHUB_USER_HOME=/jupyterhub/users_home
 RUN mkdir -p $JUPYTERHUB_USER_HOME
 RUN chown -R spark_user:spark /jupyterhub
 
+# Jupyter Hub UI templates directory
+ENV JUPYTERHUB_TEMPLATES_DIR=/templates
+RUN mkdir -p ${JUPYTERHUB_TEMPLATES_DIR}
+COPY ./templates/ ${JUPYTERHUB_TEMPLATES_DIR}
+
 RUN npm install -g configurable-http-proxy
 
 COPY ./src/ /src
