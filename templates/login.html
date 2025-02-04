@@ -83,7 +83,7 @@
       form.find('.feedback-widget>*').toggleClass('fa-pulse');
     });
 
-    const enviromentOrigin = "https://ci.kbase.us"
+    const enviromentOrigin = "{{ kbase_origin }}"
 
     $('#login_not_ok').click(function () {
       window.location.href = enviromentOrigin + '/login';
