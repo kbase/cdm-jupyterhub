@@ -13,28 +13,35 @@ import os
 import nativeauthenticator
 
 from jupyterhub_config.custom_docker_spawner import CustomDockerSpawner
+from jupyterhub_config.kb_jupyterhub_auth import KBaseAuthenticator, kbase_origin
 
 c = get_config()
 
-# Set the authenticator class to nativeauthenticator
-# ref: https://native-authenticator.readthedocs.io/en/latest/quickstart.html
-c.JupyterHub.authenticator_class = 'native'
-c.JupyterHub.template_paths = [
-    os.environ['JUPYTERHUB_TEMPLATES_DIR'],
-]
-kbase_env = (os.environ['JUPYTERHUB_KB_ENV']).lower() if 'JUPYTERHUB_KB_ENV' in os.environ else "ci"
-c.JupyterHub.template_vars = {
-    'kbase_origin': 'https://narrative.kbase.us' if kbase_env == "prod" else f'https://{kbase_env}.kbase.us'
-}
-# ref: https://native-authenticator.readthedocs.io/en/latest/options.html
-c.NativeAuthenticator.open_signup = True
-c.NativeAuthenticator.check_common_password = True
-c.NativeAuthenticator.minimum_password_length = 8
+# TODO remove USE_KBASE_AUTHENTICATOR and Jupyterhub native auth once the KBaseAuthenticator is fully implemented
+if os.environ.get('USE_KBASE_AUTHENTICATOR', 'false').lower() == 'true':
+    # Set the authenticator class to KBaseAuthenticator
+    # ref: https://jupyterhub.readthedocs.io/en/latest/reference/authenticators.html#authenticators
+    c.JupyterHub.authenticator_class = KBaseAuthenticator
+    c.Authenticator.enable_auth_state = True  # Enable authentication state persistence
+    c.JupyterHub.template_paths = [os.environ['JUPYTERHUB_TEMPLATES_DIR']]
+    c.JupyterHub.template_vars = {
+        'kbase_origin': f'https://{kbase_origin()}'
+    }
+else:
+    # Set the authenticator class to nativeauthenticator
+    # ref: https://native-authenticator.readthedocs.io/en/latest/quickstart.html
+    c.JupyterHub.authenticator_class = 'native'
+    c.JupyterHub.template_paths = [f"{os.path.dirname(nativeauthenticator.__file__)}/templates/"]
+    # ref: https://native-authenticator.readthedocs.io/en/latest/options.html
+    c.NativeAuthenticator.open_signup = True
+    c.NativeAuthenticator.check_common_password = True
+    c.NativeAuthenticator.minimum_password_length = 8
 
-# Set up the admin user
-admin_user = 'spark_user'
-c.Authenticator.admin_users = {admin_user}
-# TODO set admin user password to os.environ['JUPYTERHUB_ADMIN_PASSWORD'] automatically - currently spark_user is created manually with the signup page
+    # Set up the admin user
+    admin_user = 'spark_user'
+    c.Authenticator.admin_users = {admin_user}
+    # TODO set admin user password to os.environ['JUPYTERHUB_ADMIN_PASSWORD'] automatically - currently spark_user is created manually with the signup page
+
 # Allow user who can successfully authenticate to access the JupyterHub server
 # ref: https://jupyterhub.readthedocs.io/en/latest/reference/api/auth.html#jupyterhub.auth.Authenticator.allow_all
 c.Authenticator.allow_all = True
@@ -59,7 +66,7 @@ c.DockerSpawner.cmd = ['echo', 'Starting JupiterHub Single User Server With Dock
 c.DockerSpawner.cpu_limit = 4
 c.DockerSpawner.mem_limit = '16G'
 
-c.DockerSpawner.http_timeout = 120 # 2 minutes (default is 30 seconds)
+c.DockerSpawner.http_timeout = 120  # 2 minutes (default is 30 seconds)
 c.DockerSpawner.start_timeout = 300  # 5 minutes (default is 60 seconds)
 
 # The network name that Docker containers will use to communicate

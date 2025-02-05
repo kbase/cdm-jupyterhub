@@ -163,8 +163,12 @@ services:
       - JUPYTERHUB_ADMIN_PASSWORD=testpassword123
       - NETWORK_NAME=cdm-jupyterhub-network
       - JUPYTERHUB_USER_IMAGE=cdm-jupyterhub-cdm_jupyterhub:latest
+      # Ensure that the JUPYTERHUB_MOUNT_BASE_DIR directory below is an absolute path and exists on your local machine.
       - JUPYTERHUB_MOUNT_BASE_DIR=/cdr/cdm/jupyter
       - ENVIRONMENT=dev
+      - KB_ENV=ci
+      - AUTH_FULL_ADMIN_ROLES=CDM_JUPYTERHUB_ADMIN
+      - USE_KBASE_AUTHENTICATOR=true
     volumes:
       - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
       - ./cdr/cdm/jupyter/jupyterhub_secrets:/jupyterhub_secrets
