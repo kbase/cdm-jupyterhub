@@ -70,4 +70,8 @@
 {% block script %}
   {{ super() }}
   <script src="{{ static_url('ts/templates/login.js') }}"/></script>
+  <script>
+    const enviromentOrigin = "{{ kbase_origin }}";
+    init(enviromentOrigin);
+  </script>
 {% endblock script %}
