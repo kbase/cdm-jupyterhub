@@ -29,7 +29,9 @@ elif [ "$JUPYTER_MODE" = "jupyterhub" ]; then
   echo "starting jupyterhub"
   # unset global $NOTEBOOK_DIR var, as it should be configured individually for each user's spawner
   unset NOTEBOOK_DIR
-
+  # required by jupyterhub in order to enable authentication state
+  # ref: https://jupyterhub.readthedocs.io/en/latest/reference/authenticators.html#authentication-state
+  export JUPYTERHUB_CRYPT_KEY=$(openssl rand -hex 32)
   jupyterhub -f "$JUPYTERHUB_CONFIG_DIR"/jupyterhub_config.py
 elif [ "$JUPYTER_MODE" = "jupyterhub-singleuser" ]; then
   echo "Starting Jupyter Notebook for user: $JUPYTERHUB_USER"
