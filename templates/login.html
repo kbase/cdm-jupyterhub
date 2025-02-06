@@ -69,6 +69,7 @@
 {% endblock main %}
 {% block script %}
   {{ super() }}
+  <script src="{{ static_url('ts/templates/login.js') }}"/></script>
   <script>
     if (!window.isSecureContext) {
       // unhide http warning

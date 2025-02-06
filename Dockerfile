@@ -82,6 +82,14 @@ ENV JUPYTERHUB_TEMPLATES_DIR=/templates
 RUN mkdir -p ${JUPYTERHUB_TEMPLATES_DIR}
 COPY ./templates/ ${JUPYTERHUB_TEMPLATES_DIR}
 
+# Generate static assets
+COPY ./ts/ /ts-working/
+WORKDIR /ts-working
+RUN npm ci && npm run build
+RUN mkdir -p /opt/bitnami/python/share/jupyterhub/static/ts/
+RUN cp -R ts-build/. /opt/bitnami/python/share/jupyterhub/static/ts/
+WORKDIR /
+
 RUN npm install -g configurable-http-proxy
 
 COPY ./src/ /src
