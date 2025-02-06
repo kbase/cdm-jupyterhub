@@ -15,4 +15,4 @@ build
 
 # Ignore ts build folders
 /ts/node_modules
-/ts/build
+/ts/ts-build
