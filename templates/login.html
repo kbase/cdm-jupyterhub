@@ -35,12 +35,12 @@
                 <input id="login_not_ok"
                        type="button"
                        class='btn btn-jupyter form-control hidden'
-                       value='Please log in to KBase to continue'
+                       value='Log in to KBase to continue'
                        tabindex="3" />
                 <input id="login_submit"
                        type="submit"
                        class='btn btn-jupyter form-control hidden'
-                       value='Log In with your KBase Account'
+                       value='Log in with your KBase Account'
                        tabindex="3" />
                 <div class="feedback-widget hidden">
                   <i class="fa fa-spinner"></i>
@@ -86,21 +86,38 @@
     const enviromentOrigin = "{{ kbase_origin }}"
 
     $('#login_not_ok').click(function () {
-      window.location.href = enviromentOrigin + '/login';
+      window.location.href = enviromentOrigin + '/login?nextRequest=%22/cdm/redirect%22';
     })
 
-    // Check KBase token is present and valid
-    checkKBaseCookie().then((username) => {
-      if (username) {
-        const buttonText = 'Log in with KBase as "' + username + '"';
-        $('#login_submit').attr('value', buttonText);
-        $('#login_submit').toggleClass('hidden', false);
-        $('#login_not_ok').toggleClass('hidden', true);
-      } else {
-        $('#login_submit').toggleClass('hidden', true);
-        $('#login_not_ok').toggleClass('hidden', false);
+    // Initial state update
+    updateState();
+    // Check for cookie changes in other windows w/ setInterval,
+    // in case someone goes to another window to log in
+    // instead of clicking through our flow.
+    let currentCookie = "";
+    setInterval(() => {
+      const tokenCookie = getCookie('kbase_session');
+      // if cookie changes  
+      if (tokenCookie !== currentCookie) {
+        currentCookie = tokenCookie;
+        updateState();
       }
-    })
+    }, 200);
+
+    function updateState() {
+      // Check KBase token is present and valid
+      checkKBaseCookie().then((username) => {
+        if (username) {
+          const buttonText = 'Log in with KBase as "' + username + '"';
+          $('#login_submit').attr('value', buttonText);
+          $('#login_submit').toggleClass('hidden', false);
+          $('#login_not_ok').toggleClass('hidden', true);
+        } else {
+          $('#login_submit').toggleClass('hidden', true);
+          $('#login_not_ok').toggleClass('hidden', false);
+        }
+      })
+    }
 
     function checkKBaseCookie() {
       const tokenCookie = getCookie('kbase_session');
