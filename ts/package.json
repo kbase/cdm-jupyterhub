@@ -1,0 +1,17 @@
+{
+  "name": "cdm-jupyterhub-ts",
+  "version": "0.0.0",
+  "description": "",
+  "main": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rollup -c"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^12.1.2",
+    "@types/jquery": "^3.5.32",
+    "glob": "^11.0.1",
+    "rollup": "^4.34.4",
+    "typescript": "^5.7.3"
+  }
+}
