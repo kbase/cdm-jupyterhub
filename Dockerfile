@@ -26,6 +26,8 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     python3-dev \
     sudo \
+    # tools for troubleshooting network issues
+    iputils-ping dnsutils netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 ENV HADOOP_AWS_VER=3.3.4
@@ -85,7 +87,7 @@ COPY ./templates/ ${JUPYTERHUB_TEMPLATES_DIR}
 RUN npm install -g configurable-http-proxy
 
 COPY ./src/ /src
-ENV PYTHONPATH "${PYTHONPATH}:/src"
+ENV PYTHONPATH="${PYTHONPATH}:/src"
 
 # Copy the startup script to the default profile location to automatically load pre-built functions in Jupyter Notebook
 COPY ./src/notebook_utils/startup.py /.ipython/profile_default/startup/
