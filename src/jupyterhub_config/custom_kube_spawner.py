@@ -246,13 +246,14 @@ class CustomKubeSpawner(KubeSpawner):
         mount_base_dir = os.environ['JUPYTERHUB_MOUNT_BASE_DIR']
         hub_secrets_dir = os.environ['JUPYTERHUB_SECRETS_DIR']
 
-        cdm_shared_dir = os.environ['CDM_SHARED_DIR']
-        hive_metastore_dir = os.environ['HIVE_METASTORE_DIR']
-        kbase_shared_dir = os.environ['KBASE_GROUP_SHARED_DIR']
+        cdm_shared_dir = os.environ['CDM_SHARED_DIR']  # Legacy data volume from JupyterLab
+        hive_metastore_dir = os.environ['HIVE_METASTORE_DIR']  # within cdm_shared_dir
+        kbase_shared_dir = os.environ['KBASE_GROUP_SHARED_DIR']  # within cdm_shared_dir
 
         if self.user.admin:
             self.log.info(f"Admin user detected: {self.user.name}. Setting up admin volume mounts.")
             self.volumes = [
+                # Global users home directory
                 {
                     "name": "user-home",
                     "hostPath": {"path": f"{mount_base_dir}/{user_home_dir}"}
@@ -261,6 +262,7 @@ class CustomKubeSpawner(KubeSpawner):
                     "name": "jupyterhub-secrets",
                     "hostPath": {"path": f"{mount_base_dir}/{hub_secrets_dir}"}
                 },
+                # Legacy data volume from JupyterLab
                 {
                     "name": "cdm-shared",
                     "hostPath": {"path": f"{mount_base_dir}/{cdm_shared_dir}"}
@@ -280,10 +282,12 @@ class CustomKubeSpawner(KubeSpawner):
                     "name": "hive-metastore",
                     "hostPath": {"path": f"{mount_base_dir}/{hive_metastore_dir}"}
                 },
+                # User specific home directory
                 {
                     "name": "user-home",
                     "hostPath": {"path": f"{mount_base_dir}/{user_home_dir}/{self.user.name}"}
                 },
+                # Legacy data volume from JupyterLab
                 {
                     "name": "kbase-shared",
                     "hostPath": {"path": f"{mount_base_dir}/{kbase_shared_dir}"}
