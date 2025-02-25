@@ -92,6 +92,8 @@ class CustomKubeSpawner(KubeSpawner):
                 self.log.warn(f"Pod {self.pod_name} has been idle for {idle_time}. Stopping...")
                 await self.stop()
                 return 0
+
+        # Return status (None) to indicate that the container is still running and active
         return status
 
     def _ensure_user_directory(self, user_dir: Path, username: str):
@@ -173,10 +175,13 @@ class CustomKubeSpawner(KubeSpawner):
 
     def _configure_environment(self, user_dir: Path, user_env_dir: Path, username: str):
         self.environment.update({key: str(value) for key, value in os.environ.items() if key not in self.environment})
+
         self.environment['JUPYTER_MODE'] = 'jupyterhub-singleuser'
-        # self.environment['JUPYTERHUB_ADMIN'] = str(self.user.admin)
+        self.environment['JUPYTERHUB_ADMIN'] = str(self.user.admin)
+
         self.log.info(f"Setting spark driver host to {self.pod_name}")
         self.environment['SPARK_DRIVER_HOST'] = self.pod_name
+
         self.environment['HOME'] = str(user_dir)
         self.environment['PATH'] = f"{user_env_dir}/bin:{os.environ['PATH']}"
         self.environment['VIRTUAL_ENV'] = str(user_env_dir)
@@ -184,21 +189,27 @@ class CustomKubeSpawner(KubeSpawner):
             self.environment['PYTHONPATH'] = f"{user_env_dir}/lib/python3.11/site-packages:{os.environ['PYTHONPATH']}"
         else:
             self.environment['PYTHONPATH'] = f"{user_env_dir}/lib/python3.11/site-packages"
+
+        # Set path of the startup script for Notebook
         self.environment['PYTHONSTARTUP'] = os.path.join(os.environ['JUPYTERHUB_CONFIG_DIR'], 'startup.py')
         self.environment['JUPYTERHUB_USER'] = username
-        self.environment['SHELL'] = '/bin/bash'
+
+        self.environment['SHELL'] = '/usr/bin/bash'
 
         if self._is_rw_minio_user():
             self.log.info(f"MinIO read/write user detected: {self.user.name}. Setting up minio_rw credentials.")
             self.environment['MINIO_ACCESS_KEY'] = self.environment['MINIO_RW_ACCESS_KEY']
             self.environment['MINIO_SECRET_KEY'] = self.environment['MINIO_RW_SECRET_KEY']
+            # USAGE_MODE is used by the setup.sh script to determine the appropriate configuration for the user.
             self.environment['USAGE_MODE'] = 'dev'
         else:
             self.log.info(f"Non-admin user detected: {self.user.name}. Removing admin credentials.")
             self.environment.pop('MINIO_RW_ACCESS_KEY', None)
             self.environment.pop('MINIO_RW_SECRET_KEY', None)
 
+        # TODO: add a white list of environment variables to pass to the user's environment
         self.environment.pop('JUPYTERHUB_ADMIN_PASSWORD', None)
+
         self.log.info(f"Environment variables for user '{self.user.name}' at pod startup: {self.environment}")
 
     def _configure_notebook_dir(self, username: str, user_dir: Path):
@@ -232,7 +243,7 @@ class CustomKubeSpawner(KubeSpawner):
         """
 
         user_home_dir = os.environ['JUPYTERHUB_USER_HOME']
-        mount_base_dir = os.environ.get('JUPYTERHUB_MOUNT_BASE_DIR')
+        mount_base_dir = os.environ['JUPYTERHUB_MOUNT_BASE_DIR']
         hub_secrets_dir = os.environ['JUPYTERHUB_SECRETS_DIR']
 
         cdm_shared_dir = os.environ['CDM_SHARED_DIR']
