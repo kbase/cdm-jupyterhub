@@ -1,15 +1,14 @@
 import os
 import shutil
 import venv
+import json5
 from datetime import timedelta, datetime
 from pathlib import Path
-
-import json5
-from dockerspawner import DockerSpawner
 from filelock import FileLock
 
+from kubespawner import KubeSpawner
 
-class CustomDockerSpawner(DockerSpawner):
+class CustomKubeSpawner(KubeSpawner):
     RW_MINIO_GROUP = 'minio_rw'
     DEFAULT_IDLE_TIMEOUT_MINUTES = 180
 
@@ -30,17 +29,19 @@ class CustomDockerSpawner(DockerSpawner):
         user_env_dir = user_dir / '.virtualenvs' / 'envs' / f'{username}_default_env'
         self._ensure_virtual_environment(user_env_dir)
 
-        # Configure the environment variables specific to the user's virtual environment
+        # Configure environment variables for the pod
         self._configure_environment(user_dir, user_env_dir, username)
 
-        # Configure the notebook directory based on whether the user is an admin
+        # Configure notebook directory
         self._configure_notebook_dir(username, user_dir)
 
-        # Ensure the user's volume is correctly mounted in the container
-        self._ensure_user_volume()
+        # Set up volume mounts specific for Kubernetes
+        self._ensure_user_volume(user_dir)
 
-        # Add the user's home and group shared directory to Jupyterhub favorites
+        # Set up JupyterLab favorites (if applicable)
         self._add_favorite_dir(user_dir, favorites={Path(os.environ['KBASE_GROUP_SHARED_DIR'])})
+
+        self.namespace = os.environ['KUBE_NAMESPACE']
 
         return super().start()
 
@@ -83,14 +84,12 @@ class CustomDockerSpawner(DockerSpawner):
             return status
 
         last_activity = self.user.last_activity
-        self.log.info(f"Last activity for {self.container_name}: {last_activity}")
-
+        self.log.info(f"Last activity for {self.pod_name}: {last_activity}")
         if last_activity:
             idle_time = datetime.now() - last_activity
-            self.log.info(f"Idle time for {self.container_name}: {idle_time}")
-
+            self.log.info(f"Idle time for {self.pod_name}: {idle_time}")
             if idle_time > self.idle_timeout:
-                self.log.warn(f"Container {self.container_name} has been idle for {idle_time}. Stopping...")
+                self.log.warn(f"Pod {self.pod_name} has been idle for {idle_time}. Stopping...")
                 await self.stop()
                 return 0  # Return an exit code to indicate the container has stopped
 
@@ -118,8 +117,8 @@ class CustomDockerSpawner(DockerSpawner):
 
         # Keep a copy of the template files in the user's home directory in case they are needed later
         # for recovery or debugging. They are not used by the user's shell.
-        shutil.copy2(bashrc_tmpl, user_dir/'.bashrc.tmpl')
-        shutil.copy2(bash_profile_tmpl, user_dir/'.bash_profile.tmpl')
+        shutil.copy2(bashrc_tmpl, user_dir / '.bashrc.tmpl')
+        shutil.copy2(bash_profile_tmpl, user_dir / '.bash_profile.tmpl')
 
         bashrc_dest = user_dir / '.bashrc'
         bash_profile_dest = user_dir / '.bash_profile'
@@ -175,17 +174,13 @@ class CustomDockerSpawner(DockerSpawner):
             self.log.info(f'Reusing virtual environment for {self.user.name}')
 
     def _configure_environment(self, user_dir: Path, user_env_dir: Path, username: str):
-        """
-        Configure the environment variables for the user's session, including
-        the PATH and PYTHONPATH to use the virtual environment.
-        """
-        self.environment.update({key: value for key, value in os.environ.items() if key not in self.environment})
+        self.environment.update({key: str(value) for key, value in os.environ.items() if key not in self.environment})
 
         self.environment['JUPYTER_MODE'] = 'jupyterhub-singleuser'
-        self.environment['JUPYTERHUB_ADMIN'] = self.user.admin
+        self.environment['JUPYTERHUB_ADMIN'] = str(self.user.admin)
 
-        self.log.info(f'Setting spark driver host to {self.container_name}')
-        self.environment['SPARK_DRIVER_HOST'] = self.container_name
+        self.log.info(f"Setting spark driver host to {self.pod_name}")
+        self.environment['SPARK_DRIVER_HOST'] = self.pod_name
 
         self.environment['HOME'] = str(user_dir)
         self.environment['PATH'] = f"{user_env_dir}/bin:{os.environ['PATH']}"
@@ -202,20 +197,20 @@ class CustomDockerSpawner(DockerSpawner):
         self.environment['SHELL'] = '/usr/bin/bash'
 
         if self._is_rw_minio_user():
-            self.log.info(f'MinIO read/write user detected: {self.user.name}. Setting up minio_rw credentials.')
+            self.log.info(f"MinIO read/write user detected: {self.user.name}. Setting up minio_rw credentials.")
             self.environment['MINIO_ACCESS_KEY'] = self.environment['MINIO_RW_ACCESS_KEY']
             self.environment['MINIO_SECRET_KEY'] = self.environment['MINIO_RW_SECRET_KEY']
             # USAGE_MODE is used by the setup.sh script to determine the appropriate configuration for the user.
             self.environment['USAGE_MODE'] = 'dev'
         else:
-            self.log.info(f'Non-admin user detected: {self.user.name}. Removing admin credentials.')
+            self.log.info(f"Non-admin user detected: {self.user.name}. Removing admin credentials.")
             self.environment.pop('MINIO_RW_ACCESS_KEY', None)
             self.environment.pop('MINIO_RW_SECRET_KEY', None)
 
         # TODO: add a white list of environment variables to pass to the user's environment
         self.environment.pop('JUPYTERHUB_ADMIN_PASSWORD', None)
 
-        self.log.info(f"Environment variables for user '{self.user.name}' at container startup: {self.environment}")
+        self.log.info(f"Environment variables for user '{self.user.name}' at pod startup: {self.environment}")
 
     def _configure_notebook_dir(self, username: str, user_dir: Path):
         """
@@ -242,35 +237,73 @@ class CustomDockerSpawner(DockerSpawner):
         group_names = [group.name for group in self.user.groups]
         return self.user.admin or self.RW_MINIO_GROUP in group_names
 
-    def _ensure_user_volume(self):
+    def _ensure_user_volume(self, user_dir: Path):
         """
         Ensure the user's volume is correctly mounted in the container.
         """
 
-        user_home_dir = Path(os.environ['JUPYTERHUB_USER_HOME'])
-        mount_base_dir = Path(os.environ['JUPYTERHUB_MOUNT_BASE_DIR'])
-        hub_secrets_dir = Path(os.environ['JUPYTERHUB_SECRETS_DIR'])
+        user_home_dir = os.environ['JUPYTERHUB_USER_HOME']
+        mount_base_dir = os.environ['JUPYTERHUB_MOUNT_BASE_DIR']
+        hub_secrets_dir = os.environ['JUPYTERHUB_SECRETS_DIR']
 
-        cdm_shared_dir = Path(os.environ['CDM_SHARED_DIR'])  # Legacy data volume from JupyterLab
-        hive_metastore_dir = Path(os.environ['HIVE_METASTORE_DIR'])  # within cdm_shared_dir
-        kbase_shared_dir = Path(os.environ['KBASE_GROUP_SHARED_DIR'])  # within cdm_shared_dir
+        cdm_shared_dir = os.environ['CDM_SHARED_DIR']
+        hive_metastore_dir = os.environ['HIVE_METASTORE_DIR']
+        kbase_shared_dir = os.environ['KBASE_GROUP_SHARED_DIR']
 
         if self.user.admin:
-            self.log.info(f'Admin user detected: {self.user.name}. Setting up admin mount points.')
-            self.volumes.update({
-                f'{mount_base_dir}/{user_home_dir}': f'{user_home_dir}',  # Global users home directory
-                f'{mount_base_dir}/{hub_secrets_dir}': f'{hub_secrets_dir}',
-                f'{mount_base_dir}/{cdm_shared_dir}': f'{cdm_shared_dir}',  # Legacy data volume from JupyterLab
-            })
+            self.log.info(f"Admin user detected: {self.user.name}. Setting up admin volume mounts.")
+            self.volumes = [
+                {
+                    "name": "user-home",
+                    "hostPath": {"path": f"{mount_base_dir}/{user_home_dir}"}
+                },
+                {
+                    "name": "jupyterhub-secrets",
+                    "hostPath": {"path": f"{mount_base_dir}/{hub_secrets_dir}"}
+                },
+                {
+                    "name": "cdm-shared",
+                    "hostPath": {"path": f"{mount_base_dir}/{cdm_shared_dir}"}
+                }
+            ]
+            self.volume_mounts = [
+                {"name": "user-home", "mountPath": user_home_dir},
+                {"name": "jupyterhub-secrets", "mountPath": hub_secrets_dir},
+                {"name": "cdm-shared", "mountPath": cdm_shared_dir}
+            ]
         else:
-            self.log.info(f'Non-admin user detected: {self.user.name}. Setting up user-specific mount points.')
-            access_mode = 'rw' if self._is_rw_minio_user() else 'ro'
-            self.volumes.update({
-                f'{mount_base_dir}/{hive_metastore_dir}': {'bind': f'{hive_metastore_dir}', 'mode': access_mode},
-                # User specific home directory
-                f'{mount_base_dir}/{user_home_dir}/{self.user.name}': f'{user_home_dir}/{self.user.name}',
-                f'{mount_base_dir}/{kbase_shared_dir}': f'{kbase_shared_dir}',
-            })
+            self.log.info(f"Non-admin user detected: {self.user.name}. Setting up user-specific volume mounts.")
+            # Determine readOnly mode: True if NOT a read/write minio user
+            read_only = not self._is_rw_minio_user()
+            self.volumes = [
+                {
+                    "name": "hive-metastore",
+                    "hostPath": {"path": f"{mount_base_dir}/{hive_metastore_dir}"}
+                },
+                {
+                    "name": "user-home",
+                    "hostPath": {"path": f"{mount_base_dir}/{user_home_dir}/{self.user.name}"}
+                },
+                {
+                    "name": "kbase-shared",
+                    "hostPath": {"path": f"{mount_base_dir}/{kbase_shared_dir}"}
+                }
+            ]
+            self.volume_mounts = [
+                {
+                    "name": "hive-metastore",
+                    "mountPath": hive_metastore_dir,
+                    "readOnly": read_only
+                },
+                {
+                    "name": "user-home",
+                    "mountPath": f"{user_home_dir}/{self.user.name}"
+                },
+                {
+                    "name": "kbase-shared",
+                    "mountPath": kbase_shared_dir
+                }
+            ]
 
     def _add_favorite_dir(self, user_dir: Path, favorites: set[Path] = None):
         """
