@@ -174,6 +174,8 @@ class CustomKubeSpawner(KubeSpawner):
             self.log.info(f'Reusing virtual environment for {self.user.name}')
 
     def _configure_environment(self, user_dir: Path, user_env_dir: Path, username: str):
+        # In KubeSpawner, environment is a dict where the value can only be a strong
+        # ref: https://jupyterhub-kubespawner.readthedocs.io/en/latest/spawner.html#kubespawner.KubeSpawner.environment
         self.environment.update({key: str(value) for key, value in os.environ.items() if key not in self.environment})
 
         self.environment['JUPYTER_MODE'] = 'jupyterhub-singleuser'
