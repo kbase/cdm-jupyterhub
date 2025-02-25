@@ -91,7 +91,7 @@ class CustomKubeSpawner(KubeSpawner):
             if idle_time > self.idle_timeout:
                 self.log.warn(f"Pod {self.pod_name} has been idle for {idle_time}. Stopping...")
                 await self.stop()
-                return 0
+                return 0  # Return an exit code to indicate the container has stopped
 
         # Return status (None) to indicate that the container is still running and active
         return status
