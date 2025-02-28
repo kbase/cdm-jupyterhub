@@ -169,6 +169,8 @@ services:
       - KB_ENV=ci
       - AUTH_FULL_ADMIN_ROLES=CDM_JUPYTERHUB_ADMIN
       - USE_KBASE_AUTHENTICATOR=true
+      - USE_KUBE_SPAWNER=false
+      - REMOVE_STOPPED_CONTAINER_AND_POD=false
     volumes:
       - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
       - ./cdr/cdm/jupyter/jupyterhub_secrets:/jupyterhub_secrets

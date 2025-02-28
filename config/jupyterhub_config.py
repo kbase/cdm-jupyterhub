@@ -13,12 +13,20 @@ import os
 import nativeauthenticator
 
 from jupyterhub_config.custom_docker_spawner import CustomDockerSpawner
+from jupyterhub_config.custom_kube_spawner import CustomKubeSpawner
 from jupyterhub_config.kb_jupyterhub_auth import KBaseAuthenticator, kbase_origin
 
 c = get_config()
 
-# TODO remove USE_KBASE_AUTHENTICATOR and Jupyterhub native auth once the KBaseAuthenticator is fully implemented
-if os.environ.get('USE_KBASE_AUTHENTICATOR', 'false').lower() == 'true':
+def get_bool_env(key, default=False):
+    """Parse str boolean environment variables"""
+    value = os.environ.get(key, str(default)).lower()
+    return value in ('true', '1', 't')
+
+# NOTE: Switching the authentication method can lead to unintended consequences. For example, if user A is identified
+# as "Z" under local authentication while user B is identified as "Z" under KBase authentication, changing the auth
+# implementation could reassign file ownership from one user to the other.
+if get_bool_env('USE_KBASE_AUTHENTICATOR'):
     # Set the authenticator class to KBaseAuthenticator
     # ref: https://jupyterhub.readthedocs.io/en/latest/reference/authenticators.html#authenticators
     c.JupyterHub.authenticator_class = KBaseAuthenticator
@@ -54,40 +62,56 @@ c.JupyterHub.load_groups = {
     CustomDockerSpawner.RW_MINIO_GROUP: [],
 }
 
-c.JupyterHub.spawner_class = CustomDockerSpawner
+if get_bool_env('USE_KUBE_SPAWNER', True):
+    # Hub configuration for Kubernetes
+    c.JupyterHub.hub_ip = '0.0.0.0'
+    c.JupyterHub.hub_port = 8081
+    c.JupyterHub.bind_url = 'http://0.0.0.0:8081'
 
-c.DockerSpawner.hub_connect_url = f"http://{os.environ['SPARK_DRIVER_HOST']}:{os.environ['NOTEBOOK_PORT']}"
-# Set the Docker image to use for user containers
-c.DockerSpawner.image = os.environ['JUPYTERHUB_USER_IMAGE']
+    spawner_class = CustomKubeSpawner
+    spawner_config = c.KubeSpawner
 
-c.DockerSpawner.cmd = ['echo', 'Starting JupiterHub Single User Server With DockerSpawner ...']
+    # User Kubernetes pod configuration
+    c.KubeSpawner.namespace = os.environ['KUBE_NAMESPACE']
+    c.KubeSpawner.hub_connect_url = f"http://{os.environ['SPARK_DRIVER_HOST']}:8081"
 
-# Container resource limits
-c.DockerSpawner.cpu_limit = 4
-c.DockerSpawner.mem_limit = '16G'
+    def modify_pod_hook(spawner, pod):
+        pod.spec.service_account_name = "cdm-jupyterhub"
+        # Add a label to the pod to identify it as a JupyterHub pod
+        # Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+        pod.metadata.labels.update({"app": "cdm-jupyterhub"})
+        pod.spec.dns_policy = "ClusterFirstWithHostNet"
+        return pod
+    c.KubeSpawner.modify_pod_hook = modify_pod_hook
+    c.KubeSpawner.image_pull_policy = 'IfNotPresent'
 
-c.DockerSpawner.http_timeout = 120  # 2 minutes (default is 30 seconds)
-c.DockerSpawner.start_timeout = 300  # 5 minutes (default is 60 seconds)
+    c.KubeSpawner.delete_stopped_pods = get_bool_env('REMOVE_STOPPED_CONTAINER_AND_POD', True)
+else:
+    spawner_class = CustomDockerSpawner
+    spawner_config = c.DockerSpawner
 
-# The network name that Docker containers will use to communicate
-network_name = os.environ.get('NETWORK_NAME')
-if network_name:
-    c.DockerSpawner.network_name = network_name
-c.DockerSpawner.use_internal_ip = True
-environment = os.environ.get('ENVIRONMENT', 'prod').lower()
-# for troubleshooting purposes, keep the container in non-prod environment
-c.DockerSpawner.remove = environment != 'dev'
-c.DockerSpawner.debug = True
+    # User Docker container configuration
+    c.DockerSpawner.hub_connect_url = f"http://{os.environ['SPARK_DRIVER_HOST']}:{os.environ['NOTEBOOK_PORT']}"
+    c.DockerSpawner.cmd = ['echo', 'Starting JupyterHub Single User Server With DockerSpawner ...']
+    c.DockerSpawner.cpu_limit = 4
+    c.DockerSpawner.mem_limit = '16G'
 
-# Set extra labels in order to use Rancher's network policies
-# ref: https://rancher.com/docs/rancher/v1.6/en/rancher-services/networking/#containers-created-with-the-docker-cli
-c.DockerSpawner.extra_create_kwargs = {
-    'labels': {
-        'io.rancher.container.network': 'true'
-    }
-}
+    # The network name that Docker containers will use to communicate
+    if network_name := os.environ.get('NETWORK_NAME'):
+        c.DockerSpawner.network_name = network_name
+    c.DockerSpawner.use_internal_ip = True
+    c.DockerSpawner.extra_create_kwargs = {'labels': {'io.rancher.container.network': 'true'}}
 
-c.DockerSpawner.shutdown_no_activity_timeout = 60 * 60  # 1 hour
+    c.DockerSpawner.remove = get_bool_env('REMOVE_STOPPED_CONTAINER_AND_POD', True)
+
+# Set the custom spawner class for the JupyterHub server
+c.JupyterHub.spawner_class = spawner_class
+
+# Common container settings
+spawner_config.image = os.environ['JUPYTERHUB_USER_IMAGE']  # Set the Docker image to use for user containers
+spawner_config.http_timeout = 120  # 2 minutes (default is 30 seconds)
+spawner_config.start_timeout = 300  # 5 minutes (default is 60 seconds)
+spawner_config.debug = True
 
 # Set the JupyterHub IP address and port
 c.JupyterHub.ip = '0.0.0.0'
