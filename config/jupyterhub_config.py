@@ -59,9 +59,7 @@ c.JupyterHub.load_groups = {
     CustomDockerSpawner.RW_MINIO_GROUP: [],
 }
 
-environment = os.environ.get('ENVIRONMENT', 'prod').lower()
-
-if get_bool_env('USE_KUBE_SPAWNER'):
+if get_bool_env('USE_KUBE_SPAWNER', True):
     # Hub configuration for Kubernetes
     c.JupyterHub.hub_ip = '0.0.0.0'
     c.JupyterHub.hub_port = 8081
@@ -76,14 +74,15 @@ if get_bool_env('USE_KUBE_SPAWNER'):
 
     def modify_pod_hook(spawner, pod):
         pod.spec.service_account_name = "cdm-jupyterhub"
+        # Add a label to the pod to identify it as a JupyterHub pod
+        # Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
         pod.metadata.labels.update({"app": "cdm-jupyterhub"})
         pod.spec.dns_policy = "ClusterFirstWithHostNet"
         return pod
     c.KubeSpawner.modify_pod_hook = modify_pod_hook
     c.KubeSpawner.image_pull_policy = 'IfNotPresent'
 
-    # For troubleshooting purposes, keep the user pod in non-prod environment
-    c.KubeSpawner.delete_stopped_pods = environment != 'dev'
+    c.KubeSpawner.delete_stopped_pods = get_bool_env('REMOVE_STOPPED_CONTAINER_AND_POD', True)
 else:
     spawner_class = CustomDockerSpawner
     spawner_config = c.DockerSpawner
@@ -100,8 +99,7 @@ else:
     c.DockerSpawner.use_internal_ip = True
     c.DockerSpawner.extra_create_kwargs = {'labels': {'io.rancher.container.network': 'true'}}
 
-    # For troubleshooting purposes, keep the user container in non-prod environment
-    c.DockerSpawner.remove = environment != 'dev'
+    c.DockerSpawner.remove = get_bool_env('REMOVE_STOPPED_CONTAINER_AND_POD', True)
 
 # Set the custom spawner class for the JupyterHub server
 c.JupyterHub.spawner_class = spawner_class
