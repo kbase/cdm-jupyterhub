@@ -23,6 +23,9 @@ def get_bool_env(key, default=False):
     value = os.environ.get(key, str(default)).lower()
     return value in ('true', '1', 't')
 
+# NOTE: Switching the authentication method can lead to unintended consequences. For example, if user A is identified
+# as "Z" under local authentication while user B is identified as "Z" under KBase authentication, changing the auth
+# implementation could reassign file ownership from one user to the other.
 if get_bool_env('USE_KBASE_AUTHENTICATOR'):
     # Set the authenticator class to KBaseAuthenticator
     # ref: https://jupyterhub.readthedocs.io/en/latest/reference/authenticators.html#authenticators
