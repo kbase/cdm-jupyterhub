@@ -42,7 +42,7 @@ scikit-learn = "==1.6.1"
 biopython = "==1.85"
 seaborn = "==0.13.2"
 pandas = "==2.2.3"
-pyarrow = "==19.0.0"
+pyarrow = "==19.0.1"
 itables = "==2.2.4"
 
 [dev-packages]
