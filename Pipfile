@@ -15,7 +15,7 @@ sidecar = "==0.7.0"
 json5 = "==0.10.0"
 pycurl = "==7.45.4"
 pyspark= "==3.5.4"
-boto3 = "==1.36.11"
+boto3 = "==1.37.4"
 minio = "==7.2.15"
 delta-spark = "==3.2.0"  # should match JAR version (DELTA_SPARK_VER) specified in the Dockerfile
 PyMySQL = "==1.1.1"
