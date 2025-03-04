@@ -71,6 +71,8 @@ if get_bool_env('USE_KUBE_SPAWNER', True):
     spawner_class = CustomKubeSpawner
     spawner_config = c.KubeSpawner
 
+    c.JupyterHub.disable_check_xsrf = True
+
     # User Kubernetes pod configuration
     c.KubeSpawner.namespace = os.environ['KUBE_NAMESPACE']
     c.KubeSpawner.hub_connect_url = f"http://{os.environ['SPARK_DRIVER_HOST']}:8081"
