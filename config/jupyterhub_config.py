@@ -77,10 +77,11 @@ if get_bool_env('USE_KUBE_SPAWNER', True):
 
     def modify_pod_hook(spawner, pod):
         pod.spec.service_account_name = "cdm-jupyterhub"
+        pod.spec.hostname = spawner.pod_name
         # Add a label to the pod to identify it as a JupyterHub pod
         # Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
         pod.metadata.labels.update({"app": "cdm-jupyterhub"})
-        pod.spec.dns_policy = "ClusterFirstWithHostNet"
+        pod.spec.dns_policy = "ClusterFirst"
         pod.spec.node_selector = {"kubernetes.io/hostname": "prodb-compute01"}
         return pod
     c.KubeSpawner.modify_pod_hook = modify_pod_hook
