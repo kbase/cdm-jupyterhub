@@ -82,7 +82,9 @@ if get_bool_env('USE_KUBE_SPAWNER', True):
         # Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
         pod.metadata.labels.update({"app": "cdm-jupyterhub"})
         pod.spec.dns_policy = "ClusterFirst"
-        pod.spec.node_selector = {"kubernetes.io/hostname": "prodb-compute01"}
+        node_hostname = os.environ.get("NODE_SELECTOR_HOSTNAME")
+        if node_hostname:
+            pod.spec.node_selector = {"kubernetes.io/hostname": node_hostname}
         return pod
     c.KubeSpawner.modify_pod_hook = modify_pod_hook
     c.KubeSpawner.image_pull_policy = 'IfNotPresent'
