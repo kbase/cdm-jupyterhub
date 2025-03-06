@@ -1,6 +1,7 @@
 import csv
 import os
 import site
+import socket
 from datetime import datetime
 from urllib.parse import urlparse
 
@@ -113,6 +114,14 @@ def get_spark_session(
 
     spark_conf = _get_base_spark_conf(app_name, executor_cores, yarn)
     sc = {}
+    if os.environ['USE_KUBE_SPAWNER'] == 'true':
+        yarn = False  # YARN is not used in the Kubernetes spawner
+        # Since the Spark driver cannot resolve a pod's hostname without a dedicated service for each user pod,
+        # use the pod IP as the identifier for the Spark driver host
+        hostname = os.environ["SPARK_DRIVER_HOST"]
+        if hostname:
+            sc["spark.driver.host"] = socket.gethostbyname(hostname)
+
     if delta_lake or yarn:
         sc.update(_get_s3_conf())
     if yarn:
