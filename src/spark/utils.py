@@ -114,7 +114,7 @@ def get_spark_session(
 
     spark_conf = _get_base_spark_conf(app_name, executor_cores, yarn)
     sc = {}
-    if os.environ['USE_KUBE_SPAWNER'] == 'true':
+    if os.environ.get('USE_KUBE_SPAWNER') == 'true':
         yarn = False  # YARN is not used in the Kubernetes spawner
         # Since the Spark driver cannot resolve a pod's hostname without a dedicated service for each user pod,
         # use the pod IP as the identifier for the Spark driver host
