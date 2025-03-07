@@ -121,6 +121,8 @@ def get_spark_session(
         hostname = os.environ["SPARK_DRIVER_HOST"]
         if hostname:
             sc["spark.driver.host"] = socket.gethostbyname(hostname)
+        else:
+            raise ValueError("SPARK_DRIVER_HOST environment variable is not set.")
 
     if delta_lake or yarn:
         sc.update(_get_s3_conf())
