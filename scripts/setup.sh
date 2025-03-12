@@ -24,6 +24,10 @@ fi
     if [ -n "$SPARK_DRIVER_HOST" ]; then
         echo "spark.driver.host $SPARK_DRIVER_HOST"
     fi
+
+    # Set fair scheduler
+    echo "spark.scheduler.mode FAIR"
+    echo "spark.scheduler.allocation.file $SPARK_FAIR_SCHEDULER_CONFIG"
 } >> "$SPARK_CONF_FILE"
 
 # Config hive-site.xml for Hive support

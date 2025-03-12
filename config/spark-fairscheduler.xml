@@ -1,0 +1,13 @@
+<allocations>
+    <pool name="default">
+        <schedulingMode>FAIR</schedulingMode>
+        <weight>1</weight>
+        <minShare>1</minShare>
+    </pool>
+
+    <pool name="highPriority">
+        <schedulingMode>FAIR</schedulingMode>
+        <weight>5</weight>
+        <minShare>2</minShare>
+    </pool>
+</allocations>
