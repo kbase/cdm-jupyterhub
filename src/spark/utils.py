@@ -19,7 +19,8 @@ SCALA_VER = os.getenv('SCALA_VER')
 # If not specified, Spark will typically use all available cores on the worker nodes
 DEFAULT_EXECUTOR_CORES = 1
 # Available Spark fair scheduler pools are defined in /config/spark-fairscheduler.xml
-SPARK_POOLS = ["default", "highPriority"]
+SPARK_DEFAULT_POOL = "default"
+SPARK_POOLS = [SPARK_DEFAULT_POOL, "highPriority"]
 
 
 def _get_jars(jar_names: list) -> str:
@@ -47,6 +48,7 @@ def _get_s3_conf() -> dict:
         "spark.hadoop.fs.s3a.path.style.access": "true",
         "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
     }
+
 
 def _get_delta_lake_conf() -> dict:
     """
@@ -149,6 +151,7 @@ def get_spark_session(
     if scheduler_pool not in SPARK_POOLS:
         print(f"Warning: Scheduler pool {scheduler_pool} is not in the list of available pools: {SPARK_POOLS} "
               f"Defaulting to 'default' pool")
+        scheduler_pool = SPARK_DEFAULT_POOL
     spark.sparkContext.setLocalProperty("spark.scheduler.pool", scheduler_pool)
 
     return spark
