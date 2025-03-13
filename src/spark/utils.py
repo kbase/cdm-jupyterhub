@@ -18,6 +18,9 @@ SCALA_VER = os.getenv('SCALA_VER')
 # the default number of CPU cores that each Spark executor will use
 # If not specified, Spark will typically use all available cores on the worker nodes
 DEFAULT_EXECUTOR_CORES = 1
+# Available Spark fair scheduler pools are defined in /config/spark-fairscheduler.xml
+SPARK_DEFAULT_POOL = "default"
+SPARK_POOLS = [SPARK_DEFAULT_POOL, "highPriority"]
 
 
 def _get_jars(jar_names: list) -> str:
@@ -45,6 +48,7 @@ def _get_s3_conf() -> dict:
         "spark.hadoop.fs.s3a.path.style.access": "true",
         "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
     }
+
 
 def _get_delta_lake_conf() -> dict:
     """
@@ -82,8 +86,8 @@ def _get_base_spark_conf(
     if yarn:
         yarnparse = urlparse(os.environ.get("YARN_RESOURCE_MANAGER_URL"))
         sc.setMaster("yarn"
-            ).set("spark.hadoop.yarn.resourcemanager.hostname", yarnparse.hostname
-            ).set("spark.hadoop.yarn.resourcemanager.address", yarnparse.netloc)
+                     ).set("spark.hadoop.yarn.resourcemanager.hostname", yarnparse.hostname
+                           ).set("spark.hadoop.yarn.resourcemanager.address", yarnparse.netloc)
     else:
         sc.set("spark.master", os.environ.get("SPARK_MASTER_URL", "spark://spark-master:7077"))
     return sc
@@ -94,7 +98,8 @@ def get_spark_session(
         local: bool = False,
         yarn: bool = True,
         delta_lake: bool = True,
-        executor_cores: int = DEFAULT_EXECUTOR_CORES) -> SparkSession:
+        executor_cores: int = DEFAULT_EXECUTOR_CORES,
+        scheduler_pool: str = "default") -> SparkSession:
     """
     Helper to get and manage the SparkSession and keep all of our spark configuration params in one place.
 
@@ -103,6 +108,7 @@ def get_spark_session(
     :param yarn: Whether to run the spark session on YARN or not. Default is True.
     :param delta_lake: Build the spark session with Delta Lake support. Default is True.
     :param executor_cores: The number of CPU cores that each Spark executor will use. Default is 1.
+    :param scheduler_pool: The name of the scheduler pool to use. Default is "default".
 
     :return: A SparkSession object
     """
@@ -141,6 +147,12 @@ def get_spark_session(
     for key, value in sc.items():
         spark_conf.set(key, value)
     spark = SparkSession.builder.config(conf=spark_conf).getOrCreate()
+
+    if scheduler_pool not in SPARK_POOLS:
+        print(f"Warning: Scheduler pool {scheduler_pool} is not in the list of available pools: {SPARK_POOLS} "
+              f"Defaulting to 'default' pool")
+        scheduler_pool = SPARK_DEFAULT_POOL
+    spark.sparkContext.setLocalProperty("spark.scheduler.pool", scheduler_pool)
 
     return spark
 

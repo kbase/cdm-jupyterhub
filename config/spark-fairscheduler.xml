@@ -1,0 +1,25 @@
+
+<!-- Example configuration file for the Fair Scheduler
+https://github.com/apache/spark/blob/master/conf/fairscheduler.xml.template
+
+Pool configuration supports three properties:
+- schedulingMode: FAIR or FIFO
+- weight: pool’s share of the cluster relative to other pools
+- minShare: minimum share(as a number of CPU cores) of the pool
+For more information, see the Fair Scheduler documentation:
+https://spark.apache.org/docs/latest/job-scheduling.html#configuring-pool-properties
+-->
+
+<allocations>
+    <pool name="default">
+        <schedulingMode>FAIR</schedulingMode>
+        <weight>1</weight>
+        <minShare>1</minShare>
+    </pool>
+
+    <pool name="highPriority">
+        <schedulingMode>FAIR</schedulingMode>
+        <weight>5</weight>
+        <minShare>2</minShare>
+    </pool>
+</allocations>

@@ -99,6 +99,7 @@ RUN chmod a+x /opt/scripts/*.sh
 # Copy the configuration files
 ENV CONFIG_DIR=/opt/config
 COPY ./config/ ${CONFIG_DIR}
+ENV SPARK_FAIR_SCHEDULER_CONFIG=${CONFIG_DIR}/spark-fairscheduler.xml
 
 # Don't just do /opt since we already did bitnami
 RUN chown -R spark_user:spark /src /opt/scripts /opt/config
