@@ -12,3 +12,7 @@ build
 /.pydevproject*
 /.pytest_cache/
 /.settings/
+
+# Ignore ts build folders
+/ts/node_modules
+/ts/ts-build
