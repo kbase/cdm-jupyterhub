@@ -168,7 +168,7 @@ def get_spark_session(
             config["spark.jars"] = jars
 
     # Create SparkConf from accumulated configuration
-    spark_conf = SparkConf().setAll(config.items())
+    spark_conf = SparkConf().setAll(list(config.items()))
 
     # Initialize SparkSession
     spark = SparkSession.builder.config(conf=spark_conf).getOrCreate()
