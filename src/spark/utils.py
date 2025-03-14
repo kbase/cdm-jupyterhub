@@ -1,8 +1,8 @@
 import csv
 import os
-import site
 import socket
 from datetime import datetime
+from typing import List, Dict
 from urllib.parse import urlparse
 
 from pyspark.conf import SparkConf
@@ -12,18 +12,16 @@ from minio_utils.minio_utils import get_minio_client
 
 # Default directory for JAR files in the Bitnami Spark image
 JAR_DIR = '/opt/bitnami/spark/jars'
-HADOOP_AWS_VER = os.getenv('HADOOP_AWS_VER')
-DELTA_SPARK_VER = os.getenv('DELTA_SPARK_VER')
-SCALA_VER = os.getenv('SCALA_VER')
 # the default number of CPU cores that each Spark executor will use
 # If not specified, Spark will typically use all available cores on the worker nodes
 DEFAULT_EXECUTOR_CORES = 1
 # Available Spark fair scheduler pools are defined in /config/spark-fairscheduler.xml
 SPARK_DEFAULT_POOL = "default"
 SPARK_POOLS = [SPARK_DEFAULT_POOL, "highPriority"]
+DEFAULT_MAX_EXECUTORS = 5
 
 
-def _get_jars(jar_names: list) -> str:
+def _get_jars(jar_names: List[str]) -> str:
     """
     Helper function to get the required JAR files as a comma-separated string.
 
@@ -40,7 +38,10 @@ def _get_jars(jar_names: list) -> str:
     return ", ".join(jars)
 
 
-def _get_s3_conf() -> dict:
+def _get_s3_conf() -> Dict[str, str]:
+    """
+    Helper function to get S3 configuration for MinIO.
+    """
     return {
         "spark.hadoop.fs.s3a.endpoint": os.environ.get("MINIO_URL"),
         "spark.hadoop.fs.s3a.access.key": os.environ.get("MINIO_ACCESS_KEY"),
@@ -50,7 +51,7 @@ def _get_s3_conf() -> dict:
     }
 
 
-def _get_delta_lake_conf() -> dict:
+def _get_delta_lake_conf() -> Dict[str, str]:
     """
     Helper function to get Delta Lake specific Spark configuration.
 
@@ -58,8 +59,6 @@ def _get_delta_lake_conf() -> dict:
 
     reference: https://blog.min.io/delta-lake-minio-multi-cloud/
     """
-
-    site_packages_path = site.getsitepackages()[0]
 
     return {
         "spark.sql.extensions": "io.delta.sql.DeltaSparkSessionExtension",
@@ -69,28 +68,13 @@ def _get_delta_lake_conf() -> dict:
     }
 
 
-def _get_base_spark_conf(
-        app_name: str,
-        executor_cores: int,
-        yarn: bool
-) -> SparkConf:
-    """
-    Helper function to get the base Spark configuration.
-
-    :param app_name: The name of the application
-    :param executor_cores: The number of CPU cores that each Spark executor will use.
-
-    :return: A SparkConf object with the base configuration
-    """
-    sc = SparkConf().set("spark.app.name", app_name).set("spark.executor.cores", executor_cores)
-    if yarn:
-        yarnparse = urlparse(os.environ.get("YARN_RESOURCE_MANAGER_URL"))
-        sc.setMaster("yarn"
-                     ).set("spark.hadoop.yarn.resourcemanager.hostname", yarnparse.hostname
-                           ).set("spark.hadoop.yarn.resourcemanager.address", yarnparse.netloc)
-    else:
-        sc.set("spark.master", os.environ.get("SPARK_MASTER_URL", "spark://spark-master:7077"))
-    return sc
+def _validate_env_vars(required_vars: List[str], context: str) -> None:
+    """Validate required environment variables."""
+    missing = [var for var in required_vars if var not in os.environ]
+    if missing:
+        raise EnvironmentError(
+            f"Missing required environment variables for {context}: {missing}"
+        )
 
 
 def get_spark_session(
@@ -99,7 +83,7 @@ def get_spark_session(
         yarn: bool = True,
         delta_lake: bool = True,
         executor_cores: int = DEFAULT_EXECUTOR_CORES,
-        scheduler_pool: str = "default") -> SparkSession:
+        scheduler_pool: str = SPARK_DEFAULT_POOL) -> SparkSession:
     """
     Helper to get and manage the SparkSession and keep all of our spark configuration params in one place.
 
@@ -112,45 +96,87 @@ def get_spark_session(
 
     :return: A SparkSession object
     """
-    if not app_name:
-        app_name = f"kbase_spark_session_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+    app_name = app_name or f"kbase_spark_session_{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
     if local:
         return SparkSession.builder.appName(app_name).getOrCreate()
 
-    spark_conf = _get_base_spark_conf(app_name, executor_cores, yarn)
-    sc = {}
+    config: Dict[str, str] = {
+        "spark.app.name": app_name,
+        "spark.executor.cores": str(executor_cores),
+    }
+
+    # Dynamic allocation configuration
+    config.update({
+        "spark.dynamicAllocation.enabled": "true",
+        "spark.dynamicAllocation.minExecutors": "1",
+        "spark.dynamicAllocation.maxExecutors": os.getenv("MAX_EXECUTORS", str(DEFAULT_MAX_EXECUTORS)),
+    })
+
+    # Fair scheduler configuration
+    _validate_env_vars(["SPARK_FAIR_SCHEDULER_CONFIG"], "FAIR scheduler setup")
+    config.update({
+        "spark.scheduler.mode": "FAIR",
+        "spark.scheduler.allocation.file": os.environ["SPARK_FAIR_SCHEDULER_CONFIG"],
+    })
+
+    # Kubernetes configuration
+    _validate_env_vars(["SPARK_DRIVER_HOST"], "Kubernetes setup")
+    hostname = os.environ["SPARK_DRIVER_HOST"]
     if os.environ.get('USE_KUBE_SPAWNER') == 'true':
         yarn = False  # YARN is not used in the Kubernetes spawner
         # Since the Spark driver cannot resolve a pod's hostname without a dedicated service for each user pod,
         # use the pod IP as the identifier for the Spark driver host
-        hostname = os.environ["SPARK_DRIVER_HOST"]
-        if hostname:
-            sc["spark.driver.host"] = socket.gethostbyname(hostname)
-        else:
-            raise ValueError("SPARK_DRIVER_HOST environment variable is not set.")
+        config["spark.driver.host"] = socket.gethostbyname(hostname)
+    else:
+        # General driver host configuration - hostname is resolvable
+        config["spark.driver.host"] = hostname
 
-    if delta_lake or yarn:
-        sc.update(_get_s3_conf())
+    # YARN configuration
     if yarn:
-        sc["spark.yarn.stagingDir"] = "s3a://" + os.environ["S3_YARN_BUCKET"]
+        _validate_env_vars(["YARN_RESOURCE_MANAGER_URL", "S3_YARN_BUCKET"], "YARN setup")
+        yarnparse = urlparse(os.environ["YARN_RESOURCE_MANAGER_URL"])
 
+        config.update({
+            "spark.master": "yarn",
+            "spark.hadoop.yarn.resourcemanager.hostname": yarnparse.hostname,
+            "spark.hadoop.yarn.resourcemanager.address": yarnparse.netloc,
+            "spark.yarn.stagingDir": f"s3a://{os.environ['S3_YARN_BUCKET']}"
+        })
+    else:
+        _validate_env_vars(["SPARK_MASTER_URL"], "Standalone Spark setup")
+        config["spark.master"] = os.environ["SPARK_MASTER_URL"]
+
+    # S3 configuration
+    if yarn or delta_lake:
+        config.update(_get_s3_conf())
+
+    # Delta Lake configuration
     if delta_lake:
+        _validate_env_vars(
+            ["HADOOP_AWS_VER", "DELTA_SPARK_VER", "SCALA_VER"],
+            "Delta Lake setup"
+        )
+        config.update(_get_delta_lake_conf())
 
-        # Just to include the necessary jars for Delta Lake
-        jar_names = [f"delta-spark_{SCALA_VER}-{DELTA_SPARK_VER}.jar",
-                     f"hadoop-aws-{HADOOP_AWS_VER}.jar"]
         if not yarn:
-            sc["spark.jars"] = _get_jars(jar_names)
-        sc.update(_get_delta_lake_conf())
+            jars = _get_jars([
+                f"delta-spark_{os.environ['SCALA_VER']}-{os.environ['DELTA_SPARK_VER']}.jar",
+                f"hadoop-aws-{os.environ['HADOOP_AWS_VER']}.jar"
+            ])
+            config["spark.jars"] = jars
 
-    for key, value in sc.items():
-        spark_conf.set(key, value)
+    # Create SparkConf from accumulated configuration
+    spark_conf = SparkConf().setAll(list(config.items()))
+
+    # Initialize SparkSession
     spark = SparkSession.builder.config(conf=spark_conf).getOrCreate()
 
+    # Configure scheduler pool
     if scheduler_pool not in SPARK_POOLS:
         print(f"Warning: Scheduler pool {scheduler_pool} is not in the list of available pools: {SPARK_POOLS} "
-              f"Defaulting to 'default' pool")
+              f"Defaulting to {SPARK_DEFAULT_POOL} pool")
         scheduler_pool = SPARK_DEFAULT_POOL
     spark.sparkContext.setLocalProperty("spark.scheduler.pool", scheduler_pool)
 
