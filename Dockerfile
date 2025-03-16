@@ -11,7 +11,7 @@ USER root
 # https://github.com/bitnami/containers/pull/52661
 RUN groupadd -r spark && useradd -r -g spark spark_user
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     # GCC required to resolve error during JupyterLab installation: psutil could not be installed from sources because gcc is not installed.
     gcc \
     curl \
@@ -40,21 +40,20 @@ ENV POSTGRES_JDBC_VER=42.2.23
 COPY build.gradle settings.gradle gradlew /gradle/
 COPY gradle /gradle/gradle
 ENV GRADLE_JARS_DIR=gradle_jars
-RUN /gradle/gradlew -p /gradle build
-RUN cp -r /gradle/${GRADLE_JARS_DIR}/* /opt/bitnami/spark/jars/
+RUN /gradle/gradlew -p /gradle build && \
+    cp -r /gradle/${GRADLE_JARS_DIR}/* /opt/bitnami/spark/jars/ && \
+    rm -rf /gradle
 
 # make an empty yarn conf dir to prevent spark from complaining
 RUN mkdir -p /opt/yarn/conf && chown -R spark_user:spark /opt/yarn
 ENV YARN_CONF_DIR=/opt/yarn/conf
 
-# install pipenv
-RUN pip3 install pipenv
-
-# install python dependencies
+# Install pipenv and Python dependencies with cache cleanup
+RUN pip3 install --no-cache-dir pipenv
 COPY Pipfile* ./
-RUN pipenv sync --system
+RUN pipenv sync --system && pip cache purge
 
-RUN chown -R spark_user:spark /opt/bitnami
+# RUN chown -R spark_user:spark /opt/bitnami
 
 # Set up JupyterLab directories
 ENV JUPYTER_CONFIG_DIR=/.jupyter
@@ -84,7 +83,7 @@ ENV JUPYTERHUB_TEMPLATES_DIR=/templates
 RUN mkdir -p ${JUPYTERHUB_TEMPLATES_DIR}
 COPY ./templates/ ${JUPYTERHUB_TEMPLATES_DIR}
 
-RUN npm install -g configurable-http-proxy
+RUN npm install -g configurable-http-proxy && npm cache clean --force
 
 COPY ./src/ /src
 ENV PYTHONPATH="${PYTHONPATH}:/src"
