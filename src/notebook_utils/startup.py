@@ -8,6 +8,12 @@ from spark.utils import (
     get_spark_session,
     read_csv,
 )
+from spark.data_store import (
+    get_databases,
+    get_tables,
+    get_table_schema,
+    get_db_structure,
+)
 from db_ops.spark_db_utils import (
     create_namespace_if_not_exists,
     table_exists,
