@@ -36,7 +36,7 @@ services:
 
   spark-master:
     # The latest image from cdm-jupyterhub that includes spark standalone mode
-    image: ghcr.io/kbase/cdm-jupyterhub:pr-74
+    image: ghcr.io/kbase/cdm-spark-standalone:pr-19
     container_name: spark-master
     platform: linux/amd64
     ports:
@@ -44,7 +44,9 @@ services:
     environment:
       - SPARK_MODE=master
       - SPARK_MASTER_WEBUI_PORT=8090
-      - MAX_EXECUTORS=4
+      - MAX_EXECUTORS=5
+      - EXECUTOR_CORES=2
+      - MAX_CORES_PER_APPLICATION=10
       - POSTGRES_USER=hive
       - POSTGRES_PASSWORD=hivepassword
       - POSTGRES_DB=hive
@@ -56,7 +58,7 @@ services:
 
   spark-worker-1:
     # The latest image from cdm-jupyterhub that includes spark standalone mode
-    image: ghcr.io/kbase/cdm-jupyterhub:pr-74
+    image: ghcr.io/kbase/cdm-spark-standalone:pr-19
     container_name: spark-worker-1
     platform: linux/amd64
     ports:
@@ -64,7 +66,7 @@ services:
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_CORES=10
       - SPARK_WORKER_MEMORY=1G
       - SPARK_WORKER_WEBUI_PORT=8081
       - POSTGRES_USER=hive
@@ -78,7 +80,7 @@ services:
 
   spark-worker-2:
     # The latest image from cdm-jupyterhub that includes spark standalone mode
-    image: ghcr.io/kbase/cdm-jupyterhub:pr-74
+    image: ghcr.io/kbase/cdm-spark-standalone:pr-19
     container_name: spark-worker-2
     platform: linux/amd64
     ports:
@@ -86,7 +88,7 @@ services:
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_CORES=10
       - SPARK_WORKER_MEMORY=1G
       - SPARK_WORKER_WEBUI_PORT=8082
       - POSTGRES_USER=hive
