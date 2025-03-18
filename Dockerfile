@@ -11,7 +11,7 @@ USER root
 # https://github.com/bitnami/containers/pull/52661
 RUN groupadd -r spark && useradd -r -g spark spark_user
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y \
     # GCC required to resolve error during JupyterLab installation: psutil could not be installed from sources because gcc is not installed.
     gcc \
     curl \
@@ -51,8 +51,12 @@ ENV YARN_CONF_DIR=/opt/yarn/conf
 # Install pipenv and Python dependencies with cache cleanup
 RUN pip3 install --no-cache-dir pipenv
 COPY Pipfile* ./
-RUN pipenv sync --system && pip cache purge
+RUN pipenv sync --system && pipenv --clear
 
+# This `chown` command modifies the ownership of the entire /opt/bitnami directory to spark_user:spark,
+# increasing the image size by 3.6GB. It was previously necessary when using the spark_user user.
+# However, since we now operate as the root user, this step is no longer required.
+# We are retaining it as commented in case we need to revert to spark_user in the future.
 # RUN chown -R spark_user:spark /opt/bitnami
 
 # Set up JupyterLab directories
