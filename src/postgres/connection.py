@@ -52,6 +52,11 @@ def get_postgres_connection(dbname: Optional[str] = None,
     default_host, default_port = postgres_url.split(':')
 
     # Get and validate connection parameters
+    final_host = host or default_host
+    final_port = port or default_port
+    _validate_not_empty(final_host, "Database host", "POSTGRES_URL")
+    _validate_not_empty(final_port, "Database port", "POSTGRES_URL")
+
     final_dbname = dbname or os.environ.get('POSTGRES_DB')
     _validate_not_empty(final_dbname, "Database name", "POSTGRES_DB")
 
@@ -60,9 +65,6 @@ def get_postgres_connection(dbname: Optional[str] = None,
 
     final_password = password or os.environ.get('POSTGRES_PASSWORD')
     _validate_not_empty(final_password, "Database password", "POSTGRES_PASSWORD")
-
-    final_host = host or default_host
-    final_port = port or default_port
 
     # Get connection parameters
     db_params = {
