@@ -50,5 +50,5 @@ def get_table_schema(database: str, table: str) -> List[str]:
     Returns:
         List of column names
     """
-
+    # schema info does not appear to be available in the postgres - might be hidden in the parquet files
     raise NotImplementedError("This function is not implemented yet.")
