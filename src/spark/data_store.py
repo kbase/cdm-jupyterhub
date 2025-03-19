@@ -155,10 +155,12 @@ def get_db_structure(with_schema: bool = False,
         for db in databases:
             tables = hive_metastore.get_tables(db)
             if with_schema:
-                db_structure[db] = {
-                    table: get_table_schema(database=db, table=table, return_json=False)
-                    for table in tables
-                }
+                with get_spark_session() as spark:
+                    # Get schema using Spark session
+                    db_structure[db] = {
+                        table: get_table_schema(database=db, table=table, spark=spark, return_json=False)
+                        for table in tables
+                    }
             else:
                 db_structure[db] = tables
 

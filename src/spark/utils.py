@@ -172,6 +172,7 @@ def get_spark_session(
 
     # Initialize SparkSession
     spark = SparkSession.builder.config(conf=spark_conf).getOrCreate()
+    spark.sparkContext.setLogLevel("ERROR")
 
     # Configure scheduler pool
     if scheduler_pool not in SPARK_POOLS:
