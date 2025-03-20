@@ -1,7 +1,7 @@
 """Module for interacting with Spark databases and tables.
 
 This module provides functions to retrieve information about databases, tables,
-and their schemas from a Spark cluster.
+and their schemas from a Spark cluster or directly from Hive metastore in PostgreSQL.
 """
 
 import json
@@ -9,6 +9,7 @@ from typing import Union, Dict, Optional, List, Any
 
 from pyspark.sql import SparkSession
 
+from postgres import hive_metastore
 from spark.utils import get_spark_session
 
 
@@ -30,42 +31,56 @@ def _format_output(data: Any, return_json: bool = True) -> Union[str, Any]:
 
 
 def get_databases(spark: Optional[SparkSession] = None,
-                 return_json: bool = True) -> Union[str, List[str]]:
+                  use_postgres: bool = True,
+                  return_json: bool = True) -> Union[str, List[str]]:
     """
-    Get the list of databases in the Spark session.
+    Get the list of databases in the Hive metastore.
     
     Args:
-        spark: Optional SparkSession to use
+        spark: Optional SparkSession to use (if use_postgres is False)
+        use_postgres: Whether to use PostgreSQL direct query (faster) or Spark
         return_json: Whether to return JSON string or raw data
     
     Returns:
         List of database names, either as JSON string or raw list
     """
+
     def _get_dbs(session: SparkSession) -> List[str]:
         return [db.name for db in session.catalog.listDatabases()]
-    
-    databases = _execute_with_spark(_get_dbs, spark)
+
+    if use_postgres:
+        databases = hive_metastore.get_databases()
+    else:
+        databases = _execute_with_spark(_get_dbs, spark)
+
     return _format_output(databases, return_json)
 
 
 def get_tables(database: str,
                spark: Optional[SparkSession] = None,
+               use_postgres: bool = True,
                return_json: bool = True) -> Union[str, List[str]]:
     """
     Get the list of tables in a specific database.
     
     Args:
         database: Name of the database
-        spark: Optional SparkSession to use
+        spark: Optional SparkSession to use (if use_postgres is False)
+        use_postgres: Whether to use PostgreSQL direct query (faster) or Spark
         return_json: Whether to return JSON string or raw data
     
     Returns:
         List of table names, either as JSON string or raw list
     """
+
     def _get_tbls(session: SparkSession, db: str) -> List[str]:
         return [table.name for table in session.catalog.listTables(dbName=db)]
-    
-    tables = _execute_with_spark(_get_tbls, spark, database)
+
+    if use_postgres:
+        tables = hive_metastore.get_tables(database)
+    else:
+        tables = _execute_with_spark(_get_tbls, spark, database)
+
     return _format_output(tables, return_json)
 
 
@@ -98,13 +113,14 @@ def get_table_schema(database: str,
 
 
 def get_db_structure(with_schema: bool = False,
+                    use_postgres: bool = True,
                     return_json: bool = True) -> Union[str, Dict]:
-    """
-    Get the structure of all databases in the Spark session.
+    """Get the structure of all databases in the Hive metastore.
     
     Args:
         with_schema: Whether to include table schemas
-        return_json: Whether to return JSON string or raw data
+        use_postgres: Whether to use PostgreSQL for metadata retrieval
+        return_json: Whether to return the result as a JSON string
     
     Returns:
         Database structure as either JSON string or dictionary:
@@ -131,6 +147,24 @@ def get_db_structure(with_schema: bool = False,
                 db_structure[db] = tables
         
         return db_structure
+
+    if use_postgres:
+        db_structure = {}
+        databases = hive_metastore.get_databases()
+        
+        for db in databases:
+            tables = hive_metastore.get_tables(db)
+            if with_schema:
+                with get_spark_session() as spark:
+                    # Get schema using Spark session
+                    db_structure[db] = {
+                        table: get_table_schema(database=db, table=table, spark=spark, return_json=False)
+                        for table in tables
+                    }
+            else:
+                db_structure[db] = tables
+
+    else:
+        db_structure = _execute_with_spark(_get_structure)
     
-    structure = _execute_with_spark(_get_structure)
-    return _format_output(structure, return_json)
+    return _format_output(db_structure, return_json)
