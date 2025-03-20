@@ -7,7 +7,7 @@ import psycopg
 from psycopg.rows import dict_row
 
 
-def _validate_not_empty(value: Any, name: str, env_var: Optional[str] = None) -> None:
+def _validate_not_empty(value: Any, name: str, env_var: Optional[str] = None) -> Any:
     """Validate that a value is not None or empty string.
 
     Args:
@@ -23,6 +23,8 @@ def _validate_not_empty(value: Any, name: str, env_var: Optional[str] = None) ->
         if env_var:
             msg += f" (provide as parameter or set {env_var} env var)"
         raise ValueError(msg)
+
+    return value
 
 
 def get_postgres_connection(dbname: Optional[str] = None,
@@ -46,25 +48,20 @@ def get_postgres_connection(dbname: Optional[str] = None,
         ValueError: If POSTGRES_URL environment variable is not properly formatted
         psycopg.Error: If connection to the database fails
     """
-    postgres_url = os.environ.get('POSTGRES_URL', '')
-    if ':' not in postgres_url:
-        raise ValueError("POSTGRES_URL must be in the format 'host:port'")
-    default_host, default_port = postgres_url.split(':')
+
+    default_host, default_port = None, None
+    if not host and not port:
+        postgres_url = os.environ.get('POSTGRES_URL', '')
+        if ':' not in postgres_url:
+            raise ValueError("POSTGRES_URL must be in the format 'host:port'")
+        default_host, default_port = postgres_url.split(':')
 
     # Get and validate connection parameters
-    final_host = host or default_host
-    final_port = port or default_port
-    _validate_not_empty(final_host, "Database host", "POSTGRES_URL")
-    _validate_not_empty(final_port, "Database port", "POSTGRES_URL")
-
-    final_dbname = dbname or os.environ.get('POSTGRES_DB')
-    _validate_not_empty(final_dbname, "Database name", "POSTGRES_DB")
-
-    final_user = user or os.environ.get('POSTGRES_USER')
-    _validate_not_empty(final_user, "Database user", "POSTGRES_USER")
-
-    final_password = password or os.environ.get('POSTGRES_PASSWORD')
-    _validate_not_empty(final_password, "Database password", "POSTGRES_PASSWORD")
+    final_host = _validate_not_empty(host or default_host, "Database host", "POSTGRES_URL")
+    final_port = _validate_not_empty(port or default_port, "Database port", "POSTGRES_URL")
+    final_dbname = _validate_not_empty(dbname or os.environ.get('POSTGRES_DB'), "Database name", "POSTGRES_DB")
+    final_user =  _validate_not_empty(user or os.environ.get('POSTGRES_USER'), "Database user", "POSTGRES_USER")
+    final_password =  _validate_not_empty(password or os.environ.get('POSTGRES_PASSWORD'), "Database password", "POSTGRES_PASSWORD")
 
     # Get connection parameters
     db_params = {
