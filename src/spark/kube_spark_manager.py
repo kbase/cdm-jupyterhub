@@ -58,7 +58,7 @@ class KubeSparkManager:
 
         for var, description in cls.REQUIRED_ENV_VARS.items():
             value = os.environ.get(var)
-            if not value:
+            if not value or not value.strip():
                 missing_vars.append(f"{var} ({description})")
             env_values[var] = value
 
