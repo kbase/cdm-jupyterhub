@@ -76,7 +76,6 @@ if get_bool_env('USE_KUBE_SPAWNER', True):
     c.KubeSpawner.hub_connect_url = f"http://{os.environ['SPARK_DRIVER_HOST']}:8081"
 
     def modify_pod_hook(spawner, pod):
-        pod.spec.service_account_name = "cdm-jupyterhub"
         pod.spec.hostname = spawner.pod_name
         # Add a label to the pod to identify it as a JupyterHub pod
         # Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
