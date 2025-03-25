@@ -24,6 +24,7 @@ jupyterlab-git = "==0.51.0"
 cdm-jupyterlab-brand-extension = {file = "https://github.com/kbaseincubator/cdm_jupyterlab_brand_extension/raw/main/dist/cdm_jupyterlab_brand_extension-0.1.0-py3-none-any.whl"}
 cacheout = "==0.16.0"
 psycopg = "==3.2.6"
+kubernetes = "==32.0.1"
 
 # Jupyter AI libraries
 jupyter-ai = "==2.29.0"
