@@ -77,6 +77,7 @@ class KubeSparkManager:
                  image_pull_policy: str = DEFAULT_IMAGE_PULL_POLICY):
         """
         Initialize the KubeSparkManager with user-specific configuration.
+        This can only be run inside a kubernetes container.
 
         Args:
             username: Username of the JupyterHub user
