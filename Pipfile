@@ -27,7 +27,7 @@ psycopg = "==3.2.6"
 
 # Jupyter AI libraries
 jupyter-ai = "==2.29.0"
-langchain-openai = "==0.3.3"
+langchain-openai = "==0.3.11"
 langchain-anthropic = "==0.3.5"
 huggingface_hub = "==0.28.1"
 jupyter-ai-cborg = {git = "https://github.com/kbaseincubator/cdm-jupyter-ai-cborg.git", ref = "v0.1.0"}
