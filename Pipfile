@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 # JupyterHub and system libraries (e.g., Spark, MinIO, etc.)
-jupyterlab= "==4.3.5"
+jupyterlab= "==4.3.6"
 jupyterhub = "==5.2.1"
 jupyterhub-nativeauthenticator = "==1.3.0"
 dockerspawner = "==14.0.0"
