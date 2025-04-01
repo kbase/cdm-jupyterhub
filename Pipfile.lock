@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "71c7af91064f378cb61d7b6a04695a7476e19e7119de13708ebe895fa604515f"
+            "sha256": "e8e2b9d006bf61a9bd29dea3905590cfad25285d801c67fbda7ded588605bd8d"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -1992,11 +1992,11 @@
         },
         "narwhals": {
             "hashes": [
-                "sha256:2a7b79bb5f511055c4c0142121fc0d4171ea171458e12d44dbd9c8fc6488e997",
-                "sha256:333472e2562343dfdd27407ec9b5114a07c81d0416794e4ac6b703dd925c6a1a"
+                "sha256:6233d2457debf4b5fe4a1da54530c6fe2d84326f4a8e3bca35bbbff580a347cb",
+                "sha256:f653319112fd121a1f1c18a40cf70dada773cdacfd53e62c2aa0afae43c17129"
             ],
             "markers": "python_version >= '3.8'",
-            "version": "==1.31.0"
+            "version": "==1.33.0"
         },
         "nbclient": {
             "hashes": [
@@ -2405,12 +2405,12 @@
         },
         "plotly": {
             "hashes": [
-                "sha256:c4aad38b8c3d65e4a5e7dd308b084143b9025c2cc9d5317fc1f1d30958db87d3",
-                "sha256:f708871c3a9349a68791ff943a5781b1ec04de7769ea69068adcd9202e57653a"
+                "sha256:4714db20fea57a435692c548a4eb4fae454f7daddf15f8d8ba7e1045681d7768",
+                "sha256:dd8400229872b6e3c964b099be699f8d00c489a974f2cfccfad5e8240873366b"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.8'",
-            "version": "==6.0.0"
+            "version": "==6.0.1"
         },
         "ply": {
             "hashes": [
