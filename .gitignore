@@ -12,3 +12,5 @@ build
 /.pydevproject*
 /.pytest_cache/
 /.settings/
+
+.vscode/
