@@ -19,7 +19,12 @@ T = TypeVar("T", bound=BaseModel)
 
 
 class SparkClusterManagerClient:
-    """Client for the CDM Spark Cluster Manager API."""
+    """Client for the CDM Spark Cluster Manager API.
+    
+    This client is intended for use only when JupyterHub is deployed on Kubernetes. 
+    Additionally, the CDM Spark Cluster Manager API must also be deployed within 
+    the same Kubernetes environment.
+    """
 
     def __init__(self, api_url: str | None = None, auth_token: str | None = None):
         """
