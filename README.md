@@ -136,5 +136,27 @@ Enjoy your Spark journey!
 For more information, please consult the [User Guide](docs/user_guide.md).
 
 
+## Regenerate cdm-spark-cluster-manager-api-client with [openapi-python-client](https://pypi.org/project/openapi-python-client/)
 
+### Prerequisites
+1. Python 3.9+ installed on your system.
+2. The `openapi-python-client` package installed. If not already installed, you can do so using pip:
+    ```
+    pip install openapi-python-client
+    ```
+3. Access to the OpenAPI specification for the [cdm-kube-spark-manager](https://github.com/kbase/cdm-kube-spark-manager), either via a URL or a local file.
+    - TODO - Post the URL after deployment to Rancher2
+### Generate the Client
+From a URL:
 
+    ```
+    openapi-python-client generate --url https://api.example.com/openapi.json --output-path cdm-spark-cluster-manager-api-client
+    ```
+
+From a Local File:
+
+    ```
+    openapi-python-client generate --path ./openapi.yaml --output-path cdm-spark-cluster-manager-api-client 
+    ```
+
+Copy the generated client files to [cdm_spark_cluster_manager_api_client](src/spark/cdm_spark_cluster_manager_api_client)
