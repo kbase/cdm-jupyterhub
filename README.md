@@ -149,14 +149,19 @@ For more information, please consult the [User Guide](docs/user_guide.md).
 ### Generate the Client
 From a URL:
 
-    ```
-    openapi-python-client generate --url https://api.example.com/openapi.json --output-path cdm-spark-cluster-manager-api-client
-    ```
+```bash
+openapi-python-client generate --url https://api.example.com/openapi.json --output-path cdm-spark-cluster-manager-api-client
+```
 
 From a Local File:
 
-    ```
-    openapi-python-client generate --path ./openapi.yaml --output-path cdm-spark-cluster-manager-api-client 
-    ```
+```bash
+openapi-python-client generate --path ./openapi.yaml --output-path cdm-spark-cluster-manager-api-client 
+```
 
 Copy the generated client files to [cdm_spark_cluster_manager_api_client](src/spark/cdm_spark_cluster_manager_api_client)
+
+```bash
+cp -r path_of_openapi_ouptput_path/cdm-spark-cluster-manager-api-client/cdm_spark_cluster_manager_api_client path_of_cdm-jupyterhub/src/spark
+cp path_of_openapi_ouptput_path/cdm-spark-cluster-manager-api-client/README.md path_of_cdm-jupyterhub/src/spark/cdm_spark_cluster_manager_api_client 
+```
