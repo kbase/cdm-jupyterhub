@@ -1,0 +1,142 @@
+from http import HTTPStatus
+from typing import Any, Optional, Union
+
+import httpx
+
+from ... import errors
+from ...client import AuthenticatedClient, Client
+from ...models.spark_cluster_status import SparkClusterStatus
+from ...types import Response
+
+
+def _get_kwargs() -> dict[str, Any]:
+    _kwargs: dict[str, Any] = {
+        "method": "get",
+        "url": "/clusters",
+    }
+
+    return _kwargs
+
+
+def _parse_response(
+    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
+) -> Optional[SparkClusterStatus]:
+    if response.status_code == 200:
+        response_200 = SparkClusterStatus.from_dict(response.json())
+
+        return response_200
+    if client.raise_on_unexpected_status:
+        raise errors.UnexpectedStatus(response.status_code, response.content)
+    else:
+        return None
+
+
+def _build_response(
+    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
+) -> Response[SparkClusterStatus]:
+    return Response(
+        status_code=HTTPStatus(response.status_code),
+        content=response.content,
+        headers=response.headers,
+        parsed=_parse_response(client=client, response=response),
+    )
+
+
+def sync_detailed(
+    *,
+    client: AuthenticatedClient,
+) -> Response[SparkClusterStatus]:
+    """Get cluster status
+
+     Retrieves the status of the Spark cluster for the authenticated user. Important: Even with a
+    successful API call (HTTP 200), check the 'error' field in the response to determine if there are
+    issues with the cluster deployments.
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        Response[SparkClusterStatus]
+    """
+
+    kwargs = _get_kwargs()
+
+    response = client.get_httpx_client().request(
+        **kwargs,
+    )
+
+    return _build_response(client=client, response=response)
+
+
+def sync(
+    *,
+    client: AuthenticatedClient,
+) -> Optional[SparkClusterStatus]:
+    """Get cluster status
+
+     Retrieves the status of the Spark cluster for the authenticated user. Important: Even with a
+    successful API call (HTTP 200), check the 'error' field in the response to determine if there are
+    issues with the cluster deployments.
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        SparkClusterStatus
+    """
+
+    return sync_detailed(
+        client=client,
+    ).parsed
+
+
+async def asyncio_detailed(
+    *,
+    client: AuthenticatedClient,
+) -> Response[SparkClusterStatus]:
+    """Get cluster status
+
+     Retrieves the status of the Spark cluster for the authenticated user. Important: Even with a
+    successful API call (HTTP 200), check the 'error' field in the response to determine if there are
+    issues with the cluster deployments.
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        Response[SparkClusterStatus]
+    """
+
+    kwargs = _get_kwargs()
+
+    response = await client.get_async_httpx_client().request(**kwargs)
+
+    return _build_response(client=client, response=response)
+
+
+async def asyncio(
+    *,
+    client: AuthenticatedClient,
+) -> Optional[SparkClusterStatus]:
+    """Get cluster status
+
+     Retrieves the status of the Spark cluster for the authenticated user. Important: Even with a
+    successful API call (HTTP 200), check the 'error' field in the response to determine if there are
+    issues with the cluster deployments.
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        SparkClusterStatus
+    """
+
+    return (
+        await asyncio_detailed(
+            client=client,
+        )
+    ).parsed
