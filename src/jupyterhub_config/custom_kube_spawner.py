@@ -1,12 +1,16 @@
 import os
 import shutil
 import venv
-import json5
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from pathlib import Path
-from filelock import FileLock
 
+import json5
+from filelock import FileLock
 from kubespawner import KubeSpawner
+
+from service.arg_checkers import not_falsy
+from spark import cluster
+
 
 class CustomKubeSpawner(KubeSpawner):
     RW_MINIO_GROUP = 'minio_rw'
@@ -43,7 +47,46 @@ class CustomKubeSpawner(KubeSpawner):
 
         self.namespace = os.environ['KUBE_NAMESPACE']
 
+        # Finally, create a Spark cluster for the user
+        self._start_spark_cluster(username, not_falsy(self.environment['KBASE_AUTH_TOKEN'], 'KBASE_AUTH_TOKEN'))
+
         return super().start()
+
+    async def stop(self, now=False):
+        """Override the stop method with additional Spark cluster cleanup"""
+
+        # Delete the user's Spark cluster
+        self._stop_spark_cluster(self.user.name, not_falsy(self.environment['KBASE_AUTH_TOKEN'], 'KBASE_AUTH_TOKEN'))
+
+        # Call the parent class's stop method to stop the pod
+        return await super().stop(now=now)
+
+    def _start_spark_cluster(self, username: str, kbase_auth_token: str):
+        """
+        Create a Spark cluster for the user
+        """
+        try:
+            self.log.info(f"Creating Spark cluster for user {username}")
+            response = cluster.create_cluster(kbase_auth_token=kbase_auth_token)
+            if response and hasattr(response, 'master_url') and response.master_url:
+                self.log.info(f"Spark cluster created with master URL: {response.master_url}")
+                # Update environment with the Spark master URL
+                self.environment['SPARK_MASTER_URL'] = response.master_url
+            else:
+                raise ValueError(f"Master URL not found in response: {response}")
+        except Exception as e:
+            self.log.error(f"Error creating Spark cluster for user {username}: {str(e)}")
+
+    def _stop_spark_cluster(self, username: str, kbase_auth_token: str):
+        """
+        Delete the Spark cluster for the user
+        """
+        try:
+            self.log.info(f"Deleting Spark cluster for user {username}")
+            cluster.delete_cluster(kbase_auth_token=kbase_auth_token)
+            self.log.info(f"Spark cluster deleted for user {username}")
+        except Exception as e:
+            self.log.error(f"Error deleting Spark cluster for user {username}: {str(e)}")
 
     def _get_idle_timeout(self):
         """
@@ -59,7 +102,7 @@ class CustomKubeSpawner(KubeSpawner):
 
     async def poll(self):
         """
-        Overrides the poll method to periodically check the status of the user’s JupyterHub container.
+        Overrides the poll method to periodically check the status of the user's JupyterHub container.
 
         ref:
         https://github.com/jupyterhub/dockerspawner/blob/main/dockerspawner/dockerspawner.py#L1004
