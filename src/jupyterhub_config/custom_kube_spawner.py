@@ -67,7 +67,7 @@ class CustomKubeSpawner(KubeSpawner):
         """
         try:
             self.log.info(f"Creating Spark cluster for user {username}")
-            response = cluster.create_cluster(kbase_auth_token=kbase_auth_token)
+            response = cluster.create_cluster(kbase_auth_token=kbase_auth_token, force=True)
             if response and hasattr(response, 'master_url') and response.master_url:
                 self.log.info(f"Spark cluster created with master URL: {response.master_url}")
                 # Update environment with the Spark master URL

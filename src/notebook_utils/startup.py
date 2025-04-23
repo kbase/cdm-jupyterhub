@@ -25,3 +25,9 @@ from notebook_utils.notebook_utils import (
     spark_to_pandas,
     display_namespace_viewer,
 )
+from spark.cluster import (
+    check_api_health,
+    create_cluster,
+    delete_cluster,
+    get_cluster_status,
+)
