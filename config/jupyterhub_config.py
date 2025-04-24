@@ -126,3 +126,6 @@ if os.environ.get("ENVIRONMENT") == "dev":
     c.JupyterHub.tornado_settings = {
         "xsrf_cookies": False,  # skip XSRF check for dev environment only
     }
+    c.JupyterHub.cookie_secure = False
+    # c.JupyterHub.bind_url = "http://0.0.0.0:8081"
+
