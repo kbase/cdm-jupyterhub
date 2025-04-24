@@ -121,3 +121,8 @@ c.JupyterHub.ip = '0.0.0.0'
 c.JupyterHub.port = int(os.getenv('NOTEBOOK_PORT'))
 
 c.JupyterHub.log_level = 'DEBUG'
+
+if os.environ.get("ENVIRONMENT") == "dev":
+    c.JupyterHub.tornado_settings = {
+        "xsrf_cookies": False,  # skip XSRF check for dev environment only
+    }
