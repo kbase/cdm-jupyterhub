@@ -122,15 +122,17 @@ c.JupyterHub.port = int(os.getenv('NOTEBOOK_PORT'))
 
 c.JupyterHub.log_level = 'DEBUG'
 
-if os.environ.get("ENVIRONMENT") == "dev":
-    c.JupyterHub.public_url = 'https://rancher2.berkeley.kbase.us/api/v1/namespaces/cdm-jupyterhub/services/http:cdm-jupyterhub-dev:80/proxy'
+if get_bool_env("ENABLE_RANCHER_PROXY_ACCESS"):
+    # c.JupyterHub.public_url = 'https://rancher2.berkeley.kbase.us/api/v1/namespaces/cdm-jupyterhub/services/http:cdm-jupyterhub-dev:80/proxy'
+    c.JupyterHub.base_url = "/api/v1/namespaces/cdm-jupyterhub/services/http:cdm-jupyterhub-dev:80/proxy/hub"
 
     c.JupyterHub.tornado_settings = {
         "xsrf_cookies": False,
+        "cookie_path": "/api/v1/namespaces/cdm-jupyterhub/services/http:cdm-jupyterhub-dev:80/proxy/hub"
         "cookie_options": {
             "secure": False,
             "path": "/api/v1/namespaces/cdm-jupyterhub/services/http:cdm-jupyterhub-dev:80/proxy/hub/"
         }
     }
-    # c.JupyterHub.cookie_secure = False
+    c.JupyterHub.cookie_secure = False
 
