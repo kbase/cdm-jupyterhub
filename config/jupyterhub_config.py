@@ -123,9 +123,14 @@ c.JupyterHub.port = int(os.getenv('NOTEBOOK_PORT'))
 c.JupyterHub.log_level = 'DEBUG'
 
 if os.environ.get("ENVIRONMENT") == "dev":
+    c.JupyterHub.public_url = 'https://rancher2.berkeley.kbase.us/api/v1/namespaces/cdm-jupyterhub/services/http:cdm-jupyterhub-dev:80/proxy'
+
     c.JupyterHub.tornado_settings = {
-        "xsrf_cookies": False,  # skip XSRF check for dev environment only
-        "cookie_options": {"secure": False} 
+        "xsrf_cookies": False,
+        "cookie_options": {
+            "secure": False,
+            "path": "/api/v1/namespaces/cdm-jupyterhub/services/http:cdm-jupyterhub-dev:80/proxy/hub/"
+        }
     }
     # c.JupyterHub.cookie_secure = False
 
