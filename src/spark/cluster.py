@@ -127,7 +127,8 @@ def create_cluster(
     print("All active Spark sessions and computations will be lost.")
     
     if not force:
-        confirmation = input("Do you want to proceed? [Y/n]: ").strip().lower() or 'y'
+        # TODO: check existence of user's cluster - by default, upon pod creation, the user's cluster should be created.
+        confirmation = input("Do you want to proceed? [y/N]: ").strip().lower() or 'N'
         if confirmation not in ('y', 'yes'):
             print("Cluster creation aborted.")
             return None
