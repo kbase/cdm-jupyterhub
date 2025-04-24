@@ -124,12 +124,12 @@ c.JupyterHub.log_level = 'DEBUG'
 
 if get_bool_env("ENABLE_RANCHER_PROXY_ACCESS"):
     # c.JupyterHub.public_url = 'https://rancher2.berkeley.kbase.us/api/v1/namespaces/cdm-jupyterhub/services/http:cdm-jupyterhub-dev:80/proxy'
-    c.JupyterHub.base_url = '/api/v1/namespaces/cdm-jupyterhub/services/http:cdm-jupyterhub-dev:80/proxy/hub'
+    c.JupyterHub.base_url = '/api/v1/namespaces/cdm-jupyterhub/services/http:cdm-jupyterhub-dev:80/proxy/'
 
     c.JupyterHub.trusted_downstream_headers = {
         'X-Scheme': 'X-Forwarded-Proto',
         'X-Forwarded-For': 'X-Forwarded-For',
-        'Host': 'X-Forwarded-Host',
+        # 'Host': 'X-Forwarded-Host',
     }
 
     c.JupyterHub.tornado_settings = {
