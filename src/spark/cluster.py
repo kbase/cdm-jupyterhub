@@ -45,14 +45,18 @@ def _get_client() -> Client:
     return Client(base_url=str(api_url))
 
 
-def _get_authenticated_client(kbase_auth_token: str | None = None) -> AuthenticatedClient:
+def _get_authenticated_client(
+    kbase_auth_token: str | None = None,
+) -> AuthenticatedClient:
     """
     Get an authenticated client for the Spark Cluster Manager API.
     """
     api_url = not_falsy(
         os.environ.get("SPARK_CLUSTER_MANAGER_API_URL"), "SPARK_CLUSTER_MANAGER_API_URL"
     )
-    auth_token = not_falsy(os.environ.get("KBASE_AUTH_TOKEN", kbase_auth_token), "KBASE_AUTH_TOKEN")
+    auth_token = not_falsy(
+        os.environ.get("KBASE_AUTH_TOKEN", kbase_auth_token), "KBASE_AUTH_TOKEN"
+    )
     return AuthenticatedClient(base_url=str(api_url), token=str(auth_token))
 
 
@@ -85,7 +89,9 @@ def check_api_health() -> HealthResponse | None:
     _raise_api_error(response)
 
 
-def get_cluster_status(kbase_auth_token: str | None = None) -> SparkClusterStatus | None:
+def get_cluster_status(
+    kbase_auth_token: str | None = None,
+) -> SparkClusterStatus | None:
     """
     Get the status of the user's Spark cluster.
     """
@@ -123,16 +129,17 @@ def create_cluster(
         force: Skip confirmation prompt if True
     """
 
-    print("WARNING: Creating a new Spark cluster will terminate your existing cluster.")
-    print("All active Spark sessions and computations will be lost.")
-    
     if not force:
+        print(
+            "WARNING: Creating a new Spark cluster will terminate your existing cluster."
+        )
+        print("All active Spark sessions and computations will be lost.")
         # TODO: check existence of user's cluster - by default, upon pod creation, the user's cluster should be created.
-        confirmation = input("Do you want to proceed? [y/N]: ").strip().lower() or 'N'
-        if confirmation not in ('y', 'yes'):
+        confirmation = input("Do you want to proceed? [y/N]: ").strip().lower() or "N"
+        if confirmation not in ("y", "yes"):
             print("Cluster creation aborted.")
             return None
-    
+
     client = _get_authenticated_client(kbase_auth_token)
     with client as client:
         # Create the config object
