@@ -64,8 +64,8 @@ c.JupyterHub.load_groups = {
 
 if get_bool_env('USE_KUBE_SPAWNER', True):
     # Hub configuration for Kubernetes
-    c.JupyterHub.hub_ip = '0.0.0.0'
-    c.JupyterHub.hub_port = 8081
+    # c.JupyterHub.hub_ip = '0.0.0.0'
+    # c.JupyterHub.hub_port = 8081
     c.JupyterHub.bind_url = 'http://0.0.0.0:8081'
 
     spawner_class = CustomKubeSpawner
@@ -125,7 +125,7 @@ c.JupyterHub.log_level = 'DEBUG'
 if os.environ.get("ENVIRONMENT") == "dev":
     c.JupyterHub.tornado_settings = {
         "xsrf_cookies": False,  # skip XSRF check for dev environment only
+        "cookie_options": {"secure": False} 
     }
-    c.JupyterHub.cookie_secure = False
-    # c.JupyterHub.bind_url = "http://0.0.0.0:8081"
+    # c.JupyterHub.cookie_secure = False
 
