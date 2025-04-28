@@ -26,7 +26,7 @@ ssh -f -D 1338 <ac.anl_username>@login1.berkeley.kbase.us "/bin/sleep infinity"
 
 > **⚠️ Note:** If port `1338` is already in use on your system, you can replace it with another free port (e.g., 1080).
 
-**Step 2:** Enter your password when prompted.
+**Step 2:** If you haven't set up SSH keys, you'll be prompted to enter your password.
 
 **Step 3:** Verify the tunnel is running by checking for the background process:
 ```bash
