@@ -115,7 +115,7 @@ https://cdmhub.ci.kbase.us/
 This will open the JupyterHub login interface running on the remote server.
 ![login](screen_shots/login.png)
 
-**Step 3:** Log in using your KBase credentials (the same username and password you use for KBase services).
+**Step 3:** Log in using your KBase credentials (the same 3rd party identity provider, username and password you use for KBase services).
 
 > **⚠️ Important:** This service currently uses CI KBase environment authentication, not production KBase authentication. If you don't have a KBase account yet, you'll need to register at https://ci.kbase.us/ before proceeding.
 
