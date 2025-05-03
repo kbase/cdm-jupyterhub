@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "00bd2a710b3069990c9e0661eeba054568334e251febe523a19399b8261d34eb"
+            "sha256": "2f8cd812809f204dd2725543b0a6911840fa15eaa3916cbc4fac5dc3a8fe76bf"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -4151,11 +4151,12 @@
         },
         "ipython": {
             "hashes": [
-                "sha256:2df07257ec2f84a6b346b8d83100bcf8fa501c6e01ab75cd3799b0bb253b3d2a",
-                "sha256:a47e13a5e05e02f3b8e1e7a0f9db372199fe8c3763532fe7a1e0379e4e135f16"
+                "sha256:62a9373dbc12f28f9feaf4700d052195bf89806279fc8ca11f3f54017d04751b",
+                "sha256:fef5e33c4a1ae0759e0bba5917c9db4eb8c53fee917b6a526bd973e1ca5159f6"
             ],
+            "index": "pypi",
             "markers": "python_version >= '3.11'",
-            "version": "==9.1.0"
+            "version": "==9.2.0"
         },
         "ipython-pygments-lexers": {
             "hashes": [
@@ -4202,6 +4203,7 @@
                 "sha256:7236d1e080e4936be2dc3e326cec0af72acf9212a7e1d060210e70a47e253523",
                 "sha256:ee7d41123f3c9911050ea2c2dac107568dc43b2d3b0c7557a33212c398ead30f"
             ],
+            "markers": "sys_platform != 'win32' and sys_platform != 'emscripten'",
             "version": "==4.9.0"
         },
         "pluggy": {

@@ -50,7 +50,7 @@ itables = "==2.3.0"
 pytest = "==8.3.5"
 coverage = "==7.8.0"
 pytest-cov = "==6.1.1"
-ipython = "==9.1.0"
+ipython = "==9.2.0"
 
 [requires]
 python_version = "3.11"
