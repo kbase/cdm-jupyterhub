@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "00bd2a710b3069990c9e0661eeba054568334e251febe523a19399b8261d34eb"
+            "sha256": "0f3759d72ca730ea55c23580be007f35489c8e93483bb0967727fed807efcf7b"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -786,12 +786,12 @@
         },
         "delta-spark": {
             "hashes": [
-                "sha256:641967828e47c64805f8c746513da80bea24b5f19b069cdcf64561cd3692e11d",
-                "sha256:c4ff3fa7218e58a702cb71eb64384b0005c4d6f0bbdd0fe0b38a53564d946e09"
+                "sha256:007dac57b8d92ece52ea9f7260f31834e6588d335aec4afa93e4d918cb8f96a1",
+                "sha256:e9d829ede06b4c563a33b781a270ae81047658960b87613a59ea75ef6ce56696"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.6'",
-            "version": "==3.2.0"
+            "version": "==3.3.1"
         },
         "distributed": {
             "hashes": [
@@ -1137,11 +1137,11 @@
         },
         "importlib-metadata": {
             "hashes": [
-                "sha256:02a89390c1e15fdfdc0d7c6b25cb3e62650d0494005c97d6f148bf5b9787525e",
-                "sha256:310b41d755445d74569f993ccfc22838295d9fe005425094fad953d7f15c8580"
+                "sha256:d13b81ad223b890aa16c5471f2ac3056cf76c5f10f82d6f9292f0b415f389000",
+                "sha256:e5dd1551894c77868a30651cef00984d50e1002d06942a7101d34870c5f02afd"
             ],
             "markers": "python_version >= '3.9'",
-            "version": "==8.6.1"
+            "version": "==8.7.0"
         },
         "ipykernel": {
             "hashes": [
