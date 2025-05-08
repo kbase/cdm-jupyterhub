@@ -6,7 +6,6 @@ services:
 
   yarn-resourcemanager:
     image: ghcr.io/kbase/cdm-prototype-yarn:pr-8
-    container_name: yarn-resourcemanager
     # Images from the ghcr.io/kbase registry are exclusively available for Linux/AMD64 platforms.
     platform: linux/amd64
     ports:
@@ -21,7 +20,6 @@ services:
 
   yarn-nodemanager:
     image: ghcr.io/kbase/cdm-prototype-yarn:pr-8
-    container_name: yarn-nodemanager
     platform: linux/amd64
     ports:
       - 8042:8042  # web ui
@@ -37,7 +35,6 @@ services:
   spark-master:
     # The latest image from cdm-jupyterhub that includes spark standalone mode
     image: ghcr.io/kbase/cdm-spark-standalone:pr-19
-    container_name: spark-master
     platform: linux/amd64
     ports:
       - "8090:8090"
@@ -59,7 +56,6 @@ services:
   spark-worker-1:
     # The latest image from cdm-jupyterhub that includes spark standalone mode
     image: ghcr.io/kbase/cdm-spark-standalone:pr-19
-    container_name: spark-worker-1
     platform: linux/amd64
     ports:
       - "8081:8081"
@@ -81,7 +77,6 @@ services:
   spark-worker-2:
     # The latest image from cdm-jupyterhub that includes spark standalone mode
     image: ghcr.io/kbase/cdm-spark-standalone:pr-19
-    container_name: spark-worker-2
     platform: linux/amd64
     ports:
       - "8082:8082"
@@ -102,7 +97,6 @@ services:
 
   minio:
     image: minio/minio
-    container_name: spark-minio
     ports:
       - "9002:9002"
       # MinIO Console is available at http://localhost:9003
@@ -181,10 +175,32 @@ services:
     networks:
       - cdm-jupyterhub-network
 
+  cdm-mcp-server:
+    image: ghcr.io/kbase/cdm-mcp-server:pr-14
+    platform: linux/amd64
+    ports:
+      - "8000:8000"
+    environment:
+      - MINIO_URL=http://minio:9002
+      - MINIO_ACCESS_KEY=minio-readonly
+      - MINIO_SECRET_KEY=minio123
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - KBASE_AUTH_URL=https://ci.kbase.us/services/auth/
+      - KBASE_ADMIN_ROLES=CDM_JUPYTERHUB_ADMIN
+      - SPARK_DRIVER_HOST=cdm-mcp-server
+      - POSTGRES_USER=hive
+      - POSTGRES_PASSWORD=hivepassword
+      - POSTGRES_DB=hive
+      - POSTGRES_URL=postgres:5432
+      - SPARK_POOL=highPriority
+      - EXECUTOR_CORES=10
+    volumes:
+      - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
+    networks:
+      - cdm-jupyterhub-network
+
   postgres:
     image: postgres:16.3
-    restart: always
-    container_name: postgres
     # To avoid incorrect user permissions, manually create the volume directory before running Docker.
     # export UID=$(id -u)
     # export GID=$(id -g)

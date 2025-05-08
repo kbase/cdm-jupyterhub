@@ -5,7 +5,8 @@
       "openai-chat",
       "anthropic",
       "anthropic-chat",
-      "cborg"
+      "cborg",
+      "ollama"
     ]
   }
 }
