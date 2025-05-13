@@ -42,7 +42,7 @@ ps aux | grep "ssh -f -D 1338"
 SwitchyOmega provides a convenient way to manage and switch between different proxy configurations.
 
 **Step 1: Install the Extension**
-* [Chrome Web Store](https://chrome.google.com/webstore/detail/proxy-switchyomega/padekgcemlokbadohgkifijomclgjgif)
+* [Chrome Web Store](https://chromewebstore.google.com/detail/proxy-switchyomega-3-zero/pfnededegaaopdmhkdmcofjmoldfiped)
 * [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/switchyomega/)
 
 **Step 2: Configure Proxy Profile**
