@@ -35,6 +35,7 @@ ENV HADOOP_AWS_VER=3.3.4
 ENV DELTA_SPARK_VER=3.2.0
 ENV SCALA_VER=2.12
 ENV POSTGRES_JDBC_VER=42.2.23
+ENV SPARK_REDIS_VER=3.1.0
 
 # Run Gradle task to download JARs to /gradle/gradle_jars location
 COPY build.gradle settings.gradle gradlew /gradle/

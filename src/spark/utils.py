@@ -2,16 +2,17 @@ import csv
 import os
 import socket
 from datetime import datetime
-from typing import List, Dict
+from typing import Dict, List
 from urllib.parse import urlparse
 
 from pyspark.conf import SparkConf
-from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql import DataFrame, SparkSession
 
 from minio_utils.minio_utils import get_minio_client
+from service.arg_checkers import not_falsy
 
 # Default directory for JAR files in the Bitnami Spark image
-JAR_DIR = '/opt/bitnami/spark/jars'
+JAR_DIR = "/opt/bitnami/spark/jars"
 # the default number of CPU cores that each Spark executor will use
 # If not specified, Spark will typically use all available cores on the worker nodes
 DEFAULT_EXECUTOR_CORES = 1
@@ -43,9 +44,15 @@ def _get_s3_conf() -> Dict[str, str]:
     Helper function to get S3 configuration for MinIO.
     """
     return {
-        "spark.hadoop.fs.s3a.endpoint": os.environ.get("MINIO_URL"),
-        "spark.hadoop.fs.s3a.access.key": os.environ.get("MINIO_ACCESS_KEY"),
-        "spark.hadoop.fs.s3a.secret.key": os.environ.get("MINIO_SECRET_KEY"),
+        "spark.hadoop.fs.s3a.endpoint": not_falsy(
+            os.environ.get("MINIO_URL"), "MINIO_URL"
+        ),
+        "spark.hadoop.fs.s3a.access.key": not_falsy(
+            os.environ.get("MINIO_ACCESS_KEY"), "MINIO_ACCESS_KEY"
+        ),
+        "spark.hadoop.fs.s3a.secret.key": not_falsy(
+            os.environ.get("MINIO_SECRET_KEY"), "MINIO_SECRET_KEY"
+        ),
         "spark.hadoop.fs.s3a.path.style.access": "true",
         "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
     }
@@ -78,12 +85,13 @@ def _validate_env_vars(required_vars: List[str], context: str) -> None:
 
 
 def get_spark_session(
-        app_name: str = None,
-        local: bool = False,
-        yarn: bool = True,
-        delta_lake: bool = True,
-        executor_cores: int = DEFAULT_EXECUTOR_CORES,
-        scheduler_pool: str = SPARK_DEFAULT_POOL) -> SparkSession:
+    app_name: str | None = None,
+    local: bool = False,
+    yarn: bool = True,
+    delta_lake: bool = True,
+    executor_cores: int = DEFAULT_EXECUTOR_CORES,
+    scheduler_pool: str = SPARK_DEFAULT_POOL,
+) -> SparkSession:
     """
     Helper to get and manage the SparkSession and keep all of our spark configuration params in one place.
 
@@ -97,7 +105,9 @@ def get_spark_session(
     :return: A SparkSession object
     """
 
-    app_name = app_name or f"kbase_spark_session_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    app_name = (
+        app_name or f"kbase_spark_session_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    )
 
     if local:
         return SparkSession.builder.appName(app_name).getOrCreate()
@@ -108,23 +118,31 @@ def get_spark_session(
     }
 
     # Dynamic allocation configuration
-    config.update({
-        "spark.dynamicAllocation.enabled": "true",
-        "spark.dynamicAllocation.minExecutors": "1",
-        "spark.dynamicAllocation.maxExecutors": os.getenv("MAX_EXECUTORS", str(DEFAULT_MAX_EXECUTORS)),
-    })
+    config.update(
+        {
+            "spark.dynamicAllocation.enabled": "true",
+            "spark.dynamicAllocation.minExecutors": "1",
+            "spark.dynamicAllocation.maxExecutors": os.getenv(
+                "MAX_EXECUTORS", str(DEFAULT_MAX_EXECUTORS)
+            ),
+        }
+    )
 
     # Fair scheduler configuration
     _validate_env_vars(["SPARK_FAIR_SCHEDULER_CONFIG"], "FAIR scheduler setup")
-    config.update({
-        "spark.scheduler.mode": "FAIR",
-        "spark.scheduler.allocation.file": os.environ["SPARK_FAIR_SCHEDULER_CONFIG"],
-    })
+    config.update(
+        {
+            "spark.scheduler.mode": "FAIR",
+            "spark.scheduler.allocation.file": os.environ[
+                "SPARK_FAIR_SCHEDULER_CONFIG"
+            ],
+        }
+    )
 
     # Kubernetes configuration
     _validate_env_vars(["SPARK_DRIVER_HOST"], "Kubernetes setup")
     hostname = os.environ["SPARK_DRIVER_HOST"]
-    if os.environ.get('USE_KUBE_SPAWNER') == 'true':
+    if os.environ.get("USE_KUBE_SPAWNER") == "true":
         yarn = False  # YARN is not used in the Kubernetes spawner
         # Since the Spark driver cannot resolve a pod's hostname without a dedicated service for each user pod,
         # use the pod IP as the identifier for the Spark driver host
@@ -135,15 +153,19 @@ def get_spark_session(
 
     # YARN configuration
     if yarn:
-        _validate_env_vars(["YARN_RESOURCE_MANAGER_URL", "S3_YARN_BUCKET"], "YARN setup")
+        _validate_env_vars(
+            ["YARN_RESOURCE_MANAGER_URL", "S3_YARN_BUCKET"], "YARN setup"
+        )
         yarnparse = urlparse(os.environ["YARN_RESOURCE_MANAGER_URL"])
 
-        config.update({
-            "spark.master": "yarn",
-            "spark.hadoop.yarn.resourcemanager.hostname": yarnparse.hostname,
-            "spark.hadoop.yarn.resourcemanager.address": yarnparse.netloc,
-            "spark.yarn.stagingDir": f"s3a://{os.environ['S3_YARN_BUCKET']}"
-        })
+        config.update(
+            {
+                "spark.master": "yarn",
+                "spark.hadoop.yarn.resourcemanager.hostname": yarnparse.hostname,
+                "spark.hadoop.yarn.resourcemanager.address": yarnparse.netloc,
+                "spark.yarn.stagingDir": f"s3a://{os.environ['S3_YARN_BUCKET']}",
+            }
+        )
     else:
         _validate_env_vars(["SPARK_MASTER_URL"], "Standalone Spark setup")
         config["spark.master"] = os.environ["SPARK_MASTER_URL"]
@@ -155,16 +177,17 @@ def get_spark_session(
     # Delta Lake configuration
     if delta_lake:
         _validate_env_vars(
-            ["HADOOP_AWS_VER", "DELTA_SPARK_VER", "SCALA_VER"],
-            "Delta Lake setup"
+            ["HADOOP_AWS_VER", "DELTA_SPARK_VER", "SCALA_VER"], "Delta Lake setup"
         )
         config.update(_get_delta_lake_conf())
 
         if not yarn:
-            jars = _get_jars([
-                f"delta-spark_{os.environ['SCALA_VER']}-{os.environ['DELTA_SPARK_VER']}.jar",
-                f"hadoop-aws-{os.environ['HADOOP_AWS_VER']}.jar"
-            ])
+            jars = _get_jars(
+                [
+                    f"delta-spark_{os.environ['SCALA_VER']}-{os.environ['DELTA_SPARK_VER']}.jar",
+                    f"hadoop-aws-{os.environ['HADOOP_AWS_VER']}.jar",
+                ]
+            )
             config["spark.jars"] = jars
 
     # Create SparkConf from accumulated configuration
@@ -176,8 +199,10 @@ def get_spark_session(
 
     # Configure scheduler pool
     if scheduler_pool not in SPARK_POOLS:
-        print(f"Warning: Scheduler pool {scheduler_pool} is not in the list of available pools: {SPARK_POOLS} "
-              f"Defaulting to {SPARK_DEFAULT_POOL} pool")
+        print(
+            f"Warning: Scheduler pool {scheduler_pool} is not in the list of available pools: {SPARK_POOLS} "
+            f"Defaulting to {SPARK_DEFAULT_POOL} pool"
+        )
         scheduler_pool = SPARK_DEFAULT_POOL
     spark.sparkContext.setLocalProperty("spark.scheduler.pool", scheduler_pool)
 
@@ -199,18 +224,19 @@ def _detect_delimiter(sample: str) -> str:
         return dialect.delimiter
     except Exception as e:
         raise ValueError(
-            f"Delimiter could not be detected: {e}. Please provide the delimiter explicitly.") from e
+            f"Delimiter could not be detected: {e}. Please provide the delimiter explicitly."
+        ) from e
 
 
 def read_csv(
-        spark: SparkSession,
-        path: str,
-        header: bool = True,
-        sep: str = None,
-        minio_url: str = None,
-        access_key: str = None,
-        secret_key: str = None,
-        **kwargs
+    spark: SparkSession,
+    path: str,
+    header: bool = True,
+    sep: str | None = None,
+    minio_url: str | None = None,
+    access_key: str | None = None,
+    secret_key: str | None = None,
+    **kwargs,
 ) -> DataFrame:
     """
     Read a file in CSV format from minIO into a Spark DataFrame.
@@ -228,7 +254,9 @@ def read_csv(
     """
 
     if not sep:
-        client = get_minio_client(minio_url=minio_url, access_key=access_key, secret_key=secret_key)
+        client = get_minio_client(
+            minio_url=minio_url, access_key=access_key, secret_key=secret_key
+        )
         bucket, key = path.replace("s3a://", "").split("/", 1)
         obj = client.get_object(bucket, key)
         sample = obj.read(8192).decode()

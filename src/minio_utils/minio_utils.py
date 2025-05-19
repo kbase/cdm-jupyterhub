@@ -8,10 +8,10 @@ from minio import Minio
 
 
 def get_minio_client(
-        minio_url: str = None,
-        access_key: str = None,
-        secret_key: str = None,
-        secure: bool = False
+    minio_url: str | None = None,
+    access_key: str | None = None,
+    secret_key: str | None = None,
+    secure: bool = False,
 ) -> Minio:
     """
     Helper function to get the Minio client.

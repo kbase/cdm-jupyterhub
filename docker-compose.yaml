@@ -34,7 +34,7 @@ services:
 
   spark-master:
     # The latest image from cdm-jupyterhub that includes spark standalone mode
-    image: ghcr.io/kbase/cdm-spark-standalone:pr-19
+    image: ghcr.io/kbase/cdm-spark-standalone:pr-30
     platform: linux/amd64
     ports:
       - "8090:8090"
@@ -48,6 +48,8 @@ services:
       - POSTGRES_PASSWORD=hivepassword
       - POSTGRES_DB=hive
       - POSTGRES_URL=postgres:5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     volumes:
       - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
     networks:
@@ -55,7 +57,7 @@ services:
 
   spark-worker-1:
     # The latest image from cdm-jupyterhub that includes spark standalone mode
-    image: ghcr.io/kbase/cdm-spark-standalone:pr-19
+    image: ghcr.io/kbase/cdm-spark-standalone:pr-30
     platform: linux/amd64
     ports:
       - "8081:8081"
@@ -69,6 +71,8 @@ services:
       - POSTGRES_PASSWORD=hivepassword
       - POSTGRES_DB=hive
       - POSTGRES_URL=postgres:5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     volumes:
       - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
     networks:
@@ -76,7 +80,7 @@ services:
 
   spark-worker-2:
     # The latest image from cdm-jupyterhub that includes spark standalone mode
-    image: ghcr.io/kbase/cdm-spark-standalone:pr-19
+    image: ghcr.io/kbase/cdm-spark-standalone:pr-30
     platform: linux/amd64
     ports:
       - "8082:8082"
@@ -90,6 +94,8 @@ services:
       - POSTGRES_PASSWORD=hivepassword
       - POSTGRES_DB=hive
       - POSTGRES_URL=postgres:5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     volumes:
       - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
     networks:
@@ -156,6 +162,8 @@ services:
       - POSTGRES_PASSWORD=hivepassword
       - POSTGRES_DB=hive
       - POSTGRES_URL=postgres:5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - JUPYTERHUB_ADMIN_PASSWORD=testpassword123
       - NETWORK_NAME=cdm-jupyterhub-network
       - JUPYTERHUB_USER_IMAGE=cdm-jupyterhub-cdm_jupyterhub:latest
@@ -176,7 +184,7 @@ services:
       - cdm-jupyterhub-network
 
   cdm-mcp-server:
-    image: ghcr.io/kbase/cdm-mcp-server:pr-14
+    image: ghcr.io/kbase/cdm-mcp-server:pr-15
     platform: linux/amd64
     ports:
       - "8000:8000"
@@ -192,10 +200,22 @@ services:
       - POSTGRES_PASSWORD=hivepassword
       - POSTGRES_DB=hive
       - POSTGRES_URL=postgres:5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - SPARK_POOL=highPriority
       - EXECUTOR_CORES=10
     volumes:
       - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
+    networks:
+      - cdm-jupyterhub-network
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    # command: ["ollama", "pull", "deepseek-r1:1.5b"]
+    volumes:
+      - /Users/tgu/.ollama/models:/root/.ollama/models:ro
     networks:
       - cdm-jupyterhub-network
 
@@ -215,6 +235,16 @@ services:
       - POSTGRES_DB=hive
     volumes:
       - ./cdr/cdm/jupyter/cdm-postgres:/var/lib/postgresql/data  # For local development only. In Rancher development, PostgreSQL data shouldn't be stored in a shared mount.
+    networks:
+      - cdm-jupyterhub-network
+
+  redis:
+    image: redis:8.0.1
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./cdr/cdm/jupyter/cdm-redis:/data
+    command: redis-server --appendonly yes
     networks:
       - cdm-jupyterhub-network
 
