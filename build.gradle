@@ -17,11 +17,13 @@ def hadoopAwsVersion = System.getenv('HADOOP_AWS_VER')
 def deltaSparkVersion = System.getenv('DELTA_SPARK_VER')
 def scalaVersion = System.getenv('SCALA_VER')
 def postgresVersion = System.getenv('POSTGRES_JDBC_VER')
+def sparkRedisVersion = System.getenv('SPARK_REDIS_VER')
 
 dependencies {
     implementation "org.apache.hadoop:hadoop-aws:$hadoopAwsVersion"
     implementation "io.delta:delta-spark_${scalaVersion}:$deltaSparkVersion"
     implementation "org.postgresql:postgresql:$postgresVersion"
+    implementation "com.redislabs:spark-redis_${scalaVersion}:$sparkRedisVersion"
 }
 
 task downloadDependencies(type: Copy) {
