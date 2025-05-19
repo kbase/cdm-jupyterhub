@@ -209,16 +209,6 @@ services:
     networks:
       - cdm-jupyterhub-network
 
-  ollama:
-    image: ollama/ollama:latest
-    ports:
-      - "11434:11434"
-    # command: ["ollama", "pull", "deepseek-r1:1.5b"]
-    volumes:
-      - /Users/tgu/.ollama/models:/root/.ollama/models:ro
-    networks:
-      - cdm-jupyterhub-network
-
   postgres:
     image: postgres:16.3
     # To avoid incorrect user permissions, manually create the volume directory before running Docker.
