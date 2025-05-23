@@ -64,9 +64,8 @@ sc.stop()
 Python 3.11 must be installed on the system.
 
 ```
-pipenv sync --dev  # only the first time or when Pipfile.lock changes
-pipenv shell
-PYTHONPATH=src pytest test
+uv sync --locked # only the first time or when uv.lock changes
+PYTHONPATH=src uv run pytest tests
 ```
 
 ## Racher Deployment
