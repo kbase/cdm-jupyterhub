@@ -369,9 +369,8 @@ dependencies = [
     { name = "urllib3" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
-    { name = "coverage" },
     { name = "ipython" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -383,11 +382,9 @@ requires-dist = [
     { name = "boto3", specifier = "==1.38.8" },
     { name = "cacheout", specifier = "==0.16.0" },
     { name = "cdm-jupyterlab-brand-extension", url = "https://github.com/kbaseincubator/cdm_jupyterlab_brand_extension/raw/main/dist/cdm_jupyterlab_brand_extension-0.1.0-py3-none-any.whl" },
-    { name = "coverage", marker = "extra == 'dev'", specifier = "==7.8.0" },
     { name = "delta-spark", specifier = "==3.2.0" },
     { name = "dockerspawner", specifier = "==14.0.0" },
     { name = "huggingface-hub", specifier = "==0.30.2" },
-    { name = "ipython", marker = "extra == 'dev'", specifier = "==9.2.0" },
     { name = "ipywidgets", specifier = "==8.1.6" },
     { name = "itables", specifier = "==2.3.0" },
     { name = "json5", specifier = "==0.12.0" },
@@ -411,8 +408,6 @@ requires-dist = [
     { name = "pygraphviz", specifier = "==1.14" },
     { name = "pymysql", specifier = "==1.1.1" },
     { name = "pyspark", specifier = "==3.5.5" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = "==8.3.5" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = "==6.1.1" },
     { name = "scikit-learn", specifier = "==1.6.1" },
     { name = "scipy", specifier = "==1.15.2" },
     { name = "seaborn", specifier = "==0.13.2" },
@@ -420,7 +415,13 @@ requires-dist = [
     { name = "tqdm", specifier = "==4.67.1" },
     { name = "urllib3", specifier = "==2.4.0" },
 ]
-provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "ipython", specifier = ">=9.2.0" },
+    { name = "pytest", specifier = "==8.3.5" },
+    { name = "pytest-cov", specifier = "==6.1.1" },
+]
 
 [[package]]
 name = "cdm-jupyterlab-brand-extension"

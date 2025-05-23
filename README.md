@@ -64,7 +64,7 @@ sc.stop()
 Python 3.11 must be installed on the system.
 
 ```
-uv sync # only the first time or when uv.lock changes
+uv sync --locked # only the first time or when uv.lock changes
 PYTHONPATH=src uv run pytest tests
 ```
 

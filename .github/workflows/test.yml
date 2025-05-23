@@ -47,7 +47,7 @@ jobs:
       shell: bash
       run: |
         export UV_PROJECT_ENVIRONMENT="${pythonLocation}"
-        uv sync --locked --extra dev
+        uv sync --locked
 
     - name: Run tests
       shell: bash
