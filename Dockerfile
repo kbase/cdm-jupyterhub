@@ -90,11 +90,6 @@ ENV KBASE_GROUP_SHARED_DIR=$CDM_SHARED_DIR/kbase_group_shared
 RUN mkdir -p ${KBASE_GROUP_SHARED_DIR} && chmod -R 777 ${KBASE_GROUP_SHARED_DIR}
 RUN chown -R spark_user:spark $KBASE_GROUP_SHARED_DIR
 
-# Set a directory for hosting Hive metastore files - defined in config/hive-site-template.xml
-ENV HIVE_METASTORE_DIR=$CDM_SHARED_DIR/hive_metastore
-RUN mkdir -p ${HIVE_METASTORE_DIR}
-RUN chown -R spark_user:spark $HIVE_METASTORE_DIR
-
 # Set a directory for hosting Jupyterhub db and cookie secret
 ENV JUPYTERHUB_SECRETS_DIR=/jupyterhub_secrets
 RUN mkdir -p ${JUPYTERHUB_SECRETS_DIR}
