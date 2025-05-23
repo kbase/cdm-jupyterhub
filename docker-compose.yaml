@@ -33,8 +33,7 @@ services:
       - cdm-jupyterhub-network
 
   spark-master:
-    # The latest image from cdm-jupyterhub that includes spark standalone mode
-    image: ghcr.io/kbase/cdm-spark-standalone:pr-30
+    image: ghcr.io/kbase/cdm-spark-standalone:pr-34
     platform: linux/amd64
     ports:
       - "8090:8090"
@@ -48,16 +47,15 @@ services:
       - POSTGRES_PASSWORD=hivepassword
       - POSTGRES_DB=hive
       - POSTGRES_URL=postgres:5432
+      - DATANUCLEUS_AUTO_CREATE_TABLES=true
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    volumes:
-      - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
+      - DELTALAKE_WAREHOUSE_DIR=s3a://cdm-lake/warehouse
     networks:
       - cdm-jupyterhub-network
 
   spark-worker-1:
-    # The latest image from cdm-jupyterhub that includes spark standalone mode
-    image: ghcr.io/kbase/cdm-spark-standalone:pr-30
+    image: ghcr.io/kbase/cdm-spark-standalone:pr-34
     platform: linux/amd64
     ports:
       - "8081:8081"
@@ -71,16 +69,15 @@ services:
       - POSTGRES_PASSWORD=hivepassword
       - POSTGRES_DB=hive
       - POSTGRES_URL=postgres:5432
+      - DATANUCLEUS_AUTO_CREATE_TABLES=true
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    volumes:
-      - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
+      - DELTALAKE_WAREHOUSE_DIR=s3a://cdm-lake/warehouse
     networks:
       - cdm-jupyterhub-network
 
   spark-worker-2:
-    # The latest image from cdm-jupyterhub that includes spark standalone mode
-    image: ghcr.io/kbase/cdm-spark-standalone:pr-30
+    image: ghcr.io/kbase/cdm-spark-standalone:pr-34
     platform: linux/amd64
     ports:
       - "8082:8082"
@@ -94,10 +91,10 @@ services:
       - POSTGRES_PASSWORD=hivepassword
       - POSTGRES_DB=hive
       - POSTGRES_URL=postgres:5432
+      - DATANUCLEUS_AUTO_CREATE_TABLES=true
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    volumes:
-      - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
+      - DELTALAKE_WAREHOUSE_DIR=s3a://cdm-lake/warehouse
     networks:
       - cdm-jupyterhub-network
 
@@ -175,6 +172,7 @@ services:
       - USE_KBASE_AUTHENTICATOR=true
       - USE_KUBE_SPAWNER=false
       - REMOVE_STOPPED_CONTAINER_AND_POD=false
+      - DELTALAKE_WAREHOUSE_DIR=s3a://cdm-lake/warehouse
     volumes:
       - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
       - ./cdr/cdm/jupyter/jupyterhub_secrets:/jupyterhub_secrets
@@ -184,7 +182,7 @@ services:
       - cdm-jupyterhub-network
 
   cdm-mcp-server:
-    image: ghcr.io/kbase/cdm-mcp-server:pr-15
+    image: ghcr.io/kbase/cdm-mcp-server:pr-20
     platform: linux/amd64
     ports:
       - "8000:8000"
@@ -196,35 +194,31 @@ services:
       - KBASE_AUTH_URL=https://ci.kbase.us/services/auth/
       - KBASE_ADMIN_ROLES=CDM_JUPYTERHUB_ADMIN
       - SPARK_DRIVER_HOST=cdm-mcp-server
-      - POSTGRES_USER=hive
-      - POSTGRES_PASSWORD=hivepassword
+      - POSTGRES_USER=readonly_user
+      - POSTGRES_PASSWORD=readonly_password
       - POSTGRES_DB=hive
       - POSTGRES_URL=postgres:5432
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
       - SPARK_POOL=highPriority
       - EXECUTOR_CORES=10
-    volumes:
-      - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DELTALAKE_WAREHOUSE_DIR=s3a://cdm-lake/warehouse
     networks:
       - cdm-jupyterhub-network
 
   postgres:
     image: postgres:16.3
-    # To avoid incorrect user permissions, manually create the volume directory before running Docker.
-    # export UID=$(id -u)
-    # export GID=$(id -g)
-    # mkdir -p cdr/cdm/jupyter/cdm-postgres
-    # reference: https://forums.docker.com/t/systemd-coredump-taking-ownership-of-tmp-db-directory-and-contents-in-rails-app/93609
-    user: "${UID}:${GID}"
     ports:
       - "5432:5432"
     environment:
       - POSTGRES_USER=hive
       - POSTGRES_PASSWORD=hivepassword
       - POSTGRES_DB=hive
+      - READONLY_USER=readonly_user
+      - READONLY_PASSWORD=readonly_password
     volumes:
-      - ./cdr/cdm/jupyter/cdm-postgres:/var/lib/postgresql/data  # For local development only. In Rancher development, PostgreSQL data shouldn't be stored in a shared mount.
+      - ./cdr/cdm/jupyter/cdm-postgres/data:/var/lib/postgresql/data
+      - ./scripts/init-postgres-readonly.sh:/docker-entrypoint-initdb.d/init-postgres-readonly.sh
     networks:
       - cdm-jupyterhub-network
 
