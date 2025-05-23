@@ -252,7 +252,6 @@ class CustomDockerSpawner(DockerSpawner):
         hub_secrets_dir = Path(os.environ['JUPYTERHUB_SECRETS_DIR'])
 
         cdm_shared_dir = Path(os.environ['CDM_SHARED_DIR'])  # Legacy data volume from JupyterLab
-        hive_metastore_dir = Path(os.environ['HIVE_METASTORE_DIR'])  # within cdm_shared_dir
         kbase_shared_dir = Path(os.environ['KBASE_GROUP_SHARED_DIR'])  # within cdm_shared_dir
 
         if self.user.admin:
@@ -266,7 +265,6 @@ class CustomDockerSpawner(DockerSpawner):
             self.log.info(f'Non-admin user detected: {self.user.name}. Setting up user-specific mount points.')
             access_mode = 'rw' if self._is_rw_minio_user() else 'ro'
             self.volumes.update({
-                f'{mount_base_dir}/{hive_metastore_dir}': {'bind': f'{hive_metastore_dir}', 'mode': access_mode},
                 # User specific home directory
                 f'{mount_base_dir}/{user_home_dir}/{self.user.name}': f'{user_home_dir}/{self.user.name}',
                 f'{mount_base_dir}/{kbase_shared_dir}': f'{kbase_shared_dir}',

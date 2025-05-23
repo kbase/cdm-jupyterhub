@@ -292,7 +292,6 @@ class CustomKubeSpawner(KubeSpawner):
         hub_secrets_dir = os.environ['JUPYTERHUB_SECRETS_DIR']
 
         cdm_shared_dir = os.environ['CDM_SHARED_DIR']  # Legacy data volume from JupyterLab
-        hive_metastore_dir = os.environ['HIVE_METASTORE_DIR']  # within cdm_shared_dir
         kbase_shared_dir = os.environ['KBASE_GROUP_SHARED_DIR']  # within cdm_shared_dir
 
         if self.user.admin:
@@ -323,10 +322,6 @@ class CustomKubeSpawner(KubeSpawner):
             # Determine readOnly mode: True if NOT a read/write minio user
             read_only = not self._is_rw_minio_user()
             self.volumes = [
-                {
-                    "name": "hive-metastore",
-                    "hostPath": {"path": f"{mount_base_dir}/{hive_metastore_dir}"}
-                },
                 # User specific home directory
                 {
                     "name": "user-home",
@@ -339,11 +334,6 @@ class CustomKubeSpawner(KubeSpawner):
                 }
             ]
             self.volume_mounts = [
-                {
-                    "name": "hive-metastore",
-                    "mountPath": hive_metastore_dir,
-                    "readOnly": read_only
-                },
                 {
                     "name": "user-home",
                     "mountPath": f"{user_home_dir}/{self.user.name}"
