@@ -20,6 +20,8 @@ DEFAULT_EXECUTOR_CORES = 1
 SPARK_DEFAULT_POOL = "default"
 SPARK_POOLS = [SPARK_DEFAULT_POOL, "highPriority"]
 DEFAULT_MAX_EXECUTORS = 5
+# Alternatively, use a local directory for the Hive metastore, e.g., /cdm_shared_workspace/hive_metastore
+DEFAULT_DELTALAKE_WAREHOUSE_DIR = "s3a://cdm-lake/warehouse"
 
 
 def _get_jars(jar_names: List[str]) -> str:
@@ -44,17 +46,23 @@ def _get_s3_conf() -> Dict[str, str]:
     Helper function to get S3 configuration for MinIO.
     """
     return {
-        "spark.hadoop.fs.s3a.endpoint": not_falsy(
-            os.environ.get("MINIO_URL"), "MINIO_URL"
+        "spark.hadoop.fs.s3a.endpoint": str(
+            not_falsy(os.environ.get("MINIO_URL"), "MINIO_URL")
         ),
-        "spark.hadoop.fs.s3a.access.key": not_falsy(
-            os.environ.get("MINIO_ACCESS_KEY"), "MINIO_ACCESS_KEY"
+        "spark.hadoop.fs.s3a.access.key": str(
+            not_falsy(os.environ.get("MINIO_ACCESS_KEY"), "MINIO_ACCESS_KEY")
         ),
-        "spark.hadoop.fs.s3a.secret.key": not_falsy(
-            os.environ.get("MINIO_SECRET_KEY"), "MINIO_SECRET_KEY"
+        "spark.hadoop.fs.s3a.secret.key": str(
+            not_falsy(os.environ.get("MINIO_SECRET_KEY"), "MINIO_SECRET_KEY")
         ),
         "spark.hadoop.fs.s3a.path.style.access": "true",
         "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
+        # When Hive integration is enabled (by default), the hive.metastore.warehouse.dir property takes precedence over
+        # spark.sql.warehouse.dir for managed tables. The Hive property is defined in the hive-site.xml configuration file 
+        # from the cdm-spark-standalone image.
+        "spark.sql.warehouse.dir": os.environ.get(
+            "DELTALAKE_WAREHOUSE_DIR", DEFAULT_DELTALAKE_WAREHOUSE_DIR
+        ),
     }
 
 
@@ -161,7 +169,7 @@ def get_spark_session(
         config.update(
             {
                 "spark.master": "yarn",
-                "spark.hadoop.yarn.resourcemanager.hostname": yarnparse.hostname,
+                "spark.hadoop.yarn.resourcemanager.hostname": str(yarnparse.hostname),
                 "spark.hadoop.yarn.resourcemanager.address": yarnparse.netloc,
                 "spark.yarn.stagingDir": f"s3a://{os.environ['S3_YARN_BUCKET']}",
             }

@@ -33,7 +33,7 @@ services:
       - cdm-jupyterhub-network
 
   spark-master:
-    image: ghcr.io/kbase/cdm-spark-standalone:pr-34
+    image: ghcr.io/kbase/cdm-spark-standalone:pr-36
     platform: linux/amd64
     ports:
       - "8090:8090"
@@ -55,7 +55,7 @@ services:
       - cdm-jupyterhub-network
 
   spark-worker-1:
-    image: ghcr.io/kbase/cdm-spark-standalone:pr-34
+    image: ghcr.io/kbase/cdm-spark-standalone:pr-36
     platform: linux/amd64
     ports:
       - "8081:8081"
@@ -77,7 +77,7 @@ services:
       - cdm-jupyterhub-network
 
   spark-worker-2:
-    image: ghcr.io/kbase/cdm-spark-standalone:pr-34
+    image: ghcr.io/kbase/cdm-spark-standalone:pr-36
     platform: linux/amd64
     ports:
       - "8082:8082"
@@ -128,6 +128,7 @@ services:
       - ./config/cdm-read-only-policy.json:/config/cdm-read-only-policy.json
       - ./config/cdm-read-write-policy.json:/config/cdm-read-write-policy.json
       - ./config/yarn-write-policy.json:/config/yarn-write-policy.json
+      - ./config/cdm-spark-job-logs-policy.json:/config/cdm-spark-job-logs-policy.json
       - ./scripts/minio_create_bucket_entrypoint.sh:/scripts/minio_create_bucket_entrypoint.sh
     networks:
       - cdm-jupyterhub-network
@@ -173,6 +174,11 @@ services:
       - USE_KUBE_SPAWNER=false
       - REMOVE_STOPPED_CONTAINER_AND_POD=false
       - DELTALAKE_WAREHOUSE_DIR=s3a://cdm-lake/warehouse
+      - SPARK_JOB_LOG_DIR=s3a://cdm-spark-job-logs/spark-job-logs
+      - SPARK_JOB_LOG_DIR_CATEGORY=jupyter-master
+      - MINIO_URL=http://minio:9002
+      - MINIO_LOG_USER_ACCESS_KEY=minio-log-access
+      - MINIO_LOG_USER_SECRET_KEY=minio123
     volumes:
       - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
       - ./cdr/cdm/jupyter/jupyterhub_secrets:/jupyterhub_secrets
@@ -182,7 +188,7 @@ services:
       - cdm-jupyterhub-network
 
   cdm-mcp-server:
-    image: ghcr.io/kbase/cdm-mcp-server:pr-20
+    image: ghcr.io/kbase/cdm-mcp-server:pr-23
     platform: linux/amd64
     ports:
       - "8000:8000"
@@ -199,7 +205,7 @@ services:
       - POSTGRES_DB=hive
       - POSTGRES_URL=postgres:5432
       - SPARK_POOL=highPriority
-      - EXECUTOR_CORES=10
+      - EXECUTOR_CORES=5
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - DELTALAKE_WAREHOUSE_DIR=s3a://cdm-lake/warehouse

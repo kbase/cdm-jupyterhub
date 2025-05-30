@@ -198,6 +198,7 @@ class CustomDockerSpawner(DockerSpawner):
         # Set path of the startup script for Notebook
         self.environment['PYTHONSTARTUP'] = os.path.join(os.environ['JUPYTERHUB_CONFIG_DIR'], 'startup.py')
         self.environment['JUPYTERHUB_USER'] = username
+        self.environment['SPARK_JOB_LOG_DIR_CATEGORY'] = username
 
         self.environment['SHELL'] = '/usr/bin/bash'
 
