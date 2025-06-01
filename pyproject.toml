@@ -35,7 +35,7 @@ dependencies = [
     # Frequently utilized data visualization libraries by the science team
     "plotly==6.0.1",
     "tqdm==4.67.1",
-    "ipywidgets==8.1.6",
+    "ipywidgets==8.1.7",
     "pygraphviz==1.14",
     "scipy==1.15.2",
     "scikit-learn==1.6.1",
