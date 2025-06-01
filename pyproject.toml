@@ -37,7 +37,7 @@ dependencies = [
     "tqdm==4.67.1",
     "ipywidgets==8.1.6",
     "pygraphviz==1.14",
-    "scipy==1.15.2",
+    "scipy==1.15.3",
     "scikit-learn==1.6.1",
     "biopython==1.85",
     "seaborn==0.13.2",
