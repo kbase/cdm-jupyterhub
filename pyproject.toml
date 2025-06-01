@@ -28,7 +28,7 @@ dependencies = [
     # Jupyter AI libraries
     "jupyter-ai==2.31.4",
     "langchain-openai==0.3.16",
-    "langchain-anthropic==0.3.12",
+    "langchain-anthropic==0.3.14",
     "langchain-ollama==0.3.2",
     "huggingface_hub==0.30.2",
     "jupyter-ai-cborg @ git+https://github.com/kbaseincubator/cdm-jupyter-ai-cborg.git@v0.1.0",
