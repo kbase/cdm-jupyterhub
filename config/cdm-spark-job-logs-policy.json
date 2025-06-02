@@ -11,13 +11,9 @@
         "s3:DeleteObject"
       ],
       "Resource": [
-        "arn:aws:s3:::cdm-lake",
-        "arn:aws:s3:::cdm-lake/*",
-        "arn:aws:s3:::test-bucket",
-        "arn:aws:s3:::test-bucket/*",
         "arn:aws:s3:::cdm-spark-job-logs",
         "arn:aws:s3:::cdm-spark-job-logs/*"
       ]
     }
   ]
-}
+} 
