@@ -16,6 +16,7 @@ JAR_DIR = "/opt/bitnami/spark/jars"
 # the default number of CPU cores that each Spark executor will use
 # If not specified, Spark will typically use all available cores on the worker nodes
 DEFAULT_EXECUTOR_CORES = 1
+DEFAULT_EXECUTOR_MEMORY = "2g"
 # Available Spark fair scheduler pools are defined in /config/spark-fairscheduler.xml
 SPARK_DEFAULT_POOL = "default"
 SPARK_POOLS = [SPARK_DEFAULT_POOL, "highPriority"]
@@ -93,12 +94,11 @@ def _validate_env_vars(required_vars: List[str], context: str) -> None:
 
 
 def get_spark_session(
-    app_name: str | None = None,
-    local: bool = False,
-    yarn: bool = True,
-    delta_lake: bool = True,
-    executor_cores: int = DEFAULT_EXECUTOR_CORES,
-    scheduler_pool: str = SPARK_DEFAULT_POOL,
+        app_name: str | None = None,
+        local: bool = False,
+        yarn: bool = True,
+        delta_lake: bool = True,
+        scheduler_pool: str = SPARK_DEFAULT_POOL,
 ) -> SparkSession:
     """
     Helper to get and manage the SparkSession and keep all of our spark configuration params in one place.
@@ -107,14 +107,13 @@ def get_spark_session(
     :param local: Whether to run the spark session locally or not. Default is False.
     :param yarn: Whether to run the spark session on YARN or not. Default is True.
     :param delta_lake: Build the spark session with Delta Lake support. Default is True.
-    :param executor_cores: The number of CPU cores that each Spark executor will use. Default is 1.
     :param scheduler_pool: The name of the scheduler pool to use. Default is "default".
 
     :return: A SparkSession object
     """
 
     app_name = (
-        app_name or f"kbase_spark_session_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+            app_name or f"kbase_spark_session_{datetime.now().strftime('%Y%m%d%H%M%S')}"
     )
 
     if local:
@@ -122,7 +121,6 @@ def get_spark_session(
 
     config: Dict[str, str] = {
         "spark.app.name": app_name,
-        "spark.executor.cores": str(executor_cores),
     }
 
     # Dynamic allocation configuration
@@ -132,6 +130,11 @@ def get_spark_session(
             "spark.dynamicAllocation.minExecutors": "1",
             "spark.dynamicAllocation.maxExecutors": os.getenv(
                 "MAX_EXECUTORS", str(DEFAULT_MAX_EXECUTORS)
+            ),
+            "spark.executor.cores": os.environ.get(
+                "EXECUTOR_CORES", str(DEFAULT_EXECUTOR_CORES)),
+            "spark.executor.memory": os.getenv(
+                "EXECUTOR_MEMORY", DEFAULT_EXECUTOR_MEMORY
             ),
         }
     )
@@ -237,14 +240,14 @@ def _detect_delimiter(sample: str) -> str:
 
 
 def read_csv(
-    spark: SparkSession,
-    path: str,
-    header: bool = True,
-    sep: str | None = None,
-    minio_url: str | None = None,
-    access_key: str | None = None,
-    secret_key: str | None = None,
-    **kwargs,
+        spark: SparkSession,
+        path: str,
+        header: bool = True,
+        sep: str | None = None,
+        minio_url: str | None = None,
+        access_key: str | None = None,
+        secret_key: str | None = None,
+        **kwargs,
 ) -> DataFrame:
     """
     Read a file in CSV format from minIO into a Spark DataFrame.
