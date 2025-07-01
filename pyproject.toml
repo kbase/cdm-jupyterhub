@@ -18,7 +18,7 @@ dependencies = [
     "pyspark==3.5.6",
     "boto3==1.38.45",
     "minio==7.2.15",
-    "delta-spark==3.3.2",  # should match JAR version (DELTA_SPARK_VER) specified in the Dockerfile
+    "delta-spark==4.0.0",  # should match JAR version (DELTA_SPARK_VER) specified in the Dockerfile
     "PyMySQL==1.1.1",
     "urllib3==2.5.0",
     "jupyterlab-git==0.51.2",
