@@ -19,4 +19,4 @@ _ENV_CTS_URL = "CDM_TASK_SERVICE_URL"
 def get_task_service_client() -> CTSClient:
     """ Get an instace of the CDM Task Service client. """
     # will throw an error if either env var is undefined
-    return CTSClient(os.environ.get(_ENV_AUTH_TOKEN), os.environ.get(_ENV_CTS_URL))
+    return CTSClient(os.environ.get(_ENV_AUTH_TOKEN), url=os.environ.get(_ENV_CTS_URL))
