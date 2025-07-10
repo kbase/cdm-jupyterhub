@@ -3,7 +3,7 @@ name = "cdm-jupyterhub"
 version = "0.1.0"
 description = "CDM Jupyterhub"
 readme = "README.md"
-requires-python = "==3.11.9"
+requires-python = "==3.12.10"
 dependencies = [
     # JupyterHub and system libraries (e.g., Spark, MinIO, etc.)
     "jupyterlab==4.4.3",
@@ -44,6 +44,7 @@ dependencies = [
     "pandas==2.3.0",
     "pyarrow==20.0.0",
     "itables==2.4.2",
+    "cdm-task-service-client",
 ]
 
 [dependency-groups]
@@ -52,3 +53,6 @@ dev = [
     "pytest==8.4.1",
     "pytest-cov==6.2.1",
 ]
+
+[tool.uv.sources]
+cdm-task-service-client = { git = "https://github.com/kbase/cdm-task-service-client.git", rev = "0.1.0" }

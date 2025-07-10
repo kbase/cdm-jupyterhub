@@ -25,6 +25,7 @@ from notebook_utils.notebook_utils import (
     spark_to_pandas,
     display_namespace_viewer,
 )
+from notebook_utils.cts_client import get_task_service_client
 from spark.cluster import (
     check_api_health,
     create_cluster,
