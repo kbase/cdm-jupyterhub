@@ -59,6 +59,15 @@ sc.stop()
 
 ## Development
 
+### Install requirements
+
+In order to build the `uv` dependencies, including when adding new modules, `graphviz-dev`
+must be installed. For example:
+
+```
+sudo apt install graphviz-dev`
+```
+
 ### Running tests
 
 Python 3.11 must be installed on the system.
