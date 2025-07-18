@@ -4,7 +4,7 @@ import os
 from jupyterhub.auth import Authenticator
 from traitlets import Unicode, List
 
-from service.kb_auth import KBaseAuth, MissingTokenError, AdminPermission
+from service.kb_auth import KBaseAuth, MissingTokenError, MFARequiredError, AdminPermission
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +57,10 @@ class KBaseAuthenticator(Authenticator):
 
         kb_auth = KBaseAuth(self.kbase_auth_url, self.auth_full_admin_roles)
         kb_user = await kb_auth.get_user(session_token)
+
+        # Check MFA requirement
+        if kb_user.mfa_authenticated is False or kb_user.mfa_authenticated is None:
+            raise MFARequiredError()
 
         logger.info(f"Authenticated user: {kb_user.user}")
         return {

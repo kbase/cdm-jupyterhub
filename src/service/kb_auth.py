@@ -29,6 +29,7 @@ class KBaseUser(NamedTuple):
     user: UserID
     admin_perm: AdminPermission
     token: str
+    mfa_authenticated: bool
 
 
 async def _get(url, headers):
@@ -65,6 +66,7 @@ class KBaseAuth:
             full_admin_roles: List[str]):
         self._url = auth_url
         self._me_url = self._url + 'api/V2/me'
+        self._token_url = self._url + 'api/V2/token'
         self._full_roles = set(full_admin_roles) if full_admin_roles else set()
 
     async def get_user(self, token: str) -> KBaseUser:
@@ -76,9 +78,15 @@ class KBaseAuth:
         # TODO CODE should check the token for \n etc.
         _not_falsy(token, 'token')
 
-        j = await _get(self._me_url, {"Authorization": token})
-        v = (self._get_role(j['customroles']), UserID(j['user']))
-        return KBaseUser(v[1], v[0], token)
+        # Get user profile data from /me endpoint
+        me_data = await _get(self._me_url, {"Authorization": token})
+        
+        # Get MFA status from /token endpoint
+        token_data = await _get(self._token_url, {"Authorization": token})
+        mfa_authenticated = token_data.get('mfaAuthenticated')
+        
+        v = (self._get_role(me_data['customroles']), UserID(me_data['user']))
+        return KBaseUser(v[1], v[0], token, mfa_authenticated)
 
     def _get_role(self, roles):
         r = set(roles)
@@ -106,3 +114,10 @@ class MissingTokenError(AuthenticationError):
 
     def __init__(self, log_message=None, *args, **kwargs):
         super().__init__(status_code=401, log_message=log_message or "Missing session token", *args, **kwargs)
+
+
+class MFARequiredError(AuthenticationError):
+    ''' An error thrown when MFA is required but not used. '''
+
+    def __init__(self, log_message=None, *args, **kwargs):
+        super().__init__(status_code=401, log_message=log_message or "Multi-factor authentication is required. Please log in with MFA following the instructions at <TODO:add link>", *args, **kwargs)
