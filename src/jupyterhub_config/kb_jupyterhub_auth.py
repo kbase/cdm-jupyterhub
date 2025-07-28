@@ -2,9 +2,9 @@ import logging
 import os
 
 from jupyterhub.auth import Authenticator
-from traitlets import Unicode, List
+from traitlets import List, Unicode
 
-from service.kb_auth import KBaseAuth, MissingTokenError, AdminPermission
+from service.kb_auth import AdminPermission, KBaseAuth, MissingTokenError
 
 logger = logging.getLogger(__name__)
 
@@ -35,15 +35,17 @@ class KBaseAuthenticator(Authenticator):
     kbase_auth_url = Unicode(
         default_value=f"https://{kbase_origin()}/services/auth/",
         config=True,
-        help="KBase Auth2 API URL (e.g., https://ci.kbase.us/services/auth/)"
+        help="KBase Auth2 API URL (e.g., https://ci.kbase.us/services/auth/)",
     )
 
     auth_full_admin_roles = List(
         default_value=[
-            role.strip() for role in os.getenv("AUTH_FULL_ADMIN_ROLES", "").split(",") if role.strip()
+            role.strip()
+            for role in os.getenv("AUTH_FULL_ADMIN_ROLES", "").split(",")
+            if role.strip()
         ],
         config=True,
-        help="Comma-separated list of KBase roles with full administrative access to JupyterHub."
+        help="Comma-separated list of KBase roles with full administrative access to JupyterHub.",
     )
 
     async def authenticate(self, handler, data=None) -> dict:
@@ -53,7 +55,9 @@ class KBaseAuthenticator(Authenticator):
         session_token = handler.get_cookie(self.SESSION_COOKIE_NAME)
 
         if not session_token:
-            raise MissingTokenError(f"Authentication required - missing {self.SESSION_COOKIE_NAME} cookie.")
+            raise MissingTokenError(
+                f"Authentication required - missing {self.SESSION_COOKIE_NAME} cookie."
+            )
 
         kb_auth = KBaseAuth(self.kbase_auth_url, self.auth_full_admin_roles)
         kb_user = await kb_auth.get_user(session_token)
@@ -64,7 +68,7 @@ class KBaseAuthenticator(Authenticator):
             "admin": kb_user.admin_perm == AdminPermission.FULL,
             "auth_state": {
                 "kbase_token": session_token,
-            }
+            },
         }
 
     async def pre_spawn_start(self, user, spawner) -> None:
