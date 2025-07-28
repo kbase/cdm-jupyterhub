@@ -4,36 +4,8 @@ version: '3'
 
 services:
 
-  yarn-resourcemanager:
-    image: ghcr.io/kbase/cdm-prototype-yarn:pr-8
-    # Images from the ghcr.io/kbase registry are exclusively available for Linux/AMD64 platforms.
-    platform: linux/amd64
-    ports:
-      - 8088:8088  # web ui
-    environment:
-      - YARN_MODE=resourcemanager
-      - MINIO_URL=http://minio:9002
-      - MINIO_ACCESS_KEY=yarnuser
-      - MINIO_SECRET_KEY=yarnpass
-    networks:
-      - cdm-jupyterhub-network
-
-  yarn-nodemanager:
-    image: ghcr.io/kbase/cdm-prototype-yarn:pr-8
-    platform: linux/amd64
-    ports:
-      - 8042:8042  # web ui
-    environment:
-      - YARN_MODE=nodemanager
-      - YARN_RESOURCEMANAGER_HOSTNAME=yarn-resourcemanager
-      - MINIO_URL=http://minio:9002
-      - MINIO_ACCESS_KEY=yarnuser
-      - MINIO_SECRET_KEY=yarnpass
-    networks:
-      - cdm-jupyterhub-network
-
   spark-master:
-    image: ghcr.io/kbase/cdm-spark-standalone:pr-36
+    image: ghcr.io/kbase/cdm-spark-standalone:pr-41
     platform: linux/amd64
     ports:
       - "8090:8090"
@@ -55,7 +27,7 @@ services:
       - cdm-jupyterhub-network
 
   spark-worker-1:
-    image: ghcr.io/kbase/cdm-spark-standalone:pr-36
+    image: ghcr.io/kbase/cdm-spark-standalone:pr-41
     platform: linux/amd64
     ports:
       - "8081:8081"
@@ -77,7 +49,7 @@ services:
       - cdm-jupyterhub-network
 
   spark-worker-2:
-    image: ghcr.io/kbase/cdm-spark-standalone:pr-36
+    image: ghcr.io/kbase/cdm-spark-standalone:pr-41
     platform: linux/amd64
     ports:
       - "8082:8082"
@@ -127,7 +99,6 @@ services:
     volumes:
       - ./config/cdm-read-only-policy.json:/config/cdm-read-only-policy.json
       - ./config/cdm-read-write-policy.json:/config/cdm-read-write-policy.json
-      - ./config/yarn-write-policy.json:/config/yarn-write-policy.json
       - ./config/cdm-spark-job-logs-policy.json:/config/cdm-spark-job-logs-policy.json
       - ./scripts/minio_create_bucket_entrypoint.sh:/scripts/minio_create_bucket_entrypoint.sh
     networks:
@@ -146,7 +117,6 @@ services:
     environment:
       - NOTEBOOK_PORT=4043
       - JUPYTER_MODE=jupyterhub
-      - YARN_RESOURCE_MANAGER_URL=http://yarn-resourcemanager:8032
       - SPARK_MASTER_URL=spark://spark-master:7077
       - SPARK_DRIVER_HOST=cdm-jupyterhub
       - MINIO_URL=http://minio:9002
@@ -154,7 +124,6 @@ services:
       - MINIO_SECRET_KEY=minio123
       - MINIO_RW_ACCESS_KEY=minio-readwrite
       - MINIO_RW_SECRET_KEY=minio123
-      - S3_YARN_BUCKET=yarn
       - MAX_EXECUTORS=4
       - EXECUTOR_CORES=2
       - EXECUTOR_MEMORY=1g
@@ -180,7 +149,7 @@ services:
       - SPARK_JOB_LOG_DIR_CATEGORY=jupyter-master
       - MINIO_LOG_USER_ACCESS_KEY=minio-log-access
       - MINIO_LOG_USER_SECRET_KEY=minio123
-      - CDM_TASK_SERVICE_URL=https://ci.kbase.us/services/cts/"
+      - DATANUCLEUS_AUTO_CREATE_TABLES=true
     volumes:
       - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
       - ./cdr/cdm/jupyter/jupyterhub_secrets:/jupyterhub_secrets
