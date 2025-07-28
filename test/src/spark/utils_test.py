@@ -61,4 +61,4 @@ def test_get_jars_missing_file():
     with mock.patch('os.path.exists', side_effect=side_effect):
         with pytest.raises(FileNotFoundError) as excinfo:
             _get_jars(jar_names)
-        assert "Some required jars are not found" in str(excinfo.value)
+        assert "Required JAR files not found" in str(excinfo.value)
