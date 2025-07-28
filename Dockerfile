@@ -1,4 +1,4 @@
-FROM ghcr.io/kbase/cdm-spark-standalone:pr-41
+FROM ghcr.io/kbase/cdm-spark-standalone:pr-42
 
 # Switch to root to install packages
 # https://github.com/bitnami/containers/tree/main/bitnami/spark#installing-additional-jars
