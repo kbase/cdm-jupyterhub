@@ -1,9 +1,15 @@
+"""
+Spark utilities for CDM JupyterHub.
+
+This module provides utilities for creating and configuring Spark sessions
+with support for Delta Lake, MinIO S3 storage, and fair scheduling.
+"""
+
 import csv
 import os
 import socket
 from datetime import datetime
-from typing import Dict, List
-from urllib.parse import urlparse
+from typing import Dict, List, Optional
 
 from pyspark.conf import SparkConf
 from pyspark.sql import DataFrame, SparkSession
@@ -11,41 +17,71 @@ from pyspark.sql import DataFrame, SparkSession
 from minio_utils.minio_utils import get_minio_client
 from service.arg_checkers import not_falsy
 
-# Default directory for JAR files in the Bitnami Spark image
+# =============================================================================
+# CONSTANTS
+# =============================================================================
+
+# JAR file configuration
 JAR_DIR = "/opt/bitnami/spark/jars"
-# the default number of CPU cores that each Spark executor will use
-# If not specified, Spark will typically use all available cores on the worker nodes
+
+# Spark executor defaults
 DEFAULT_EXECUTOR_CORES = 1
 DEFAULT_EXECUTOR_MEMORY = "2g"
-# Available Spark fair scheduler pools are defined in /config/spark-fairscheduler.xml
+DEFAULT_MAX_EXECUTORS = 5
+
+# Fair scheduler configuration
 SPARK_DEFAULT_POOL = "default"
 SPARK_POOLS = [SPARK_DEFAULT_POOL, "highPriority"]
-DEFAULT_MAX_EXECUTORS = 5
-# Alternatively, use a local directory for the Hive metastore, e.g., /cdm_shared_workspace/hive_metastore
+
+# Delta Lake configuration
 DEFAULT_DELTALAKE_WAREHOUSE_DIR = "s3a://cdm-lake/warehouse"
+
+# =============================================================================
+# PRIVATE HELPER FUNCTIONS
+# =============================================================================
+
+
+def _validate_env_vars(required_vars: List[str], context: str) -> None:
+    """Validate that required environment variables are set."""
+    missing = [var for var in required_vars if var not in os.environ]
+    if missing:
+        raise EnvironmentError(
+            f"Missing required environment variables for {context}: {missing}"
+        )
 
 
 def _get_jars(jar_names: List[str]) -> str:
     """
-    Helper function to get the required JAR files as a comma-separated string.
+    Get required JAR files as a comma-separated string.
 
-    :param jar_names: List of JAR file names
+    Args:
+        jar_names: List of JAR file names
 
-    :return: A comma-separated string of JAR file paths
+    Returns:
+        Comma-separated string of JAR file paths
+
+    Raises:
+        FileNotFoundError: If any required JAR files are missing
     """
     jars = [os.path.join(JAR_DIR, jar) for jar in jar_names]
 
     missing_jars = [jar for jar in jars if not os.path.exists(jar)]
     if missing_jars:
-        raise FileNotFoundError(f"Some required jars are not found: {missing_jars}")
+        raise FileNotFoundError(f"Required JAR files not found: {missing_jars}")
 
     return ", ".join(jars)
 
 
 def _get_s3_conf() -> Dict[str, str]:
     """
-    Helper function to get S3 configuration for MinIO.
+    Get S3 configuration for MinIO.
+
+    Returns:
+        Dictionary of S3/MinIO Spark configuration properties
     """
+    # TODO: Get warehouse directory from data governance service
+    warehouse_dir = DEFAULT_DELTALAKE_WAREHOUSE_DIR
+
     return {
         "spark.hadoop.fs.s3a.endpoint": str(
             not_falsy(os.environ.get("MINIO_URL"), "MINIO_URL")
@@ -58,24 +94,20 @@ def _get_s3_conf() -> Dict[str, str]:
         ),
         "spark.hadoop.fs.s3a.path.style.access": "true",
         "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
-        # When Hive integration is enabled (by default), the hive.metastore.warehouse.dir property takes precedence over
-        # spark.sql.warehouse.dir for managed tables. The Hive property is defined in the hive-site.xml configuration file 
-        # from the cdm-spark-standalone image.
-        "spark.sql.warehouse.dir": os.environ.get(
-            "DELTALAKE_WAREHOUSE_DIR", DEFAULT_DELTALAKE_WAREHOUSE_DIR
-        ),
+        "spark.sql.warehouse.dir": warehouse_dir,
     }
 
 
 def _get_delta_lake_conf() -> Dict[str, str]:
     """
-    Helper function to get Delta Lake specific Spark configuration.
+    Get Delta Lake specific Spark configuration.
 
-    :return: A dictionary of Delta Lake specific Spark configuration
+    Returns:
+        Dictionary of Delta Lake Spark configuration properties
 
-    reference: https://blog.min.io/delta-lake-minio-multi-cloud/
+    Reference:
+        https://blog.min.io/delta-lake-minio-multi-cloud/
     """
-
     return {
         "spark.sql.extensions": "io.delta.sql.DeltaSparkSessionExtension",
         "spark.sql.catalog.spark_catalog": "org.apache.spark.sql.delta.catalog.DeltaCatalog",
@@ -84,46 +116,8 @@ def _get_delta_lake_conf() -> Dict[str, str]:
     }
 
 
-def _validate_env_vars(required_vars: List[str], context: str) -> None:
-    """Validate required environment variables."""
-    missing = [var for var in required_vars if var not in os.environ]
-    if missing:
-        raise EnvironmentError(
-            f"Missing required environment variables for {context}: {missing}"
-        )
-
-
-def get_spark_session(
-        app_name: str | None = None,
-        local: bool = False,
-        yarn: bool = True,
-        delta_lake: bool = True,
-        scheduler_pool: str = SPARK_DEFAULT_POOL,
-) -> SparkSession:
-    """
-    Helper to get and manage the SparkSession and keep all of our spark configuration params in one place.
-
-    :param app_name: The name of the application. If not provided, a default name will be generated.
-    :param local: Whether to run the spark session locally or not. Default is False.
-    :param yarn: Whether to run the spark session on YARN or not. Default is True.
-    :param delta_lake: Build the spark session with Delta Lake support. Default is True.
-    :param scheduler_pool: The name of the scheduler pool to use. Default is "default".
-
-    :return: A SparkSession object
-    """
-
-    app_name = (
-            app_name or f"kbase_spark_session_{datetime.now().strftime('%Y%m%d%H%M%S')}"
-    )
-
-    if local:
-        return SparkSession.builder.appName(app_name).getOrCreate()
-
-    config: Dict[str, str] = {
-        "spark.app.name": app_name,
-    }
-
-    # Dynamic allocation configuration
+def _configure_dynamic_allocation(config: Dict[str, str]) -> None:
+    """Configure Spark dynamic allocation settings."""
     config.update(
         {
             "spark.dynamicAllocation.enabled": "true",
@@ -132,15 +126,18 @@ def get_spark_session(
                 "MAX_EXECUTORS", str(DEFAULT_MAX_EXECUTORS)
             ),
             "spark.executor.cores": os.environ.get(
-                "EXECUTOR_CORES", str(DEFAULT_EXECUTOR_CORES)),
+                "EXECUTOR_CORES", str(DEFAULT_EXECUTOR_CORES)
+            ),
             "spark.executor.memory": os.getenv(
                 "EXECUTOR_MEMORY", DEFAULT_EXECUTOR_MEMORY
             ),
         }
     )
 
-    # Fair scheduler configuration
-    _validate_env_vars(["SPARK_FAIR_SCHEDULER_CONFIG"], "FAIR scheduler setup")
+
+def _configure_fair_scheduler(config: Dict[str, str]) -> None:
+    """Configure Spark fair scheduler settings."""
+    _validate_env_vars(["SPARK_FAIR_SCHEDULER_CONFIG"], "fair scheduler setup")
     config.update(
         {
             "spark.scheduler.mode": "FAIR",
@@ -150,130 +147,211 @@ def get_spark_session(
         }
     )
 
-    # Kubernetes configuration
-    _validate_env_vars(["SPARK_DRIVER_HOST"], "Kubernetes setup")
+
+def _configure_driver_host(config: Dict[str, str]) -> None:
+    """Configure Spark driver host settings."""
+    _validate_env_vars(["SPARK_DRIVER_HOST"], "Spark driver setup")
     hostname = os.environ["SPARK_DRIVER_HOST"]
+
     if os.environ.get("USE_KUBE_SPAWNER") == "true":
-        yarn = False  # YARN is not used in the Kubernetes spawner
-        # Since the Spark driver cannot resolve a pod's hostname without a dedicated service for each user pod,
-        # use the pod IP as the identifier for the Spark driver host
+        # For Kubernetes: use pod IP since hostname may not be resolvable
         config["spark.driver.host"] = socket.gethostbyname(hostname)
     else:
-        # General driver host configuration - hostname is resolvable
+        # For Docker/standalone: hostname is resolvable
         config["spark.driver.host"] = hostname
 
-    # YARN configuration
-    if yarn:
-        _validate_env_vars(
-            ["YARN_RESOURCE_MANAGER_URL", "S3_YARN_BUCKET"], "YARN setup"
-        )
-        yarnparse = urlparse(os.environ["YARN_RESOURCE_MANAGER_URL"])
 
-        config.update(
-            {
-                "spark.master": "yarn",
-                "spark.hadoop.yarn.resourcemanager.hostname": str(yarnparse.hostname),
-                "spark.hadoop.yarn.resourcemanager.address": yarnparse.netloc,
-                "spark.yarn.stagingDir": f"s3a://{os.environ['S3_YARN_BUCKET']}",
-            }
-        )
-    else:
-        _validate_env_vars(["SPARK_MASTER_URL"], "Standalone Spark setup")
-        config["spark.master"] = os.environ["SPARK_MASTER_URL"]
+def _configure_spark_master(config: Dict[str, str]) -> None:
+    """Configure Spark master URL."""
+    _validate_env_vars(["SPARK_MASTER_URL"], "Spark master setup")
+    config["spark.master"] = os.environ["SPARK_MASTER_URL"]
 
-    # S3 configuration
-    if yarn or delta_lake:
-        config.update(_get_s3_conf())
 
-    # Delta Lake configuration
-    if delta_lake:
-        _validate_env_vars(
-            ["HADOOP_AWS_VER", "DELTA_SPARK_VER", "SCALA_VER"], "Delta Lake setup"
-        )
-        config.update(_get_delta_lake_conf())
+def _configure_delta_lake(config: Dict[str, str]) -> None:
+    """Configure Delta Lake support including JARs and settings."""
+    _validate_env_vars(
+        ["HADOOP_AWS_VER", "DELTA_SPARK_VER", "SCALA_VER"], "Delta Lake setup"
+    )
 
-        if not yarn:
-            jars = _get_jars(
-                [
-                    f"delta-spark_{os.environ['SCALA_VER']}-{os.environ['DELTA_SPARK_VER']}.jar",
-                    f"hadoop-aws-{os.environ['HADOOP_AWS_VER']}.jar",
-                ]
-            )
-            config["spark.jars"] = jars
+    # Add Delta Lake configuration
+    config.update(_get_delta_lake_conf())
 
-    # Create SparkConf from accumulated configuration
-    spark_conf = SparkConf().setAll(list(config.items()))
+    # Add required JAR files
+    jars = _get_jars(
+        [
+            f"delta-spark_{os.environ['SCALA_VER']}-{os.environ['DELTA_SPARK_VER']}.jar",
+            f"hadoop-aws-{os.environ['HADOOP_AWS_VER']}.jar",
+        ]
+    )
+    config["spark.jars"] = jars
 
-    # Initialize SparkSession
-    spark = SparkSession.builder.config(conf=spark_conf).getOrCreate()
-    spark.sparkContext.setLogLevel("ERROR")
 
-    # Configure scheduler pool
+def _set_scheduler_pool(spark: SparkSession, scheduler_pool: str) -> None:
+    """Set the scheduler pool for the Spark session."""
     if scheduler_pool not in SPARK_POOLS:
         print(
-            f"Warning: Scheduler pool {scheduler_pool} is not in the list of available pools: {SPARK_POOLS} "
-            f"Defaulting to {SPARK_DEFAULT_POOL} pool"
+            f"Warning: Scheduler pool '{scheduler_pool}' not in available pools: {SPARK_POOLS}. "
+            f"Defaulting to '{SPARK_DEFAULT_POOL}'"
         )
         scheduler_pool = SPARK_DEFAULT_POOL
+
     spark.sparkContext.setLocalProperty("spark.scheduler.pool", scheduler_pool)
 
-    return spark
 
-
-def _detect_delimiter(sample: str) -> str:
+def _detect_csv_delimiter(sample: str) -> str:
     """
-    Detect the delimiter of a CSV file from a sample string.
+    Detect CSV delimiter from a sample string.
 
-    :param sample: A sample string from the CSV file
+    Args:
+        sample: Sample string from CSV file
 
-    :return: The detected delimiter or raise error if it cannot be detected
+    Returns:
+        Detected delimiter character
+
+    Raises:
+        ValueError: If delimiter cannot be detected
     """
-
     try:
         sniffer = csv.Sniffer()
         dialect = sniffer.sniff(sample)
         return dialect.delimiter
     except Exception as e:
         raise ValueError(
-            f"Delimiter could not be detected: {e}. Please provide the delimiter explicitly."
+            f"Could not detect CSV delimiter: {e}. Please provide delimiter explicitly."
         ) from e
 
 
+# =============================================================================
+# PUBLIC FUNCTIONS
+# =============================================================================
+
+
+def get_spark_session(
+    app_name: Optional[str] = None,
+    local: bool = False,
+    delta_lake: bool = True,
+    scheduler_pool: str = SPARK_DEFAULT_POOL,
+) -> SparkSession:
+    """
+    Create and configure a Spark session with CDM-specific settings.
+
+    This function creates a Spark session configured for the CDM environment,
+    including support for Delta Lake, MinIO S3 storage, and fair scheduling.
+
+    Args:
+        app_name: Application name. If None, generates a timestamp-based name
+        local: If True, creates a local Spark session (ignores other configs)
+        delta_lake: If True, enables Delta Lake support with required JARs
+        scheduler_pool: Fair scheduler pool name (default: "default")
+
+    Returns:
+        Configured SparkSession instance
+
+    Raises:
+        EnvironmentError: If required environment variables are missing
+        FileNotFoundError: If required JAR files are missing
+
+    Example:
+        >>> # Basic usage
+        >>> spark = get_spark_session("MyApp")
+
+        >>> # With custom scheduler pool
+        >>> spark = get_spark_session("MyApp", scheduler_pool="highPriority")
+
+        >>> # Local development
+        >>> spark = get_spark_session("TestApp", local=True)
+    """
+    # Generate app name if not provided
+    if app_name is None:
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        app_name = f"kbase_spark_session_{timestamp}"
+
+    # For local development, return simple session
+    if local:
+        return SparkSession.builder.appName(app_name).getOrCreate()
+
+    # Build configuration dictionary
+    config: Dict[str, str] = {"spark.app.name": app_name}
+
+    # Configure core Spark settings
+    _configure_dynamic_allocation(config)
+    _configure_fair_scheduler(config)
+    _configure_driver_host(config)
+    _configure_spark_master(config)
+
+    # Configure Delta Lake if enabled
+    if delta_lake:
+        config.update(_get_s3_conf())
+        _configure_delta_lake(config)
+
+    # Create and configure Spark session
+    spark_conf = SparkConf().setAll(list(config.items()))
+    spark = SparkSession.builder.config(conf=spark_conf).getOrCreate()
+    spark.sparkContext.setLogLevel("ERROR")
+
+    # Set scheduler pool
+    _set_scheduler_pool(spark, scheduler_pool)
+
+    return spark
+
+
 def read_csv(
-        spark: SparkSession,
-        path: str,
-        header: bool = True,
-        sep: str | None = None,
-        minio_url: str | None = None,
-        access_key: str | None = None,
-        secret_key: str | None = None,
-        **kwargs,
+    spark: SparkSession,
+    path: str,
+    header: bool = True,
+    sep: Optional[str] = None,
+    minio_url: Optional[str] = None,
+    access_key: Optional[str] = None,
+    secret_key: Optional[str] = None,
+    **kwargs,
 ) -> DataFrame:
     """
-    Read a file in CSV format from minIO into a Spark DataFrame.
+    Read CSV file from MinIO into a Spark DataFrame with automatic delimiter detection.
 
-    :param spark: The Spark session.
-    :param path: The minIO path to the CSV file. e.g. s3a://bucket-name/file.csv or bucket-name/file.csv
-    :param header: Whether the CSV file has a header. Default is True.
-    :param sep: The delimiter to use. If not provided, the function will try to detect it.
-    :param minio_url: The minIO URL. Default is None (environment variable used if not provided).
-    :param access_key: The minIO access key. Default is None (environment variable used if not provided).
-    :param secret_key: The minIO secret key. Default is None (environment variable used if not provided).
-    :param kwargs: Additional arguments to pass to spark.read.csv.
+    Args:
+        spark: Spark session instance
+        path: MinIO path to CSV file (e.g., "s3a://bucket/file.csv" or "bucket/file.csv")
+        header: Whether CSV file has header row
+        sep: CSV delimiter. If None, will attempt auto-detection
+        minio_url: MinIO URL (uses MINIO_URL env var if None)
+        access_key: MinIO access key (uses MINIO_ACCESS_KEY env var if None)
+        secret_key: MinIO secret key (uses MINIO_SECRET_KEY env var if None)
+        **kwargs: Additional arguments passed to spark.read.csv()
 
-    :return: A DataFrame.
+    Returns:
+        Spark DataFrame containing CSV data
+
+    Example:
+        >>> # Basic usage with auto-detection
+        >>> df = read_csv(spark, "s3a://my-bucket/data.csv")
+
+        >>> # With explicit delimiter
+        >>> df = read_csv(spark, "s3a://my-bucket/data.tsv", sep="\\t")
+
+        >>> # With custom MinIO credentials
+        >>> df = read_csv(
+        ...     spark,
+        ...     "s3a://my-bucket/data.csv",
+        ...     minio_url="http://localhost:9000",
+        ...     access_key="my-key",
+        ...     secret_key="my-secret"
+        ... )
     """
-
-    if not sep:
+    # Auto-detect delimiter if not provided
+    if sep is None:
         client = get_minio_client(
             minio_url=minio_url, access_key=access_key, secret_key=secret_key
         )
-        bucket, key = path.replace("s3a://", "").split("/", 1)
+
+        # Parse S3 path to get bucket and key
+        s3_path = path.replace("s3a://", "")
+        bucket, key = s3_path.split("/", 1)
+
+        # Sample file to detect delimiter
         obj = client.get_object(bucket, key)
         sample = obj.read(8192).decode()
-        sep = _detect_delimiter(sample)
-        print(f"Detected delimiter: {sep}")
+        sep = _detect_csv_delimiter(sample)
+        print(f"Auto-detected CSV delimiter: '{sep}'")
 
-    df = spark.read.csv(path, header=header, sep=sep, **kwargs)
-
-    return df
+    # Read CSV into DataFrame
+    return spark.read.csv(path, header=header, sep=sep, **kwargs)
