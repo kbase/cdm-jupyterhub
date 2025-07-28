@@ -149,6 +149,7 @@ services:
       - SPARK_JOB_LOG_DIR_CATEGORY=jupyter-master
       - MINIO_LOG_USER_ACCESS_KEY=minio-log-access
       - MINIO_LOG_USER_SECRET_KEY=minio123
+      - CDM_TASK_SERVICE_URL=https://ci.kbase.us/services/cts/"
       - DATANUCLEUS_AUTO_CREATE_TABLES=true
     volumes:
       - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
