@@ -3,9 +3,12 @@ Modern API client for CDM MinIO Data Governance service
 """
 
 import os
-from typing import Any, Optional
+from typing import Any, Optional, Type, TypeVar
 
 import httpx
+from pydantic import BaseModel
+
+T = TypeVar('T', bound=BaseModel)
 
 from service.arg_checkers import not_falsy
 
@@ -96,72 +99,54 @@ class DataGovernanceClient:
                 message=error_message,
             )
 
+    def _get(self, path: str, response_class: Type[T]) -> T:
+        """Helper method for GET requests"""
+        response = self._get_client().get(path)
+        data = self._handle_response(response)
+        return response_class(**data)
+
+    def _post(self, path: str, request_data: BaseModel, response_class: Type[T]) -> T:
+        """Helper method for POST requests with request body"""
+        response = self._get_client().post(path, json=request_data.model_dump())
+        data = self._handle_response(response)
+        return response_class(**data)
+
     def health_check(self) -> HealthResponse:
         """Check service health"""
-        response = self._get_client().get("/health")
-        data = self._handle_response(response)
-        return HealthResponse(**data)
+        return self._get("/health", HealthResponse)
 
     def get_credentials(self) -> CredentialsResponse:
         """Get user credentials for MinIO access"""
-        response = self._get_client().get("/credentials/")
-        data = self._handle_response(response)
-        return CredentialsResponse(**data)
+        return self._get("/credentials/", CredentialsResponse)
 
     def get_workspace(self) -> UserWorkspaceResponse:
         """Get user workspace information"""
-        response = self._get_client().get("/workspaces/me")
-        data = self._handle_response(response)
-        return UserWorkspaceResponse(**data)
+        return self._get("/workspaces/me", UserWorkspaceResponse)
 
     def share_path(self, request: SharePathRequest) -> SharePathResponse:
         """Share a path with users and/or groups"""
-        response = self._get_client().post(
-            "/sharing/share", json=request.model_dump()
-        )
-        data = self._handle_response(response)
-        return SharePathResponse(**data)
+        return self._post("/sharing/share", request, SharePathResponse)
 
     def unshare_path(self, request: UnsharePathRequest) -> UnsharePathResponse:
         """Remove sharing permissions from users and/or groups"""
-        response = self._get_client().post(
-            "/sharing/unshare", json=request.model_dump()
-        )
-        data = self._handle_response(response)
-        return UnsharePathResponse(**data)
+        return self._post("/sharing/unshare", request, UnsharePathResponse)
 
     def get_user_policies(self) -> UserPoliciesResponse:
         """Get user policy information"""
-        response = self._get_client().get("/workspaces/me/policies")
-        data = self._handle_response(response)
-        return UserPoliciesResponse(**data)
+        return self._get("/workspaces/me/policies", UserPoliciesResponse)
 
     def make_public(self, request: PathRequest) -> PublicAccessResponse:
         """Make a path publicly accessible"""
-        response = self._get_client().post(
-            "/sharing/make-public", json=request.model_dump()
-        )
-        data = self._handle_response(response)
-        return PublicAccessResponse(**data)
+        return self._post("/sharing/make-public", request, PublicAccessResponse)
 
     def make_private(self, request: PathRequest) -> PublicAccessResponse:
         """Make a path completely private"""
-        response = self._get_client().post(
-            "/sharing/make-private", json=request.model_dump()
-        )
-        data = self._handle_response(response)
-        return PublicAccessResponse(**data)
+        return self._post("/sharing/make-private", request, PublicAccessResponse)
 
     def get_path_access_info(self, request: PathRequest) -> PathAccessInfoResponse:
         """Get access information for a specific path"""
-        response = self._get_client().post(
-            "/sharing/get_path_access_info", json=request.model_dump()
-        )
-        data = self._handle_response(response)
-        return PathAccessInfoResponse(**data)
+        return self._post("/sharing/get_path_access_info", request, PathAccessInfoResponse)
 
     def get_sql_warehouse_prefix(self) -> SqlWarehousePrefixResponse:
         """Get SQL warehouse prefix for the current user"""
-        response = self._get_client().get("/workspaces/me/sql-warehouse-prefix")
-        data = self._handle_response(response)
-        return SqlWarehousePrefixResponse(**data)
+        return self._get("/workspaces/me/sql-warehouse-prefix", SqlWarehousePrefixResponse)
