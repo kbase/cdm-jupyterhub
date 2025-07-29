@@ -150,6 +150,7 @@ services:
       - MINIO_LOG_USER_ACCESS_KEY=minio-log-access
       - MINIO_LOG_USER_SECRET_KEY=minio123
       - CDM_TASK_SERVICE_URL=https://ci.kbase.us/services/cts/"
+      - CDM_DATA_GOVERNANCE_API_URL=http://cdm-minio-service:8000
       - DATANUCLEUS_AUTO_CREATE_TABLES=true
     volumes:
       - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
@@ -185,6 +186,23 @@ services:
       - SPARK_JOB_LOG_DIR_CATEGORY=mcp-server
       - MINIO_LOG_USER_ACCESS_KEY=minio-log-access
       - MINIO_LOG_USER_SECRET_KEY=minio123
+    networks:
+      - cdm-jupyterhub-network
+
+  cdm-minio-service:
+    image: ghcr.io/kbase/cdm-minio-service:pr-60
+    platform: linux/amd64
+    ports:
+      - "8003:8000"
+    depends_on:
+      - minio-create-bucket
+    environment:
+      - MINIO_ENDPOINT=http://minio:9002
+      - MINIO_ROOT_USER=minio
+      - MINIO_ROOT_PASSWORD=minio123
+      - KBASE_AUTH_URL=https://ci.kbase.us/services/auth/
+      - KBASE_ADMIN_ROLES=CDM_JUPYTERHUB_ADMIN
+      - REDIS_URL=redis://redis:6379
     networks:
       - cdm-jupyterhub-network
 

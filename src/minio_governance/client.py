@@ -1,18 +1,46 @@
 """
 Modern API client for CDM MinIO Data Governance service
+
+This client is for internal system use within CDM JupyterHub components.
+End users should use the utility functions in minio_utils.minio_utils for direct MinIO operations.
 """
 
 import os
-from typing import Any, Optional
+from typing import Any, Optional, Type, TypeVar
 
 import httpx
+from pydantic import BaseModel
+
+T = TypeVar("T", bound=BaseModel)
 
 from service.arg_checkers import not_falsy
 
 from .exceptions import APIError
+from .models import (
+    CredentialsResponse,
+    HealthResponse,
+    PathAccessInfoResponse,
+    PathRequest,
+    PublicAccessResponse,
+    SharePathRequest,
+    SharePathResponse,
+    SqlWarehousePrefixResponse,
+    UnsharePathRequest,
+    UnsharePathResponse,
+    UserPoliciesResponse,
+    UserWorkspaceResponse,
+)
 
 
 class DataGovernanceClient:
+    """
+    Internal API client for CDM MinIO Data Governance service.
+
+    This class is used internally by CDM JupyterHub components and should not be
+    instantiated directly by end users. Instead, users should use:
+    - The pre-configured 'governance' object available in notebooks for data governance operations
+    - Functions in minio_utils.minio_utils for direct MinIO client operations
+    """
 
     def __init__(self, kbase_token: Optional[str] = None):
         """
@@ -81,3 +109,59 @@ class DataGovernanceClient:
                 error_type=error_type,
                 message=error_message,
             )
+
+    def _get(self, path: str, response_class: Type[T]) -> T:
+        """Helper method for GET requests"""
+        response = self._get_client().get(path)
+        data = self._handle_response(response)
+        return response_class(**data)
+
+    def _post(self, path: str, request_data: BaseModel, response_class: Type[T]) -> T:
+        """Helper method for POST requests with request body"""
+        response = self._get_client().post(path, json=request_data.model_dump())
+        data = self._handle_response(response)
+        return response_class(**data)
+
+    def health_check(self) -> HealthResponse:
+        """Check service health"""
+        return self._get("/health", HealthResponse)
+
+    def get_credentials(self) -> CredentialsResponse:
+        """Get user credentials for MinIO access"""
+        return self._get("/credentials/", CredentialsResponse)
+
+    def get_workspace(self) -> UserWorkspaceResponse:
+        """Get user workspace information"""
+        return self._get("/workspaces/me", UserWorkspaceResponse)
+
+    def share_path(self, request: SharePathRequest) -> SharePathResponse:
+        """Share a path with users and/or groups"""
+        return self._post("/sharing/share", request, SharePathResponse)
+
+    def unshare_path(self, request: UnsharePathRequest) -> UnsharePathResponse:
+        """Remove sharing permissions from users and/or groups"""
+        return self._post("/sharing/unshare", request, UnsharePathResponse)
+
+    def get_user_policies(self) -> UserPoliciesResponse:
+        """Get user policy information"""
+        return self._get("/workspaces/me/policies", UserPoliciesResponse)
+
+    def make_public(self, request: PathRequest) -> PublicAccessResponse:
+        """Make a path publicly accessible"""
+        return self._post("/sharing/make-public", request, PublicAccessResponse)
+
+    def make_private(self, request: PathRequest) -> PublicAccessResponse:
+        """Make a path completely private"""
+        return self._post("/sharing/make-private", request, PublicAccessResponse)
+
+    def get_path_access_info(self, request: PathRequest) -> PathAccessInfoResponse:
+        """Get access information for a specific path"""
+        return self._post(
+            "/sharing/get_path_access_info", request, PathAccessInfoResponse
+        )
+
+    def get_sql_warehouse_prefix(self) -> SqlWarehousePrefixResponse:
+        """Get SQL warehouse prefix for the current user"""
+        return self._get(
+            "/workspaces/me/sql-warehouse-prefix", SqlWarehousePrefixResponse
+        )
