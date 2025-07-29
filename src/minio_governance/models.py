@@ -1,5 +1,8 @@
 """
 Pydantic models for CDM MinIO Data Governance API responses
+
+These models are for internal system use within CDM JupyterHub components.
+End users should use functions in minio_utils.minio_utils for direct MinIO client operations.
 """
 
 from datetime import datetime
@@ -9,7 +12,7 @@ from pydantic import BaseModel
 
 
 class CredentialsResponse(BaseModel):
-    """Response model for user credentials"""
+    """Response model for user credentials (internal use)"""
 
     username: Annotated[str, "Username"]
     access_key: Annotated[str, "MinIO access key (same as username)"]
@@ -58,7 +61,7 @@ class UnsharePathResponse(BaseModel):
 
 class PolicyInfo(BaseModel):
     """Model for policy information"""
-    
+
     policy_name: Annotated[str, "Policy name"]
     policy_document: Annotated[Dict[str, Any], "Policy document"]
 

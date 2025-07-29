@@ -1,5 +1,8 @@
 """
 Modern API client for CDM MinIO Data Governance service
+
+This client is for internal system use within CDM JupyterHub components.
+End users should use the utility functions in minio_utils.minio_utils for direct MinIO operations.
 """
 
 import os
@@ -8,7 +11,7 @@ from typing import Any, Optional, Type, TypeVar
 import httpx
 from pydantic import BaseModel
 
-T = TypeVar('T', bound=BaseModel)
+T = TypeVar("T", bound=BaseModel)
 
 from service.arg_checkers import not_falsy
 
@@ -30,6 +33,14 @@ from .models import (
 
 
 class DataGovernanceClient:
+    """
+    Internal API client for CDM MinIO Data Governance service.
+
+    This class is used internally by CDM JupyterHub components and should not be
+    instantiated directly by end users. Instead, users should use:
+    - The pre-configured 'governance' object available in notebooks for data governance operations
+    - Functions in minio_utils.minio_utils for direct MinIO client operations
+    """
 
     def __init__(self, kbase_token: Optional[str] = None):
         """
@@ -145,8 +156,12 @@ class DataGovernanceClient:
 
     def get_path_access_info(self, request: PathRequest) -> PathAccessInfoResponse:
         """Get access information for a specific path"""
-        return self._post("/sharing/get_path_access_info", request, PathAccessInfoResponse)
+        return self._post(
+            "/sharing/get_path_access_info", request, PathAccessInfoResponse
+        )
 
     def get_sql_warehouse_prefix(self) -> SqlWarehousePrefixResponse:
         """Get SQL warehouse prefix for the current user"""
-        return self._get("/workspaces/me/sql-warehouse-prefix", SqlWarehousePrefixResponse)
+        return self._get(
+            "/workspaces/me/sql-warehouse-prefix", SqlWarehousePrefixResponse
+        )
