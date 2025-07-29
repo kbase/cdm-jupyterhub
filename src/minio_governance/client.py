@@ -3,7 +3,7 @@ Modern API client for CDM MinIO Data Governance service
 """
 
 import os
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import httpx
 
@@ -114,34 +114,18 @@ class DataGovernanceClient:
         data = self._handle_response(response)
         return UserWorkspaceResponse(**data)
 
-    def share_path(
-        self,
-        path: str,
-        with_users: Optional[List[str]] = None,
-        with_groups: Optional[List[str]] = None,
-    ) -> SharePathResponse:
+    def share_path(self, request: SharePathRequest) -> SharePathResponse:
         """Share a path with users and/or groups"""
-        share_request = SharePathRequest(
-            path=path, with_users=with_users or [], with_groups=with_groups or []
-        )
         response = self._get_client().post(
-            "/sharing/share", json=share_request.model_dump()
+            "/sharing/share", json=request.model_dump()
         )
         data = self._handle_response(response)
         return SharePathResponse(**data)
 
-    def unshare_path(
-        self,
-        path: str,
-        from_users: Optional[List[str]] = None,
-        from_groups: Optional[List[str]] = None,
-    ) -> UnsharePathResponse:
+    def unshare_path(self, request: UnsharePathRequest) -> UnsharePathResponse:
         """Remove sharing permissions from users and/or groups"""
-        unshare_request = UnsharePathRequest(
-            path=path, from_users=from_users or [], from_groups=from_groups or []
-        )
         response = self._get_client().post(
-            "/sharing/unshare", json=unshare_request.model_dump()
+            "/sharing/unshare", json=request.model_dump()
         )
         data = self._handle_response(response)
         return UnsharePathResponse(**data)
@@ -152,29 +136,26 @@ class DataGovernanceClient:
         data = self._handle_response(response)
         return UserPoliciesResponse(**data)
 
-    def make_public(self, path: str) -> PublicAccessResponse:
+    def make_public(self, request: PathRequest) -> PublicAccessResponse:
         """Make a path publicly accessible"""
-        path_request = PathRequest(path=path)
         response = self._get_client().post(
-            "/sharing/make-public", json=path_request.model_dump()
+            "/sharing/make-public", json=request.model_dump()
         )
         data = self._handle_response(response)
         return PublicAccessResponse(**data)
 
-    def make_private(self, path: str) -> PublicAccessResponse:
+    def make_private(self, request: PathRequest) -> PublicAccessResponse:
         """Make a path completely private"""
-        path_request = PathRequest(path=path)
         response = self._get_client().post(
-            "/sharing/make-private", json=path_request.model_dump()
+            "/sharing/make-private", json=request.model_dump()
         )
         data = self._handle_response(response)
         return PublicAccessResponse(**data)
 
-    def get_path_access_info(self, path: str) -> PathAccessInfoResponse:
+    def get_path_access_info(self, request: PathRequest) -> PathAccessInfoResponse:
         """Get access information for a specific path"""
-        path_request = PathRequest(path=path)
         response = self._get_client().post(
-            "/sharing/get_path_access_info", json=path_request.model_dump()
+            "/sharing/get_path_access_info", json=request.model_dump()
         )
         data = self._handle_response(response)
         return PathAccessInfoResponse(**data)
