@@ -26,9 +26,25 @@ from notebook_utils.notebook_utils import (
     display_namespace_viewer,
 )
 from notebook_utils.cts_client import get_task_service_client
+from minio_governance.client import DataGovernanceClient
+from minio_governance.utils import (
+    check_governance_health,
+    get_minio_credentials,
+    get_my_sql_warehouse,
+    get_my_policies,
+    get_my_workspace,
+    get_path_access_info,
+    make_table_private,
+    make_table_public,
+    share_table,
+    unshare_table,
+)
 from spark.cluster import (
     check_api_health,
     create_cluster,
     delete_cluster,
     get_cluster_status,
 )
+
+# Pre-initialize data governance client for easy access
+governance = DataGovernanceClient()
