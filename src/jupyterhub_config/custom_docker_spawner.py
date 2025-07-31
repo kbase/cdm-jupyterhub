@@ -238,11 +238,9 @@ class CustomDockerSpawner(DockerSpawner):
             raise ValueError(
                 "KBASE_AUTH_TOKEN not found in spawner environment. Authentication required for governance client."
             )
-
-        # Initialize governance client with the token directly
         client = DataGovernanceClient(kbase_token=kbase_token)
 
-        # Get credentials for the current user
+        # Get credentials for the current user - it will also create a new user if it doesn't exist
         credentials = client.get_credentials()
         self.log.info(
             f"Retrieved governance credentials for user {username}: access_key='{credentials.access_key}'"
@@ -263,8 +261,6 @@ class CustomDockerSpawner(DockerSpawner):
                 self.environment["MINIO_SECRET_KEY"] = self.environment[
                     "MINIO_RW_SECRET_KEY"
                 ]
-                # USAGE_MODE is used by the setup.sh script to determine the appropriate configuration for the user.
-                self.environment["USAGE_MODE"] = "dev"
             else:
                 self.log.info(
                     f"Non-admin user detected: {self.user.name}. Removing admin credentials."
