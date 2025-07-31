@@ -152,6 +152,7 @@ services:
       - CDM_TASK_SERVICE_URL=https://ci.kbase.us/services/cts/"
       - CDM_DATA_GOVERNANCE_API_URL=http://cdm-minio-service:8000
       - DATANUCLEUS_AUTO_CREATE_TABLES=true
+      - USE_DATA_GOVERNANCE_CREDENTIALS=true
     volumes:
       - ./cdr/cdm/jupyter/cdm_shared_workspace:/cdm_shared_workspace
       - ./cdr/cdm/jupyter/jupyterhub_secrets:/jupyterhub_secrets
