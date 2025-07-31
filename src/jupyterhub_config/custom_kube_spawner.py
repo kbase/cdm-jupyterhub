@@ -8,6 +8,7 @@ import json5
 from filelock import FileLock
 from kubespawner import KubeSpawner
 
+from minio_governance.client import DataGovernanceClient
 from service.arg_checkers import not_falsy
 from spark import cluster
 
@@ -283,24 +284,42 @@ class CustomKubeSpawner(KubeSpawner):
 
         self.environment["SHELL"] = "/usr/bin/bash"
 
-        if self._is_rw_minio_user():
-            self.log.info(
-                f"MinIO read/write user detected: {self.user.name}. Setting up minio_rw credentials."
+        # Get user-specific MinIO credentials from governance service
+        # Check if KBASE_AUTH_TOKEN is available (should be set by pre_spawn_start)
+        kbase_token = self.environment.get("KBASE_AUTH_TOKEN")
+        if not kbase_token:
+            raise ValueError(
+                "KBASE_AUTH_TOKEN not found in spawner environment. Authentication required for governance client."
             )
-            self.environment["MINIO_ACCESS_KEY"] = self.environment[
-                "MINIO_RW_ACCESS_KEY"
-            ]
-            self.environment["MINIO_SECRET_KEY"] = self.environment[
-                "MINIO_RW_SECRET_KEY"
-            ]
-            # USAGE_MODE is used by the setup.sh script to determine the appropriate configuration for the user.
-            self.environment["USAGE_MODE"] = "dev"
+
+        client = DataGovernanceClient(kbase_token=kbase_token)
+
+        # Get credentials for the current user - it will also create a new user if it doesn't exist
+        credentials = client.get_credentials()
+        self.log.info(
+            f"Retrieved governance credentials for user {username}: access_key='{credentials.access_key}'"
+        )
+        if self.environment.get("USE_DATA_GOVERNANCE_CREDENTIALS", "false") == "true":
+            # Set user-specific MinIO credentials
+            self.environment["MINIO_ACCESS_KEY"] = credentials.access_key
+            self.environment["MINIO_SECRET_KEY"] = credentials.secret_key
         else:
-            self.log.info(
-                f"Non-admin user detected: {self.user.name}. Removing admin credentials."
-            )
-            self.environment.pop("MINIO_RW_ACCESS_KEY", None)
-            self.environment.pop("MINIO_RW_SECRET_KEY", None)
+            if self._is_rw_minio_user():
+                self.log.info(
+                    f"MinIO read/write user detected: {self.user.name}. Setting up minio_rw credentials."
+                )
+                self.environment["MINIO_ACCESS_KEY"] = self.environment[
+                    "MINIO_RW_ACCESS_KEY"
+                ]
+                self.environment["MINIO_SECRET_KEY"] = self.environment[
+                    "MINIO_RW_SECRET_KEY"
+                ]
+            else:
+                self.log.info(
+                    f"Non-admin user detected: {self.user.name}. Removing admin credentials."
+                )
+                self.environment.pop("MINIO_RW_ACCESS_KEY", None)
+                self.environment.pop("MINIO_RW_SECRET_KEY", None)
 
         # TODO: add a white list of environment variables to pass to the user's environment
         self.environment.pop("JUPYTERHUB_ADMIN_PASSWORD", None)
