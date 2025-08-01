@@ -14,6 +14,7 @@ from typing import Dict, List, Optional
 from pyspark.conf import SparkConf
 from pyspark.sql import DataFrame, SparkSession
 
+from minio_governance.client import DataGovernanceClient
 from minio_utils.minio_utils import get_minio_client
 from service.arg_checkers import not_falsy
 
@@ -32,9 +33,6 @@ DEFAULT_MAX_EXECUTORS = 5
 # Fair scheduler configuration
 SPARK_DEFAULT_POOL = "default"
 SPARK_POOLS = [SPARK_DEFAULT_POOL, "highPriority"]
-
-# Delta Lake configuration
-DEFAULT_DELTALAKE_WAREHOUSE_DIR = "s3a://cdm-lake/warehouse"
 
 # =============================================================================
 # PRIVATE HELPER FUNCTIONS
@@ -79,8 +77,9 @@ def _get_s3_conf() -> Dict[str, str]:
     Returns:
         Dictionary of S3/MinIO Spark configuration properties
     """
-    # TODO: Get warehouse directory from data governance service
-    warehouse_dir = DEFAULT_DELTALAKE_WAREHOUSE_DIR
+    # Set warehouse directory to the user's SQL warehouse
+    governance_client = DataGovernanceClient()
+    warehouse_dir = governance_client.get_sql_warehouse_prefix().sql_warehouse_prefix
 
     return {
         "spark.hadoop.fs.s3a.endpoint": str(
