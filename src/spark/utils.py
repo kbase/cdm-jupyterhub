@@ -34,9 +34,6 @@ DEFAULT_MAX_EXECUTORS = 5
 SPARK_DEFAULT_POOL = "default"
 SPARK_POOLS = [SPARK_DEFAULT_POOL, "highPriority"]
 
-# Delta Lake configuration
-DEFAULT_DELTALAKE_WAREHOUSE_DIR = "s3a://cdm-lake/warehouse"
-
 # =============================================================================
 # PRIVATE HELPER FUNCTIONS
 # =============================================================================
