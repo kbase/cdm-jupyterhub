@@ -231,6 +231,9 @@ print(f"Table is now private: {not response.is_public}")
 
 ```python
 # Get detailed access information for any path that in your SQL warehouse
+# Path format: s3a://cdm-lake/users-sql-warehouse/{username}/{namespace}/{table_name}
+# Note: The namespace typically ends with `.db`.
+
 access_info = get_path_access_info(
     path="s3a://cdm-lake/users-general-warehouse/alice/datasets/climate-analysis"
 )
