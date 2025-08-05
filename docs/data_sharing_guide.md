@@ -130,6 +130,8 @@ response = share_table(
 )
 
 print(f"Shared with groups: {response.shared_with_groups}")
+if response.errors:
+    print(f"Errors: {response.errors}")
 ```
 
 ### Share with Both Users and Groups
@@ -144,6 +146,8 @@ response = share_table(
 )
 
 print(f"Successfully shared with {response.success_count} recipients")
+if response.errors:
+    print(f"Errors: {response.errors}")
 ```
 
 ## Unsharing SQL Warehouse Tables
@@ -159,6 +163,8 @@ response = unshare_table(
 )
 
 print(f"Removed access from: {response.unshared_from_users}")
+if response.errors:
+    print(f"Errors: {response.errors}")
 ```
 
 ### Remove Access from Groups
@@ -172,6 +178,8 @@ response = unshare_table(
 )
 
 print(f"Removed group access from: {response.unshared_from_groups}")
+if response.errors:
+    print(f"Errors: {response.errors}")
 ```
 
 ### Unshare from Both Users and Groups
@@ -186,6 +194,8 @@ response = unshare_table(
 )
 
 print(f"Completely privatized table: {response.success_count} removals")
+if response.errors:
+    print(f"Errors: {response.errors}")
 ```
 
 ## Public and Private Table Access
