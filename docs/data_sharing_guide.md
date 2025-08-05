@@ -55,6 +55,7 @@ health = check_governance_health()
 print(f"🔍 Service status: {health.status}")
 
 # Get your credentials (automatically sets environment variables)
+# NOTE: This will rotate your credentials
 credentials = get_minio_credentials()
 print(f"🔐 Credentials loaded for: {credentials.username}")
 ```
@@ -69,6 +70,7 @@ health = check_governance_health()
 print(f"Service status: {health.status}")
 
 # Get MinIO credentials (automatically sets MINIO_ACCESS_KEY and MINIO_SECRET_KEY)
+# NOTE: This will rotate your credentials
 credentials = get_minio_credentials()
 print(f"Username: {credentials.username}")
 print(f"Access key: {credentials.access_key}")
