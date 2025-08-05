@@ -70,10 +70,24 @@ sudo apt install graphviz-dev`
 
 ### Running tests
 
-Python 3.11 must be installed on the system.
+Python 3.12.10 must be installed on the system.
 
-```
+#### Install dependencies
+```bash
+# Install Graphviz system library (required for pygraphviz dependency)
+brew install graphviz
+
+# Optionally, set environment variables to help uv find Graphviz headers and libraries
+# This fixes build errors where the compiler can't locate the Graphviz headers
+export CPATH=$(brew --prefix graphviz)/include:$CPATH
+export LIBRARY_PATH=$(brew --prefix graphviz)/lib:$LIBRARY_PATH
+
+# Install Python dependencies
 uv sync --locked # only the first time or when uv.lock changes
+```
+
+#### Run tests
+```bash
 PYTHONPATH=src uv run pytest tests
 ```
 
