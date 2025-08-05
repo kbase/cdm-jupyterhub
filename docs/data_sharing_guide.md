@@ -250,7 +250,7 @@ print(f"Public access: {access_info.public}")
 # Get comprehensive workspace information
 workspace = get_my_workspace()
 
-print(f"🏠 Your workspace: {workspace.username}")
+print(f"🏠 Your username: {workspace.username}")
 print(f"📁 Home directories: {len(workspace.home_paths)}")
 for path in workspace.home_paths:
     print(f"   - {path}")
