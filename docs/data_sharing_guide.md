@@ -26,7 +26,7 @@ All CDM JupyterHub notebooks automatically import these data governance function
 - `get_minio_credentials()` - Get your MinIO credentials (sets environment variables)
 - `get_my_sql_warehouse()` - Get your SQL warehouse prefix
 - `get_my_workspace()` - Get comprehensive workspace information
-- `get_path_access_info(path)` - Check who has access to a path
+- `get_table_access_info(namespace, table_name)` - Check who has access to a SQL table
 - `make_table_private(namespace, table_name)` - Remove public access from SQL tables
 - `make_table_public(namespace, table_name)` - Make SQL tables publicly accessible
 - `share_table(namespace, table_name, with_users, with_groups)` - Share SQL tables
@@ -220,21 +220,21 @@ print(f"Table is now private: {not response.is_public}")
 
 ## Managing Access Information
 
-### Check Who Has Access to Paths
+### Check Table Access
+
+For SQL warehouse tables, use the convenient `get_table_access_info` function:
 
 ```python
-# Get detailed access information for any path that in your SQL warehouse
-# Path format: s3a://cdm-lake/users-sql-warehouse/{username}/{namespace}/{table_name}
-# Note: The namespace typically ends with `.db`.
-
-access_info = get_path_access_info(
-    path="s3a://cdm-lake/users-general-warehouse/alice/datasets/climate-analysis"
+# Check access for a specific table (much easier than constructing paths!)
+access_info = get_table_access_info(
+    namespace="research",
+    table_name="climate_data"
 )
 
-print(f"Path: {access_info.path}")
 print(f"Users with access: {access_info.users}")
 print(f"Groups with access: {access_info.groups}")
 print(f"Public access: {access_info.public}")
+print(f"Full path: {access_info.path}")
 ```
 
 ### View Your Complete Workspace
@@ -291,7 +291,7 @@ try:
 except Exception as e:
     print(f"❌ Could not access shared table: {e}")
     # Check access
-    access_info = get_path_access_info(shared_table_path)
+    access_info = get_table_access_info("research", "climate_data")
     print(f"Your access granted: {get_my_workspace().username in access_info.users}")
 ```
 
