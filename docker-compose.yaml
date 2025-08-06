@@ -191,7 +191,7 @@ services:
       - cdm-jupyterhub-network
 
   cdm-minio-service:
-    image: ghcr.io/kbase/cdm-minio-service:pr-60
+    image: ghcr.io/kbase/cdm-minio-service:pr-63
     platform: linux/amd64
     ports:
       - "8003:8000"
