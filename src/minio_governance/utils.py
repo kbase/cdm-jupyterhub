@@ -137,19 +137,20 @@ def get_my_policies() -> UserPoliciesResponse:
     return client.get_user_policies()
 
 
-def get_path_access_info(path: str) -> PathAccessInfoResponse:
+
+def get_table_access_info(namespace: str, table_name: str) -> PathAccessInfoResponse:
     """
-    Get access information for a specific data path.
+    Get access information for a SQL warehouse table.
 
     Args:
-        path: S3 path to query
-        kbase_token: Optional KBase token. Uses KBASE_AUTH_TOKEN env var if None.
-
-    Returns:
-        PathAccessInfoResponse with users, groups, and public access information
+        namespace: Database namespace (e.g., "test" or "test.db")
+        table_name: Table name (e.g., "test_employees")
     """
     client = _get_governance_client()
-    request = PathRequest(path=path)
+    username = str(not_falsy(os.environ.get("JUPYTERHUB_USER"), "JUPYTERHUB_USER"))
+
+    table_path = _build_table_path(username, namespace, table_name)
+    request = PathRequest(path=table_path)
     return client.get_path_access_info(request)
 
 

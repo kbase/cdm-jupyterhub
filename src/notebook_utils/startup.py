@@ -33,7 +33,7 @@ from minio_governance.utils import (
     get_my_sql_warehouse,
     get_my_policies,
     get_my_workspace,
-    get_path_access_info,
+    get_table_access_info,
     make_table_private,
     make_table_public,
     share_table,
