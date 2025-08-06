@@ -25,7 +25,6 @@ All CDM JupyterHub notebooks automatically import these data governance function
 - `check_governance_health()` - Check service status
 - `get_minio_credentials()` - Get your MinIO credentials (sets environment variables)
 - `get_my_sql_warehouse()` - Get your SQL warehouse prefix
-- `get_my_policies()` - Get detailed policy information
 - `get_my_workspace()` - Get comprehensive workspace information
 - `get_path_access_info(path)` - Check who has access to a path
 - `make_table_private(namespace, table_name)` - Remove public access from SQL tables
@@ -84,7 +83,7 @@ print(f"SQL warehouse prefix: {sql_warehouse.sql_warehouse_prefix}")
 print(f"Governance client ready: {governance is not None}")
 ```
 
-### Workspace and Policy Information
+### Workspace Information
 
 ```python
 # Get comprehensive workspace information
@@ -93,12 +92,6 @@ print(f"Username: {workspace.username}")
 print(f"Home paths: {workspace.home_paths}")
 print(f"Groups: {workspace.groups}")
 print(f"Total accessible paths: {len(workspace.accessible_paths)}")
-
-# Get detailed policy information
-policies = get_my_policies()
-print(f"Home policy: {policies.user_home_policy.policy_name}")
-print(f"System policy: {policies.user_system_policy.policy_name}")
-print(f"Group policies: {len(policies.group_policies)}")
 ```
 
 ## Sharing SQL Warehouse Tables
