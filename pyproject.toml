@@ -18,7 +18,7 @@ dependencies = [
     "pyspark==3.5.6",
     "boto3==1.40.1",
     "minio==7.2.16",
-    "delta-spark==3.3.2",  # should match JAR version (DELTA_SPARK_VER) specified in the Dockerfile
+    "delta-spark==3.3.2", # should match JAR version (DELTA_SPARK_VER) specified in the Dockerfile
     "PyMySQL==1.1.1",
     "urllib3==2.5.0",
     "jupyterlab-git==0.51.2",
@@ -45,6 +45,7 @@ dependencies = [
     "pyarrow==21.0.0",
     "itables==2.4.4",
     "cdm-task-service-client",
+    "cdm-tree-browser",
 ]
 
 [dependency-groups]
@@ -56,3 +57,4 @@ dev = [
 
 [tool.uv.sources]
 cdm-task-service-client = { git = "https://github.com/kbase/cdm-task-service-client.git", rev = "0.1.0" }
+cdm-tree-browser = { url = "https://github.com/kbaseincubator/cdm-tree-browser/releases/download/0.0.2/cdm_tree_browser-0.1.0-py3-none-any.whl" }
