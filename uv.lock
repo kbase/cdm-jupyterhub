@@ -332,6 +332,7 @@ dependencies = [
     { name = "cacheout" },
     { name = "cdm-jupyterlab-brand-extension" },
     { name = "cdm-task-service-client" },
+    { name = "cdm-tree-browser" },
     { name = "delta-spark" },
     { name = "dockerspawner" },
     { name = "huggingface-hub" },
@@ -380,6 +381,7 @@ requires-dist = [
     { name = "cacheout", specifier = "==0.16.0" },
     { name = "cdm-jupyterlab-brand-extension", url = "https://github.com/kbaseincubator/cdm_jupyterlab_brand_extension/raw/main/dist/cdm_jupyterlab_brand_extension-0.1.0-py3-none-any.whl" },
     { name = "cdm-task-service-client", git = "https://github.com/kbase/cdm-task-service-client.git?rev=0.1.0" },
+    { name = "cdm-tree-browser", url = "https://github.com/kbaseincubator/cdm-tree-browser/releases/download/0.0.2/cdm_tree_browser-0.1.0-py3-none-any.whl" },
     { name = "delta-spark", specifier = "==3.3.2" },
     { name = "dockerspawner", specifier = "==14.0.0" },
     { name = "huggingface-hub", specifier = "==0.34.3" },
@@ -441,6 +443,14 @@ version = "0.1.0"
 source = { git = "https://github.com/kbase/cdm-task-service-client.git?rev=0.1.0#e52d0c49f5bb53c9118382e2db2863d84b41fa63" }
 dependencies = [
     { name = "requests" },
+]
+
+[[package]]
+name = "cdm-tree-browser"
+version = "0.1.0"
+source = { url = "https://github.com/kbaseincubator/cdm-tree-browser/releases/download/0.0.2/cdm_tree_browser-0.1.0-py3-none-any.whl" }
+wheels = [
+    { url = "https://github.com/kbaseincubator/cdm-tree-browser/releases/download/0.0.2/cdm_tree_browser-0.1.0-py3-none-any.whl", hash = "sha256:eb716c82148020ec93153bb4098ead13386260c3a9cada9936bec83ec4ab6205" },
 ]
 
 [[package]]
