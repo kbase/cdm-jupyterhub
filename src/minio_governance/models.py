@@ -123,3 +123,10 @@ class SqlWarehousePrefixResponse(BaseModel):
 
     username: Annotated[str, "Username"]
     sql_warehouse_prefix: Annotated[str, "SQL warehouse prefix for the user"]
+
+
+class GroupSqlWarehousePrefixResponse(BaseModel):
+    """Response model for group's SQL warehouse prefix"""
+
+    group_name: Annotated[str, "Group name"]
+    sql_warehouse_prefix: Annotated[str, "SQL warehouse prefix for the group"]
