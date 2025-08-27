@@ -45,7 +45,7 @@ def create_namespace_if_not_exists(
         print(f"Error creating namespace: {e}")
         raise e
     
-    spark.sql(f"CREATE DATABASE IF NOT EXISTS `{namespace}`")
+    spark.sql(f"CREATE DATABASE IF NOT EXISTS {namespace}")
     print(f"Namespace {namespace} is ready to use.")
 
 
