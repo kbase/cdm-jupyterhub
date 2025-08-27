@@ -16,12 +16,12 @@ def create_namespace_if_not_exists(
     Create a namespace in the Spark catalog if it does not exist.
     
     If append_target is True, automatically prepends the target name (user/tenant)
-    from the Spark warehouse configuration to create {target_name}.{namespace}.
+    from the Spark warehouse configuration to create {target_name}_{namespace}.
 
     :param spark: The Spark session.
     :param namespace: The name of the namespace.
     :param append_target: If True, prepends target name from warehouse directory
-                         (e.g., "john.default" or "research_team.experiments").
+                         (e.g., "john_default" or "research_team_experiments").
                          If False, uses namespace as-is.
     :return: None
     """
