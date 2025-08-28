@@ -109,6 +109,10 @@ data_namespace = create_namespace_if_not_exists(spark, "research_data")  # Retur
 # Use returned namespace names for table operations
 df.write.format("delta").saveAsTable(f"{exp_namespace}.my_experiment_table")
 df.write.format("delta").saveAsTable(f"{data_namespace}.shared_dataset")
+
+# Table will be stored at:
+# s3a://cdm-lake/users-sql-warehouse/tgu2/tgu2_experiments.db/my_experiment_table/
+# s3a://cdm-lake/tenant-sql-warehouse/kbase/kbase_research_data.db/shared_dataset/
 ```
 
 ### Disable Target Prefixing
@@ -132,4 +136,8 @@ shared_ns = create_namespace_if_not_exists(spark, "shared_data", append_target=F
 # Use unprefixed namespace names
 df.write.format("delta").saveAsTable(f"{global_ns}.reference_table")
 df.write.format("delta").saveAsTable(f"{shared_ns}.common_dataset")
+
+# Table will be stored at:
+# s3a://cdm-lake/users-sql-warehouse/tgu2/global_reference.db/reference_table/
+# s3a://cdm-lake/tenant-sql-warehouse/kbase/shared_data.db/common_dataset/
 ```
