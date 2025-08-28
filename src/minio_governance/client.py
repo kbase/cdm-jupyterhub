@@ -18,6 +18,7 @@ from service.arg_checkers import not_falsy
 from .exceptions import APIError
 from .models import (
     CredentialsResponse,
+    GroupSqlWarehousePrefixResponse,
     HealthResponse,
     PathAccessInfoResponse,
     PathRequest,
@@ -164,4 +165,11 @@ class DataGovernanceClient:
         """Get SQL warehouse prefix for the current user"""
         return self._get(
             "/workspaces/me/sql-warehouse-prefix", SqlWarehousePrefixResponse
+        )
+
+    def get_group_sql_warehouse_prefix(self, group_name: str) -> GroupSqlWarehousePrefixResponse:
+        """Get SQL warehouse prefix for a specific group"""
+        return self._get(
+            f"/workspaces/me/groups/{group_name}/sql-warehouse-prefix", 
+            GroupSqlWarehousePrefixResponse
         )

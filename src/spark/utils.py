@@ -70,16 +70,32 @@ def _get_jars(jar_names: List[str]) -> str:
     return ", ".join(jars)
 
 
-def _get_s3_conf() -> Dict[str, str]:
+def _get_s3_conf(tenant_name: Optional[str] = None) -> Dict[str, str]:
     """
     Get S3 configuration for MinIO.
-
+    
+    Args:
+        tenant_name: Tenant/group name to use for SQL warehouse. If provided, 
+                    configures Spark to write tables to the tenant's SQL warehouse.
+                    If None, uses the user's personal SQL warehouse.
+    
     Returns:
         Dictionary of S3/MinIO Spark configuration properties
     """
-    # Set warehouse directory to the user's SQL warehouse
     governance_client = DataGovernanceClient()
-    warehouse_dir = governance_client.get_sql_warehouse_prefix().sql_warehouse_prefix
+    
+    if tenant_name:
+        # Get tenant SQL warehouse prefix (this also validates membership)
+        try:
+            tenant_warehouse_response = governance_client.get_group_sql_warehouse_prefix(tenant_name)
+            warehouse_dir = tenant_warehouse_response.sql_warehouse_prefix
+        except Exception as e:
+            raise ValueError(
+                f"Cannot access tenant warehouse '{tenant_name}': {e}"
+            )
+    else:
+        # Set warehouse directory to the user's SQL warehouse
+        warehouse_dir = governance_client.get_sql_warehouse_prefix().sql_warehouse_prefix
 
     return {
         "spark.hadoop.fs.s3a.endpoint": str(
@@ -230,6 +246,7 @@ def get_spark_session(
     local: bool = False,
     delta_lake: bool = True,
     scheduler_pool: str = SPARK_DEFAULT_POOL,
+    tenant_name: Optional[str] = None,
 ) -> SparkSession:
     """
     Create and configure a Spark session with CDM-specific settings.
@@ -242,6 +259,9 @@ def get_spark_session(
         local: If True, creates a local Spark session (ignores other configs)
         delta_lake: If True, enables Delta Lake support with required JARs
         scheduler_pool: Fair scheduler pool name (default: "default")
+        tenant_name: Tenant/group name to use for SQL warehouse location. If specified,
+                     tables will be written to the tenant's SQL warehouse instead
+                     of the user's personal warehouse.
 
     Returns:
         Configured SparkSession instance
@@ -249,10 +269,14 @@ def get_spark_session(
     Raises:
         EnvironmentError: If required environment variables are missing
         FileNotFoundError: If required JAR files are missing
+        ValueError: If user is not a member of the specified tenant
 
     Example:
-        >>> # Basic usage
+        >>> # Basic usage (user's personal warehouse)
         >>> spark = get_spark_session("MyApp")
+
+        >>> # Using tenant warehouse (writes to tenant's SQL directory)
+        >>> spark = get_spark_session("MyApp", tenant_name="research_team")
 
         >>> # With custom scheduler pool
         >>> spark = get_spark_session("MyApp", scheduler_pool="highPriority")
@@ -261,6 +285,10 @@ def get_spark_session(
         >>> spark = get_spark_session("TestApp", local=True)
     """
     # Generate app name if not provided
+    current_spark = SparkSession.getActiveSession()
+    if current_spark:
+        current_spark.stop()
+    
     if app_name is None:
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         app_name = f"kbase_spark_session_{timestamp}"
@@ -280,7 +308,7 @@ def get_spark_session(
 
     # Configure Delta Lake if enabled
     if delta_lake:
-        config.update(_get_s3_conf())
+        config.update(_get_s3_conf(tenant_name))
         _configure_delta_lake(config)
 
     # Create and configure Spark session

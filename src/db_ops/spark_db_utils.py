@@ -8,17 +8,43 @@ from pyspark.sql import SparkSession
 
 def create_namespace_if_not_exists(
         spark: SparkSession,
-        namespace: str = "default"
+        namespace: str = "default",
+        append_target: bool = False,
 ) -> None:
 
     """
     Create a namespace in the Spark catalog if it does not exist.
+    
+    If append_target is True, automatically prepends the target name (user/tenant)
+    from the Spark warehouse configuration to create {target_name}_{namespace}.
 
     :param spark: The Spark session.
-    :param namespace: The name of the namespace. Default is "default".
+    :param namespace: The name of the namespace.
+    :param append_target: If True, prepends target name from warehouse directory
+                         (e.g., "john_default" or "research_team_experiments").
+                         If False, uses namespace as-is.
     :return: None
     """
-
+    try:
+        # Extract user/tenant name from warehouse directory if append_target is enabled
+        if append_target:
+            warehouse_dir = spark.conf.get('spark.sql.warehouse.dir', '')
+            
+            if warehouse_dir and ('users-sql-warehouse' in warehouse_dir or 'tenant-sql-warehouse' in warehouse_dir):
+                # Extract target name (username or tenant name) from path
+                # e.g. s3a://cdm-lake/users-sql-warehouse/tgu2
+                # e.g. s3a://cdm-lake/tenant-sql-warehouse/global-user-group
+                target_name = warehouse_dir.rstrip('/').split('/')[-1]
+                # Sanitize target_name to only contain valid characters (alphanumeric and underscore)
+                sanitized_target_name = ''.join(c if c.isalnum() or c == '_' else '_' for c in target_name)
+                namespace = f"{sanitized_target_name}_{namespace}"
+            else:
+                # Keep original namespace if warehouse path doesn't match expected patterns
+                print(f"Warning: Could not determine target name from warehouse directory '{warehouse_dir}'. Using namespace as-is.")
+    except Exception as e:
+        print(f"Error creating namespace: {e}")
+        raise e
+    
     spark.sql(f"CREATE DATABASE IF NOT EXISTS {namespace}")
     print(f"Namespace {namespace} is ready to use.")
 
