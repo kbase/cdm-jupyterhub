@@ -9,8 +9,8 @@ from pyspark.sql import SparkSession
 def create_namespace_if_not_exists(
         spark: SparkSession,
         namespace: str = "default",
-        append_target: bool = False,
-) -> None:
+        append_target: bool = True,
+) -> str:
 
     """
     Create a namespace in the Spark catalog if it does not exist.
@@ -23,7 +23,7 @@ def create_namespace_if_not_exists(
     :param append_target: If True, prepends target name from warehouse directory
                          (e.g., "john_default" or "research_team_experiments").
                          If False, uses namespace as-is.
-    :return: None
+    :return: The name of the namespace.
     """
     try:
         # Extract user/tenant name from warehouse directory if append_target is enabled
@@ -47,6 +47,8 @@ def create_namespace_if_not_exists(
     
     spark.sql(f"CREATE DATABASE IF NOT EXISTS {namespace}")
     print(f"Namespace {namespace} is ready to use.")
+
+    return namespace
 
 
 def table_exists(
