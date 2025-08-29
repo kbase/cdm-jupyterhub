@@ -141,3 +141,26 @@ df.write.format("delta").saveAsTable(f"{shared_ns}.common_dataset")
 # s3a://cdm-lake/users-sql-warehouse/tgu2/global_reference.db/reference_table/
 # s3a://cdm-lake/tenant-sql-warehouse/kbase/shared_data.db/common_dataset/
 ```
+
+### Underscore Handling in Names
+
+To prevent namespace collision issues, the system automatically doubles any underscores present in usernames or tenant names when creating namespace prefixes.
+
+**Examples:**
+- Username `john_doe` → namespace prefix `john__doe_`
+- Tenant name `research_team` → namespace prefix `research__team_`
+- Username `user_with_multiple_underscores` → namespace prefix `user__with__multiple__underscores_`
+
+**Why this matters:**
+This ensures that usernames like `john_doe` and `john_doe_analysis` don't accidentally create conflicting namespace patterns, and helps maintain clear separation between different users and tenants.
+
+**Sample namespace creation:**
+```python
+# If your username is "john_doe"
+spark = get_spark_session()
+namespace = create_namespace_if_not_exists(spark)  # Returns "john__doe_default"
+
+# If tenant name is "research_team"
+spark = get_spark_session(tenant_name="research_team")
+namespace = create_namespace_if_not_exists(spark)  # Returns "research__team_default"
+```

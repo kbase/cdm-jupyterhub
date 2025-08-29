@@ -37,6 +37,9 @@ def create_namespace_if_not_exists(
                 target_name = warehouse_dir.rstrip('/').split('/')[-1]
                 # Sanitize target_name to only contain valid characters (alphanumeric and underscore)
                 sanitized_target_name = ''.join(c if c.isalnum() or c == '_' else '_' for c in target_name)
+                # Add extra underscore wherever there's already an underscore to avoid namespace name collision
+                # e.g. "john_default" -> "john__default"
+                sanitized_target_name = sanitized_target_name.replace('_', '__')
                 namespace = f"{sanitized_target_name}_{namespace}"
             else:
                 # Keep original namespace if warehouse path doesn't match expected patterns
