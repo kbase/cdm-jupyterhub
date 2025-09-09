@@ -14,7 +14,11 @@ import nativeauthenticator
 
 from jupyterhub_config.custom_docker_spawner import CustomDockerSpawner
 from jupyterhub_config.custom_kube_spawner import CustomKubeSpawner
-from jupyterhub_config.kb_jupyterhub_auth import KBaseAuthenticator, kbase_origin
+from jupyterhub_config.kb_jupyterhub_auth import (
+    KBaseAuthenticator,
+    kbase_origin,
+    TokenRefreshHandler
+)
 
 c = get_config()
 
@@ -31,10 +35,23 @@ if get_bool_env('USE_KBASE_AUTHENTICATOR'):
     # ref: https://jupyterhub.readthedocs.io/en/latest/reference/authenticators.html#authenticators
     c.JupyterHub.authenticator_class = KBaseAuthenticator
     c.Authenticator.enable_auth_state = True  # Enable authentication state persistence
+
+    # Token refresh configuration for KBase authentication
+    # This controls how often JupyterHub calls the authenticator's refresh_user() method
+    # to validate tokens against the KBase auth2/token endpoint.
+    # Set to 120 seconds (2 minutes) to provide timely detection of token expiration
+    # while balancing API call frequency to the KBase auth service.
+    # ref: https://jupyterhub.readthedocs.io/en/stable/reference/config-reference.html#Authenticator.auth_refresh_age
+    c.Authenticator.auth_refresh_age = 120
     c.JupyterHub.template_paths = [os.environ['JUPYTERHUB_TEMPLATES_DIR']]
     c.JupyterHub.template_vars = {
         'kbase_origin': f'https://{kbase_origin()}'
     }
+
+    # Add custom API handlers for token monitoring
+    c.JupyterHub.extra_handlers = [
+        (r'/api/refresh-token', TokenRefreshHandler),
+    ]
 else:
     # Set the authenticator class to nativeauthenticator
     # ref: https://native-authenticator.readthedocs.io/en/latest/quickstart.html

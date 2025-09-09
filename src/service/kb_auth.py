@@ -6,8 +6,9 @@ A client for the KBase Auth2 server.
 
 
 import logging
+from datetime import datetime, timezone
 from enum import IntEnum
-from typing import NamedTuple, List
+from typing import NamedTuple, List, Optional
 
 import aiohttp
 from tornado import web
@@ -29,6 +30,7 @@ class KBaseUser(NamedTuple):
     user: UserID
     admin_perm: AdminPermission
     token: str
+    expires: Optional[datetime] = None
 
 
 async def _get(url, headers):
@@ -65,11 +67,12 @@ class KBaseAuth:
             full_admin_roles: List[str]):
         self._url = auth_url
         self._me_url = self._url + 'api/V2/me'
+        self._token_url = self._url + 'api/V2/token'
         self._full_roles = set(full_admin_roles) if full_admin_roles else set()
 
     async def get_user(self, token: str) -> KBaseUser:
         '''
-        Get a username from a token as well as the user's administration status.
+        Get a username from a token as well as the user's administration status using auth2/me.
         :param token: The user's token.
         :returns: the user.
         '''
@@ -79,6 +82,33 @@ class KBaseAuth:
         j = await _get(self._me_url, {"Authorization": token})
         v = (self._get_role(j['customroles']), UserID(j['user']))
         return KBaseUser(v[1], v[0], token)
+
+    async def validate_token(self, token: str) -> KBaseUser:
+        '''
+        Validate a token and get user information with expiration using auth2/token.
+        :param token: The user's token.
+        :returns: the user with token expiration information.
+        '''
+        _not_falsy(token, 'token')
+
+        j = await _get(self._token_url, {"Authorization": token})
+
+        # Parse expiration timestamp (KBase returns epoch milliseconds)
+        expires_ms = j.get('expires')
+        expires = None
+        if expires_ms:
+            expires = datetime.fromtimestamp(expires_ms / 1000.0, tz=timezone.utc)
+
+        # Get user roles for admin permissions
+        user_data = j.get('user', {})
+        roles = user_data.get('customroles', [])
+        admin_perm = self._get_role(roles)
+
+        username = j.get('user', {}).get('user')
+        if not username:
+            raise InvalidTokenError('Invalid token response - missing username')
+
+        return KBaseUser(UserID(username), admin_perm, token, expires)
 
     def _get_role(self, roles):
         r = set(roles)
