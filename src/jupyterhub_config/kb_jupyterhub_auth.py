@@ -65,13 +65,23 @@ class KBaseAuthenticator(Authenticator):
         kb_auth = KBaseAuth(self.kbase_auth_url, self.auth_full_admin_roles)
         kb_user = await kb_auth.validate_token(session_token)
 
-        logger.info(f"Authenticated user: {kb_user.user}")
+        # Validate MFA requirement - only allow USED status
+        if kb_user.mfa_status != "USED":
+            logger.warning(f"User {kb_user.user} denied access due to MFA status: {kb_user.mfa_status}")
+            # Redirect to MFA requirement page
+            mfa_status = kb_user.mfa_status or 'UNKNOWN'
+            redirect_url = f"/mfa-required?mfa_status={mfa_status}"
+            handler.redirect(redirect_url)
+            return None
+
+        logger.info(f"Authenticated user: {kb_user.user} with MFA status: {kb_user.mfa_status}")
         return {
             "name": str(kb_user.user),
             "admin": kb_user.admin_perm == AdminPermission.FULL,
             "auth_state": {
                 "kbase_token": session_token,
                 "token_expires": kb_user.expires.isoformat() if kb_user.expires else None,
+                "mfa_status": kb_user.mfa_status,
             },
         }
 
@@ -103,16 +113,22 @@ class KBaseAuthenticator(Authenticator):
             kb_auth = KBaseAuth(self.kbase_auth_url, self.auth_full_admin_roles)
             kb_user = await kb_auth.validate_token(kbase_token)
 
+            # Check MFA status - if not USED, invalidate the session
+            if kb_user.mfa_status != "USED":
+                logger.warning(f"Token refresh failed for user {user.name}: MFA status is {kb_user.mfa_status}")
+                return False
+
             # Update auth_state with fresh token information
             auth_state.update({
                 "kbase_token": kbase_token,
                 "token_expires": kb_user.expires.isoformat() if kb_user.expires else None,
+                "mfa_status": kb_user.mfa_status,
             })
 
             user.db.auth_state = auth_state
             self.db.commit()
 
-            logger.info(f"Successfully refreshed token for user {user.name}")
+            logger.info(f"Successfully refreshed token for user {user.name} with MFA status: {kb_user.mfa_status}")
             return True
 
         except (InvalidTokenError, MissingTokenError) as e:
@@ -166,3 +182,22 @@ class TokenRefreshHandler(BaseHandler):
         except Exception as e:
             logger.error(f"Error refreshing token: {e}")
             raise web.HTTPError(500, "Internal server error refreshing token")
+
+
+class MfaRequiredHandler(BaseHandler):
+    """
+    Handler for MFA requirement page.
+    """
+
+    async def get(self):
+        """
+        Display MFA requirement page.
+        """
+        mfa_status = self.get_argument("mfa_status", "UNKNOWN")
+
+        html = await self.render_template(
+            "mfa-required.html",
+            mfa_status=mfa_status,
+            kbase_origin=f'https://{kbase_origin()}'
+        )
+        self.finish(html)

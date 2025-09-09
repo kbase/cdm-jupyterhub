@@ -31,6 +31,7 @@ class KBaseUser(NamedTuple):
     admin_perm: AdminPermission
     token: str
     expires: Optional[datetime] = None
+    mfa_status: Optional[str] = None
 
 
 async def _get(url, headers):
@@ -66,22 +67,9 @@ class KBaseAuth:
             auth_url: str,
             full_admin_roles: List[str]):
         self._url = auth_url
-        self._me_url = self._url + 'api/V2/me'
         self._token_url = self._url + 'api/V2/token'
         self._full_roles = set(full_admin_roles) if full_admin_roles else set()
 
-    async def get_user(self, token: str) -> KBaseUser:
-        '''
-        Get a username from a token as well as the user's administration status using auth2/me.
-        :param token: The user's token.
-        :returns: the user.
-        '''
-        # TODO CODE should check the token for \n etc.
-        _not_falsy(token, 'token')
-
-        j = await _get(self._me_url, {"Authorization": token})
-        v = (self._get_role(j['customroles']), UserID(j['user']))
-        return KBaseUser(v[1], v[0], token)
 
     async def validate_token(self, token: str) -> KBaseUser:
         '''
@@ -104,11 +92,14 @@ class KBaseAuth:
         roles = user_data.get('customroles', [])
         admin_perm = self._get_role(roles)
 
+        # Get MFA status from token response
+        mfa_status = j.get('mfa')
+
         username = j.get('user', {}).get('user')
         if not username:
             raise InvalidTokenError('Invalid token response - missing username')
 
-        return KBaseUser(UserID(username), admin_perm, token, expires)
+        return KBaseUser(UserID(username), admin_perm, token, expires, mfa_status)
 
     def _get_role(self, roles):
         r = set(roles)

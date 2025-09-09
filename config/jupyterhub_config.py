@@ -17,7 +17,8 @@ from jupyterhub_config.custom_kube_spawner import CustomKubeSpawner
 from jupyterhub_config.kb_jupyterhub_auth import (
     KBaseAuthenticator,
     kbase_origin,
-    TokenRefreshHandler
+    TokenRefreshHandler,
+    MfaRequiredHandler
 )
 
 c = get_config()
@@ -48,9 +49,10 @@ if get_bool_env('USE_KBASE_AUTHENTICATOR'):
         'kbase_origin': f'https://{kbase_origin()}'
     }
 
-    # Add custom API handlers for token monitoring
+    # Add custom API handlers for token monitoring and MFA requirement
     c.JupyterHub.extra_handlers = [
         (r'/api/refresh-token', TokenRefreshHandler),
+        (r'/mfa-required', MfaRequiredHandler),
     ]
 else:
     # Set the authenticator class to nativeauthenticator
