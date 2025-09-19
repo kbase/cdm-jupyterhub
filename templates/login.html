@@ -122,7 +122,7 @@
     function checkKBaseCookie() {
       const tokenCookie = getCookie('kbase_session');
       if (!tokenCookie) return Promise.resolve(null);
-      return fetch(enviromentOrigin + '/services/auth/api/V2/me', {
+      return fetch(enviromentOrigin + '/services/auth/api/V2/token', {
         headers: {
           Authorization: tokenCookie,
         },

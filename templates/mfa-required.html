@@ -1,0 +1,48 @@
+{% extends "page.html" %}
+
+{% block main %}
+<div id="mfa-main" class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="panel panel-default">
+        <div class="panel-body">
+          <div class="text-center">
+            <h1>Multi-Factor Authentication Required</h1>
+            <div style="margin: 20px 0;">
+              <i class="fa fa-shield" style="font-size: 4em; color: #f0ad4e;"></i>
+            </div>
+            <p class="lead">
+              Access to JupyterHub requires multi-factor authentication (MFA) to be enabled and used during login.
+            </p>
+            
+            {% if mfa_status %}
+            <div class="alert alert-warning">
+              <strong>Current MFA Status:</strong> {{ mfa_status }}
+            </div>
+            {% endif %}
+            
+            <div class="alert alert-info">
+              <h4>To access JupyterHub:</h4>
+              <ol class="text-left">
+                <li>Log out of your current KBase session</li>
+                <li>Enable multi-factor authentication in your KBase account settings</li>
+                <li>Log back into KBase using MFA (typically via ORCID with 2FA enabled)</li>
+                <li>Return to JupyterHub</li>
+              </ol>
+            </div>
+            
+            <div style="margin-top: 30px;">
+              <a href="{{ kbase_origin }}/logout" class="btn btn-warning btn-lg">
+                Log Out of KBase
+              </a>
+              <a href="{{ kbase_origin }}/account" class="btn btn-primary btn-lg" style="margin-left: 10px;">
+                Account Settings
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock main %}
