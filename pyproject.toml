@@ -27,7 +27,7 @@ dependencies = [
     "psycopg==3.2.9",
     # Jupyter AI libraries
     "jupyter-ai==2.31.6",
-    "langchain-openai==0.3.28",
+    "langchain-openai==0.3.34",
     "langchain-anthropic==0.3.18",
     "langchain-ollama==0.3.6",
     "huggingface_hub==0.34.3",
