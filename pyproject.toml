@@ -13,7 +13,7 @@ dependencies = [
     "jupyterhub-kubespawner==7.0.0",
     "jupyterlab_favorites==3.2.2",
     "sidecar==0.7.0",
-    "json5==0.12.0",
+    "json5==0.12.1",
     "pycurl==7.45.6",
     "pyspark==3.5.6",
     "boto3==1.40.12",
