@@ -43,7 +43,7 @@ dependencies = [
     "seaborn==0.13.2",
     "pandas==2.3.1",
     "pyarrow==21.0.0",
-    "itables==2.4.4",
+    "itables==2.5.2",
     "cdm-task-service-client",
     "cdm-tree-browser",
 ]
