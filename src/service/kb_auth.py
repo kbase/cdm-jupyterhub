@@ -32,6 +32,7 @@ class KBaseUser(NamedTuple):
     token: str
     expires: Optional[datetime] = None
     mfa_status: Optional[str] = None
+    approved: bool = True
 
 
 async def _get(url, headers):
@@ -65,11 +66,13 @@ class KBaseAuth:
     def __init__(
             self,
             auth_url: str,
-            full_admin_roles: List[str]):
+            full_admin_roles: List[str],
+            approval_roles: List[str]):
         self._url = auth_url
         self._token_url = self._url + 'api/V2/token'
         self._me_url = self._url + 'api/V2/me'
         self._full_roles = set(full_admin_roles) if full_admin_roles else set()
+        self._approval_roles = set(approval_roles) if approval_roles else set()
 
 
     async def validate_token(self, token: str) -> KBaseUser:
@@ -90,6 +93,7 @@ class KBaseAuth:
 
         roles = me_data.get('customroles', [])
         admin_perm = self._get_role(roles)
+        approved = self._check_approval(roles)
 
         mfa_status = token_data.get('mfa')
 
@@ -97,13 +101,22 @@ class KBaseAuth:
         if not username:
             raise InvalidTokenError('Invalid token response - missing username')
 
-        return KBaseUser(UserID(username), admin_perm, token, expires, mfa_status)
+        return KBaseUser(UserID(username), admin_perm, token, expires, mfa_status, approved)
 
     def _get_role(self, roles):
         r = set(roles)
         if r & self._full_roles:
             return AdminPermission.FULL
         return AdminPermission.NONE
+
+    def _check_approval(self, roles):
+        """
+        Check if user has any of the required approval roles.
+        """
+        if not self._approval_roles:
+            return False
+        r = set(roles)
+        return bool(r & self._approval_roles)
 
 
 class AuthenticationError(web.HTTPError):
