@@ -24,7 +24,7 @@ dependencies = [
     "jupyterlab-git==0.51.2",
     "cdm-jupyterlab-brand-extension @ https://github.com/kbaseincubator/cdm_jupyterlab_brand_extension/raw/main/dist/cdm_jupyterlab_brand_extension-0.1.0-py3-none-any.whl",
     "cacheout==0.16.0",
-    "psycopg==3.2.9",
+    "psycopg==3.2.10",
     # Jupyter AI libraries
     "jupyter-ai==2.31.6",
     "langchain-openai==0.3.28",
