@@ -29,7 +29,7 @@ dependencies = [
     "jupyter-ai==2.31.6",
     "langchain-openai==0.3.28",
     "langchain-anthropic==0.3.18",
-    "langchain-ollama==0.3.6",
+    "langchain-ollama==0.3.8",
     "huggingface_hub==0.34.3",
     "jupyter-ai-cborg @ git+https://github.com/kbaseincubator/cdm-jupyter-ai-cborg.git@v0.1.0",
     # Frequently utilized data visualization libraries by the science team
