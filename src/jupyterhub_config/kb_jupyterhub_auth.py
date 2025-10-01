@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from jupyterhub.auth import Authenticator
 from jupyterhub.handlers import BaseHandler
 from traitlets import List, Unicode
+from tornado import web
 
 from service.kb_auth import (
     AdminPermission,
