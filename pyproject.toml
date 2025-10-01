@@ -19,7 +19,7 @@ dependencies = [
     "boto3==1.40.12",
     "minio==7.2.16",
     "delta-spark==3.3.2", # should match JAR version (DELTA_SPARK_VER) specified in the Dockerfile
-    "PyMySQL==1.1.1",
+    "PyMySQL==1.1.2",
     "urllib3==2.5.0",
     "jupyterlab-git==0.51.2",
     "cdm-jupyterlab-brand-extension @ https://github.com/kbaseincubator/cdm_jupyterlab_brand_extension/raw/main/dist/cdm_jupyterlab_brand_extension-0.1.0-py3-none-any.whl",
