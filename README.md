@@ -1,6 +1,8 @@
 # CDM Jupyterhub dockerfiles (Prototype)
 
-This prototype establishes a Docker container configuration for JupyterHub, designed to furnish a multi-user 
+> **⚠️ DEPRECATED**: This repository has been deprecated and is no longer maintained. Please use the new repository at [https://github.com/BERDataLakehouse/spark_notebook](https://github.com/BERDataLakehouse/spark_notebook)
+
+This prototype establishes a Docker container configuration for JupyterHub, designed to furnish a multi-user
 environment tailored for executing Spark jobs via Jupyter notebooks.
 
 ## User How-To Guide
