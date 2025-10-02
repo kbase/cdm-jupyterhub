@@ -82,7 +82,10 @@ class KBaseAuthenticator(Authenticator):
             logger.warning(f"User {kb_user.user} denied access - missing required approval role")
             raise AuthenticationError(
                 status_code=403,
-                log_message=f"User does not have an approved role. Required roles: {self.approved_roles}"
+                log_message=(
+                    f"Access denied. Your account requires one of the following roles: {self.approved_roles}. "
+                    "Please contact the KBase or BERDL administrators for assistance."
+                ),
             )
 
         # Validate MFA requirement - only allow USED status
