@@ -7,7 +7,13 @@ from jupyterhub.handlers import BaseHandler
 from traitlets import List, Unicode
 from tornado import web
 
-from service.kb_auth import AdminPermission, KBaseAuth, MissingTokenError, InvalidTokenError
+from service.kb_auth import (
+    AdminPermission,
+    AuthenticationError,
+    InvalidTokenError,
+    KBaseAuth,
+    MissingTokenError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +57,12 @@ class KBaseAuthenticator(Authenticator):
         help="Comma-separated list of KBase roles with full administrative access to JupyterHub.",
     )
 
+    approved_roles = List(
+        default_value=[role.strip() for role in os.getenv("APPROVED_ROLES", "").split(",") if role.strip()],
+        config=True,
+        help="Comma-separated list of KBase roles approved to login to JupyterHub.",
+    )
+
     async def authenticate(self, handler, data=None) -> dict:
         """
         Authenticate user using KBase session cookie and API validation
@@ -62,8 +74,16 @@ class KBaseAuthenticator(Authenticator):
                 f"Authentication required - missing {self.SESSION_COOKIE_NAME} cookie."
             )
 
-        kb_auth = KBaseAuth(self.kbase_auth_url, self.auth_full_admin_roles)
+        kb_auth = KBaseAuth(self.kbase_auth_url, self.auth_full_admin_roles, self.approved_roles)
         kb_user = await kb_auth.validate_token(session_token)
+
+        # Check if user has required approval role
+        if not kb_user.approved:
+            logger.warning(f"User {kb_user.user} denied access - missing required approval role")
+            raise AuthenticationError(
+                status_code=403,
+                log_message=f"User does not have an approved role. Required roles: {self.approved_roles}"
+            )
 
         # Validate MFA requirement - only allow USED status
         if kb_user.mfa_status != "USED":
@@ -110,8 +130,13 @@ class KBaseAuthenticator(Authenticator):
             return False
 
         try:
-            kb_auth = KBaseAuth(self.kbase_auth_url, self.auth_full_admin_roles)
+            kb_auth = KBaseAuth(self.kbase_auth_url, self.auth_full_admin_roles, self.approved_roles)
             kb_user = await kb_auth.validate_token(kbase_token)
+
+            # Check if user still has required approval role
+            if not kb_user.approved:
+                logger.warning(f"Token refresh failed for user {user.name}: missing required approval role")
+                return False
 
             # Check MFA status - if not USED, invalidate the session
             if kb_user.mfa_status != "USED":
