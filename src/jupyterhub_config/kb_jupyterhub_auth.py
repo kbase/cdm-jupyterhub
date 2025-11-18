@@ -88,11 +88,11 @@ class KBaseAuthenticator(Authenticator):
                 ),
             )
 
-        # Validate MFA requirement - only allow USED status
-        if kb_user.mfa_status != "USED":
+        # Validate MFA requirement - only allow Used status
+        if kb_user.mfa_status != "Used":
             logger.warning(f"User {kb_user.user} denied access due to MFA status: {kb_user.mfa_status}")
             # Redirect to MFA requirement page
-            mfa_status = kb_user.mfa_status or 'UNKNOWN'
+            mfa_status = kb_user.mfa_status or 'Unknown'
             redirect_url = f"/mfa-required?mfa_status={mfa_status}"
             handler.redirect(redirect_url)
             return None
@@ -141,8 +141,8 @@ class KBaseAuthenticator(Authenticator):
                 logger.warning(f"Token refresh failed for user {user.name}: missing required approval role")
                 return False
 
-            # Check MFA status - if not USED, invalidate the session
-            if kb_user.mfa_status != "USED":
+            # Check MFA status - if not Used, invalidate the session
+            if kb_user.mfa_status != "Used":
                 logger.warning(f"Token refresh failed for user {user.name}: MFA status is {kb_user.mfa_status}")
                 return False
 
@@ -221,7 +221,7 @@ class MfaRequiredHandler(BaseHandler):
         """
         Display MFA requirement page.
         """
-        mfa_status = self.get_argument("mfa_status", "UNKNOWN")
+        mfa_status = self.get_argument("mfa_status", "Unknown")
 
         html = await self.render_template(
             "mfa-required.html",
