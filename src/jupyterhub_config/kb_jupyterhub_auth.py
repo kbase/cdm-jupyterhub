@@ -88,8 +88,8 @@ class KBaseAuthenticator(Authenticator):
                 ),
             )
 
-        # Validate MFA requirement - only allow Used status
-        if kb_user.mfa_status != "Used":
+        # Validate MFA requirement - only allow Used status (case-insensitive)
+        if not kb_user.mfa_status or kb_user.mfa_status.lower() != "used":
             logger.warning(f"User {kb_user.user} denied access due to MFA status: {kb_user.mfa_status}")
             # Redirect to MFA requirement page
             mfa_status = kb_user.mfa_status or 'Unknown'
@@ -141,8 +141,8 @@ class KBaseAuthenticator(Authenticator):
                 logger.warning(f"Token refresh failed for user {user.name}: missing required approval role")
                 return False
 
-            # Check MFA status - if not Used, invalidate the session
-            if kb_user.mfa_status != "Used":
+            # Check MFA status - if not Used (case-insensitive), invalidate the session
+            if not kb_user.mfa_status or kb_user.mfa_status.lower() != "used":
                 logger.warning(f"Token refresh failed for user {user.name}: MFA status is {kb_user.mfa_status}")
                 return False
 
