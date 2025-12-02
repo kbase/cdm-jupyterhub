@@ -26,7 +26,7 @@ dependencies = [
     "cacheout==0.16.0",
     "psycopg==3.2.9",
     # Jupyter AI libraries
-    "jupyter-ai==2.31.6",
+    "jupyter-ai==2.31.7",
     "langchain-openai==0.3.28",
     "langchain-anthropic==0.3.18",
     "langchain-ollama==0.3.6",
